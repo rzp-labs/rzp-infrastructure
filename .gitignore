@@ -1,0 +1,210 @@
+# =========================
+# OS and Editor Files
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# JetBrains IDEs
+.idea/
+
+# Visual Studio
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local History for VSCode
+.history/
+
+# Thumbnails
+._*
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+.early.coverage
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# UV
+uv.lock
+
+# PEP 582
+__pypackages__/
+
+# Environments
+.env
+.venv
+.envrc
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Ruff
+.ruff_cache/
+
+# PyPI config
+.pypirc
+
+# =========================
+# Node.js
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Project-specific tools
+# =========================
+.windsurf
+.serena
+.nx/installation
+.nx/cache
+.nx/workspace-data
+.roo/
+.roomodes/
+.taskmaster/
+tasks/
+tasks.json
+context_portal/
+alembic/
+alembic.ini
+.roomodes
+.windsurfrules
+.cursor/
+.cursor/rules/nx-rules.mdc
+.proxmox/
+.claude/
+.agent/
+
+# =========================
+# Pulumi
+# =========================
+.pulumi/
+Pulumi.*.yaml
+Pulumi.yaml
+Pulumi.lock.yaml
+
+# =========================
+# GitHub/AI
+# =========================
+.github/instructions/nx.instructions.md
+.github/copilot-instructions.md
+
+# =========================
+# Misc
+# =========================
+.site
+share/python-wheels/
+
+# Added by Task Master AI
+logs
+# Dependency directories
+# Environment variables
+# Editor directories and files
+.idea
+.vscode
+# OS specific
+# Task files
+examples/terraform
+# =========================
+# Git Worktrees
+# =========================
+worktrees/

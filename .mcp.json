@@ -1,0 +1,94 @@
+{
+  "mcpServers": {
+    "language-server": {
+      "command": "/Users/stephen/Projects/MCP/mcp-language-server/mcp-language-server",
+      "args": [
+        "-workspace",
+        "/Users/stephen/Projects/rzp-infra",
+        "-lsp",
+        "typescript-language-server",
+        "--",
+        "--stdio"
+      ],
+      "cwd": "/Users/stephen/Projects/MCP/mcp-language-server",
+      "env": {
+        "DEBUG": "1"
+      }
+    },
+    "serena": {
+      "type": "stdio",
+      "command": "/Users/stephen/.local/bin/uv",
+      "args": [
+        "run",
+        "--directory",
+        "/Users/stephen/Projects/MCP/serena",
+        "serena-mcp-server",
+        "--context",
+        "desktop-app",
+        "--mode",
+        "editing",
+        "--mode",
+        "interactive",
+        "--project",
+        "/Users/stephen/Projects/rzp-infra"
+      ],
+      "env": {}
+    },
+    "conport": {
+      "type": "stdio",
+      "command": "/Users/stephen/Projects/MCP/context-portal/.venv/bin/python",
+      "args": [
+        "-m",
+        "context_portal_mcp.main",
+        "--mode",
+        "stdio",
+        "--workspace_id",
+        "/Users/stephen/Projects/rzp-infra",
+        "--log-file",
+        "./logs/conport.log",
+        "--log-level",
+        "INFO"
+      ]
+    },
+    "repomix": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "repomix", "--mcp"],
+      "env": {}
+    },
+    "code-reasoning": {
+      "command": "npx",
+      "args": ["-y", "@mettamatt/code-reasoning"]
+    },
+    "sequential-thinking": {
+      "command": "/opt/homebrew/opt/node@22/bin/npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "env": {}
+    },
+    "perplexity-ask": {
+      "command": "/opt/homebrew/opt/node@22/bin/npx",
+      "args": ["-y", "@chatmcp/server-perplexity-ask"],
+      "env": {
+        "PERPLEXITY_API_KEY": "op://rzp-labs/PERPLEXITY_API_KEY/api_key"
+      }
+    },
+    "context7": {
+      "command": "/opt/homebrew/opt/node@22/bin/npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "taskmaster-ai": {
+      "command": "node",
+      "args": ["/Users/stephen/Projects/MCP/task-master-ai/mcp-server/server.js"],
+      "env": {}
+    },
+    "ProxmoxMCP": {
+      "command": "/Users/stephen/Projects/MCP/ProxmoxMCP/.venv/bin/python",
+      "args": ["-m", "proxmox_mcp.server"],
+      "env": {
+        "PYTHONPATH": "/Users/stephen/Projects/MCP/ProxmoxMCP/src",
+        "PROXMOX_MCP_CONFIG": "/Users/stephen/Projects/rzp-infra/.proxmox/config.json"
+      },
+      "working_directory": "/Users/stephen/Projects/rzp-infra"
+    }
+  }
+}
