@@ -11,6 +11,9 @@ const proxmoxUsername = cfg.requireSecret("proxmoxUsername"); // Automatically e
 const proxmoxPassword = cfg.requireSecret("proxmoxPassword"); // Automatically encrypted & masked
 const proxmoxInsecure = cfg.getBoolean("proxmoxInsecure") ?? false;
 
+// SSH key from secure config (NEVER hardcode!)
+const sshPublicKey = cfg.requireSecret("sshPublicKey"); // Automatically encrypted & masked
+
 // Node & datastore names in your Proxmox cluster
 const node = cfg.get("proxmoxNode") ?? "rzp-net";
 const isoStore = cfg.get("isoStore") ?? "local";
@@ -81,7 +84,7 @@ const userCi = new proxmoxve.storage.File(
     contentType: "snippets",
     sourceRaw: {
       fileName: "k3s-user-data-cloud-init.yaml",
-      data: `#cloud-config
+      data: pulumi.interpolate`#cloud-config
 users:
   - name: "admin_ops"
     groups: sudo
@@ -215,7 +218,7 @@ const workers = Array.from({ length: workerCount }, (_, i) =>
 /* ──────────────────  OUTPUTS  ────────────────── */
 
 export const masterIps = masters.reduce(
-  (o, vm, i) => {
+  (o, _, i) => {
     const vmName = masterCount > 1 && i > 0 ? `stg-k3s-node-master-${i + 1}` : "stg-k3s-node-master";
     o[vmName] = `${net4Prefix}${ipHostBase + i}`;
     return o;
@@ -224,7 +227,7 @@ export const masterIps = masters.reduce(
 );
 
 export const workerIps = workers.reduce(
-  (o, vm, i) => {
+  (o, _, i) => {
     const vmName = `stg-k3s-node-worker-${i + 1}`;
     o[vmName] = `${net4Prefix}${ipHostBase + masterCount + i}`;
     return o;
@@ -233,7 +236,7 @@ export const workerIps = workers.reduce(
 );
 
 export const allNodes = {
-  masters: masters.map((vm, i) => ({
+  masters: masters.map((_, i) => ({
     name: masterCount > 1 && i > 0 ? `stg-k3s-node-master-${i + 1}` : "stg-k3s-node-master",
     ip: `${net4Prefix}${ipHostBase + i}`,
     ipv6: `${net6Prefix}${ipHostBase + i}`,
@@ -242,7 +245,7 @@ export const allNodes = {
     osDisk: 20,
     dataDisk: 60,
   })),
-  workers: workers.map((vm, i) => ({
+  workers: workers.map((_, i) => ({
     name: `stg-k3s-node-worker-${i + 1}`,
     ip: `${net4Prefix}${ipHostBase + masterCount + i}`,
     ipv6: `${net6Prefix}${ipHostBase + masterCount + i}`,
