@@ -26,6 +26,10 @@ const workerCount = cfg.getNumber("workerCount") ?? 1;
 const vmidBase = cfg.getNumber("vmidBase") ?? 120;
 const ipHostBase = cfg.getNumber("ipHostBase") ?? 20;
 
+// VM ID ranges for clear role separation
+const masterVmidStart = vmidBase;                           // 120-129 (masters)
+const workerVmidStart = vmidBase + 10;                      // 130-139 (workers)
+
 // Network settings
 const net4Prefix = cfg.get("net4Prefix") ?? "10.10.0.";
 const net6Prefix = cfg.get("net6Prefix") ?? "fd00:10:10::";
@@ -140,26 +144,34 @@ runcmd:
 
 /* ──────────────────  HELPER TO BUILD A VM  ────────────────── */
 
-function createVm(idx: number, name: string) {
-  const ip4 = `${net4Prefix}${ipHostBase + idx}`;
-  const ip6 = `${net6Prefix}${ipHostBase + idx}`;
+function createVm(vmId: number, role: "master" | "worker", roleIndex: number) {
+  // Calculate IP based on overall sequence for consistent networking
+  const overallIndex = role === "master" ? roleIndex : masterCount + roleIndex;
+  const ip4 = `${net4Prefix}${ipHostBase + overallIndex}`;
+  const ip6 = `${net6Prefix}${ipHostBase + overallIndex}`;
+  
+  // Generate consistent VM name based on role and index
+  const vmName = role === "master" 
+    ? (roleIndex === 0 ? "stg-k3s-master" : `stg-k3s-master-${roleIndex + 1}`)
+    : `stg-k3s-worker-${roleIndex + 1}`;
+
   return new proxmoxve.vm.VirtualMachine(
-    name,
+    vmName,
     {
       nodeName: node,
-      vmId: vmidBase + idx,
+      vmId: vmId,
       started: true,
       onBoot: true,
-      tags: ["stg", "k3s", name.includes("master") ? "master" : "worker"],
-      description: `K3s ${name.includes("master") ? "Master" : "Worker"} Node`,
+      tags: ["stg", "k3s", role],
+      description: `K3s ${role.charAt(0).toUpperCase() + role.slice(1)} Node ${roleIndex + 1}`,
       machine: "q35",
       bios: "seabios",
       scsiHardware: "virtio-scsi-single",
       tabletDevice: false,
       bootOrders: ["scsi0", "ide2"],
       startup: {
-        order: name.includes("master") ? 1 : 2,
-        upDelay: name.includes("master") ? 30 : 10,
+        order: role === "master" ? 1 : 2,
+        upDelay: role === "master" ? 30 : 10,
       },
       operatingSystem: { type: "l26" },
       agent: { enabled: true, trim: true, type: "virtio", timeout: "15m" },
@@ -208,18 +220,18 @@ function createVm(idx: number, name: string) {
 /* ──────────────────  CREATE MASTERS & WORKERS  ────────────────── */
 
 const masters = Array.from({ length: masterCount }, (_, i) =>
-  createVm(i, masterCount > 1 && i > 0 ? `stg-k3s-node-master-${i + 1}` : "stg-k3s-node-master"),
+  createVm(masterVmidStart + i, "master", i),
 );
 
 const workers = Array.from({ length: workerCount }, (_, i) =>
-  createVm(masterCount + i, `stg-k3s-node-worker-${i + 1}`),
+  createVm(workerVmidStart + i, "worker", i),
 );
 
 /* ──────────────────  OUTPUTS  ────────────────── */
 
 export const masterIps = masters.reduce(
   (o, _, i) => {
-    const vmName = masterCount > 1 && i > 0 ? `stg-k3s-node-master-${i + 1}` : "stg-k3s-node-master";
+    const vmName = i === 0 ? "stg-k3s-master" : `stg-k3s-master-${i + 1}`;
     o[vmName] = `${net4Prefix}${ipHostBase + i}`;
     return o;
   },
@@ -228,7 +240,7 @@ export const masterIps = masters.reduce(
 
 export const workerIps = workers.reduce(
   (o, _, i) => {
-    const vmName = `stg-k3s-node-worker-${i + 1}`;
+    const vmName = `stg-k3s-worker-${i + 1}`;
     o[vmName] = `${net4Prefix}${ipHostBase + masterCount + i}`;
     return o;
   },
@@ -237,7 +249,8 @@ export const workerIps = workers.reduce(
 
 export const allNodes = {
   masters: masters.map((_, i) => ({
-    name: masterCount > 1 && i > 0 ? `stg-k3s-node-master-${i + 1}` : "stg-k3s-node-master",
+    name: i === 0 ? "stg-k3s-master" : `stg-k3s-master-${i + 1}`,
+    vmId: masterVmidStart + i,
     ip: `${net4Prefix}${ipHostBase + i}`,
     ipv6: `${net6Prefix}${ipHostBase + i}`,
     cores: 2,
@@ -246,7 +259,8 @@ export const allNodes = {
     dataDisk: 60,
   })),
   workers: workers.map((_, i) => ({
-    name: `stg-k3s-node-worker-${i + 1}`,
+    name: `stg-k3s-worker-${i + 1}`,
+    vmId: workerVmidStart + i,
     ip: `${net4Prefix}${ipHostBase + masterCount + i}`,
     ipv6: `${net6Prefix}${ipHostBase + masterCount + i}`,
     cores: 2,
@@ -254,4 +268,11 @@ export const allNodes = {
     osDisk: 20,
     dataDisk: 60,
   })),
+};
+
+// Helper function to determine role from VM ID
+export const getVmRole = (vmId: number): "master" | "worker" | "unknown" => {
+  if (vmId >= masterVmidStart && vmId < masterVmidStart + 10) return "master";
+  if (vmId >= workerVmidStart && vmId < workerVmidStart + 10) return "worker";
+  return "unknown";
 };
