@@ -49,8 +49,9 @@ export function generateVmName(role: "master" | "worker", roleIndex: number, pre
  * Calculates the network index for master nodes
  * Masters use sequential indexing: 0 → .20, 1 → .21, etc.
  */
-function getMasterNetworkIndex(roleIndex: number): number {
-  return roleIndex;
+function getMasterNetworkIndex(roleIndex: number, masterVmidStart: number): number {
+  const masterVmId = masterVmidStart + roleIndex;
+  return masterVmId - 100; // Network index = VMID - 100
 }
 
 /**
@@ -72,7 +73,7 @@ export function calculateNetworkIndex(config: {
   vmIdStart?: number;
 }): number {
   if (config.role === "master") {
-    return getMasterNetworkIndex(config.roleIndex);
+    return getMasterNetworkIndex(config.roleIndex, config.vmIdStart ?? 120);
   }
 
   return getWorkerNetworkIndex(config.roleIndex, config.vmIdStart ?? 130);

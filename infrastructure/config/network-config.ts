@@ -24,7 +24,7 @@ export function getNetworkBase(): INetworkBase {
 
   return {
     bridge: cfg.get("bridge") ?? "vmbr0",
-    ipHostBase: cfg.getNumber("ipHostBase") ?? 20,
+    ipHostBase: cfg.getNumber("ipHostBase") ?? 0,
   };
 }
 

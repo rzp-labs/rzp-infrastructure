@@ -78,7 +78,7 @@ export class K3sCluster extends ComponentResource {
       role,
       roleIndex,
       masterCount: config.k3s.masterCount,
-      vmIdStart: config.k3s.workerVmidStart,
+      vmIdStart: role === "master" ? config.k3s.masterVmidStart : config.k3s.workerVmidStart,
     });
 
     return {
