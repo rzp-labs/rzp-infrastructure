@@ -9,10 +9,9 @@ import { getVmRole } from "../../shared/utils";
 // Get staging configuration
 const config = getStagingConfig();
 
-// Deploy K3s cluster using template VM 9000
+// Deploy K3s cluster using fresh cloud images
 export const cluster = new K3sCluster("stg-k3s", {
   config,
-  templateVmId: 9000, // Clone from your existing k3s template
 });
 
 // Export cluster information

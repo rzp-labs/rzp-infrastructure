@@ -4,48 +4,44 @@
 
 import * as pulumi from "@pulumi/pulumi";
 import type { INetworkConfig, IProxmoxConfig, IVmResourceConfig } from "../shared/types";
-import { DEFAULT_VM_RESOURCES } from "../shared/constants";
+
+import { getNodeConfig, getProviderAuth, getVmStorage } from "./provider-config";
+import { getIpv4Config, getIpv6Config, getNetworkBase } from "./network-config";
+import { getVmDiskSizes, getVmHardware } from "./vm-resources";
 
 export function getProxmoxConfig(): IProxmoxConfig {
-  const cfg = new pulumi.Config();
+  const auth = getProviderAuth();
+  const nodeConfig = getNodeConfig();
+  const storage = getVmStorage();
+  const network = getNetworkBase();
 
   return {
-    endpoint: cfg.require("proxmoxEndpoint"),
-    username: cfg.requireSecret("proxmoxUsername"),
-    password: cfg.requireSecret("proxmoxPassword"),
-    insecure: cfg.getBoolean("proxmoxInsecure") ?? false,
-    node: cfg.get("proxmoxNode") ?? "rzp-net",
-    isoStore: cfg.get("isoStore") ?? "local",
-    vmStore: cfg.get("vmStore") ?? "local-zfs",
-    bridge: cfg.get("bridge") ?? "vmbr0",
-    ssh: {
-      agent: cfg.getBoolean("sshAgent") ?? false,
-      privateKey: cfg.getSecret("sshPrivateKey"),
-      username: cfg.get("sshUsername") ?? "root",
-    },
+    ...nodeConfig,
+    ...auth,
+    ...storage,
+    bridge: network.bridge,
   };
 }
 
 export function getNetworkConfig(): INetworkConfig {
-  const cfg = new pulumi.Config();
+  const ipv4 = getIpv4Config();
+  const ipv6 = getIpv6Config();
+  const network = getNetworkBase();
 
   return {
-    net4Prefix: cfg.get("net4Prefix") ?? "10.10.0.",
-    net6Prefix: cfg.get("net6Prefix") ?? "fd00:10:10::",
-    gateway4: cfg.get("gateway4") ?? "10.10.0.1",
-    gateway6: cfg.get("gateway6") ?? "fd00:10:10::1",
-    ipHostBase: cfg.getNumber("ipHostBase") ?? 20,
+    ...ipv4,
+    ...ipv6,
+    ipHostBase: network.ipHostBase,
   };
 }
 
 export function getVmResourceConfig(): IVmResourceConfig {
-  const cfg = new pulumi.Config();
+  const hardware = getVmHardware();
+  const diskSizes = getVmDiskSizes();
 
   return {
-    cores: cfg.getNumber("vmCores") ?? DEFAULT_VM_RESOURCES.CORES,
-    memory: cfg.getNumber("vmMemory") ?? DEFAULT_VM_RESOURCES.MEMORY,
-    osDiskSize: cfg.getNumber("vmOsDiskSize") ?? DEFAULT_VM_RESOURCES.OS_DISK_SIZE,
-    dataDiskSize: cfg.getNumber("vmDataDiskSize") ?? DEFAULT_VM_RESOURCES.DATA_DISK_SIZE,
+    ...hardware,
+    ...diskSizes,
   };
 }
 

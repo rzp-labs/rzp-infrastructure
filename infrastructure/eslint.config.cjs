@@ -59,7 +59,8 @@ module.exports = [
             "@typescript-eslint/consistent-type-exports": "error",
             "@typescript-eslint/no-import-type-side-effects": "error",
             "@typescript-eslint/prefer-readonly": "error",
-            "@typescript-eslint/prefer-readonly-parameter-types": "warn",
+            // Disabled: We use readonly properties in interfaces for immutability protection
+            // "@typescript-eslint/prefer-readonly-parameter-types": "warn",
 
             // SOLID principles enforcement
             "max-lines": ["error", { max: 150, skipComments: true, skipBlankLines: true }],

@@ -11,23 +11,25 @@ import { ProxmoxNode } from "./ProxmoxNode";
 
 export interface IK3sClusterArgs {
   readonly config: IEnvironmentConfig;
-  readonly templateVmId?: number; // Template VM to clone from (default: 9000)
 }
 
 export class K3sCluster extends ComponentResource {
   public readonly provider: proxmoxve.Provider;
   public readonly masters: readonly ProxmoxNode[];
   public readonly workers: readonly ProxmoxNode[];
-  private readonly templateVmId: number;
 
   constructor(name: string, args: IK3sClusterArgs, opts?: ComponentResourceOptions) {
     super("custom:k3s:K3sCluster", name, {}, opts);
 
     const { config } = args;
-    this.templateVmId = args.templateVmId ?? 9000; // Default to VM 9000
 
-    // Create Proxmox provider with SSH configuration
-    this.provider = new proxmoxve.Provider(
+    this.provider = this.createProvider(name, config);
+    this.masters = this.createMasterNodes(config);
+    this.workers = this.createWorkerNodes(config);
+  }
+
+  private createProvider(name: string, config: IEnvironmentConfig): proxmoxve.Provider {
+    return new proxmoxve.Provider(
       `${name}-provider`,
       {
         endpoint: config.proxmox.endpoint,
@@ -44,10 +46,14 @@ export class K3sCluster extends ComponentResource {
       },
       { parent: this },
     );
+  }
 
-    // Create master and worker nodes
-    this.masters = this.createNodes("master", config.k3s.masterCount, config);
-    this.workers = this.createNodes("worker", config.k3s.workerCount, config);
+  private createMasterNodes(config: IEnvironmentConfig): ProxmoxNode[] {
+    return this.createNodes("master", config.k3s.masterCount, config);
+  }
+
+  private createWorkerNodes(config: IEnvironmentConfig): ProxmoxNode[] {
+    return this.createNodes("worker", config.k3s.workerCount, config);
   }
 
   private createNodes(role: "master" | "worker", count: number, config: IEnvironmentConfig): ProxmoxNode[] {
@@ -58,7 +64,6 @@ export class K3sCluster extends ComponentResource {
         {
           config: config.proxmox,
           nodeConfig,
-          templateVmId: this.templateVmId,
           provider: this.provider,
         },
         { parent: this },
