@@ -15,5 +15,12 @@
   "dependencies": {
     "@muhlba91/pulumi-proxmoxve": "^7.2.0",
     "@pulumi/pulumi": "^3.113.0"
+  },
+  "scripts": {
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
+    "lint": "eslint \"**/*.{ts,js}\"",
+    "type-check": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:coverage": "echo \"Error: no test coverage specified\" && exit 1"
   }
 }

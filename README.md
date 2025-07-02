@@ -17,6 +17,15 @@ single-operator sustainability at 70+ service scale.
 - **Purpose-Driven Taxonomy**: Services organized by operational intent within a hierarchical configuration
 - **Comprehensive Observability**: Vector → OpenObserve pipeline with Netdata real-time metrics
 
+## Development Setup
+
+For development commands, code quality checks, and infrastructure operations, see [CLAUDE.md](./CLAUDE.md).
+
+Key commands:
+- `npx eslint . --fix` - Auto-fix linting and import sorting
+- `pnpm run format` - Format code with Prettier  
+- `pnpm run type-check` - TypeScript validation
+
 ## Code Quality Standards
 
 This project adheres to SOLID principles, recognizing that infrastructure-as-code demands the same engineering rigor as

@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```text
 [SESSION START CHECKLIST]
-□ 1. Read all files from @agent/rules and @docs/
+□ 1. Read all files from @.agent/rules and @docs/
 □ 2. Retreive context from ConPort (if database exists):
    □ get_product_context
    □ get_active_context
@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### [ALWAYS]
 
-- ALWAYS follow [SOLID guidelines](/Users/stephen/Projects/rzp-labs/rzp-infra/agent/rules/SOLID-guidelines.md)
+- ALWAYS follow [SOLID guidelines](/Users/stephen/Projects/rzp-labs/rzp-infra/.agent/rules/SOLID-guidelines.md)
 - ALWAYS follow Test-Driven Development
 - ALWAYS consider the impact on other components before making changes
 - ALWAYS check for existing utilities/helpers before creating new ones
@@ -156,7 +156,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RZP Infrastructure is a GitOps-managed homelab infrastructure repository that powers 100+ services using Infrastructure
+rzp Infrastructure is a GitOps-managed homelab infrastructure repository that powers 100+ services using Infrastructure
 as Code (IaC) principles with Pulumi and Python.
 
 ### Purpose
@@ -227,11 +227,17 @@ pnpm run format
 # Lint code
 pnpm run lint
 
+# Lint with auto-fix (import sorting, formatting)
+npx eslint . --fix
+
 # Type checking
 pnpm run type-check
 
 # Run all quality checks
 pnpm run lint && pnpm run format && pnpm run type-check
+
+# Run full quality check with auto-fixes
+npx eslint . --fix && pnpm run format && pnpm run type-check
 ```
 
 ### Infrastructure Operations
