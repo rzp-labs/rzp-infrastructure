@@ -135,13 +135,25 @@ module.exports = [
     /* Test files - relaxed rules */
     {
         files: ["**/*.test.ts", "**/*.spec.ts", "**/tests/**"],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+                ...globals.jest,
+            },
+        },
         rules: {
             "@typescript-eslint/no-explicit-any": "warn",
             "@typescript-eslint/no-unsafe-assignment": "warn",
             "@typescript-eslint/no-unsafe-call": "warn",
             "@typescript-eslint/no-unsafe-member-access": "warn",
+            "@typescript-eslint/no-unsafe-return": "warn",
+            "@typescript-eslint/no-unsafe-argument": "warn",
+            "@typescript-eslint/strict-boolean-expressions": "warn",
             "max-lines-per-function": "off",
             "max-lines": "off",
+            complexity: "off",
+            "max-depth": "off",
+            "no-console": "warn", // Allow console in tests for debugging
         },
     },
 

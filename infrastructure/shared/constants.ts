@@ -47,7 +47,7 @@ export const K3S_INSTALLATION = {
   TOKEN_FILE_PATH: "/var/lib/rancher/k3s/server/node-token",
   KUBECONFIG_PATH: "/etc/rancher/k3s/k3s.yaml",
   SERVER_PORT: "6443",
-  UNINSTALL_SERVER_CMD: "systemctl stop k3s && /usr/local/bin/k3s-uninstall.sh",
-  UNINSTALL_AGENT_CMD: "systemctl stop k3s-agent && /usr/local/bin/k3s-agent-uninstall.sh",
+  UNINSTALL_SERVER_CMD: "sudo systemctl stop k3s && sudo /usr/local/bin/k3s-uninstall.sh",
+  UNINSTALL_AGENT_CMD: "sudo systemctl stop k3s-agent && sudo /usr/local/bin/k3s-agent-uninstall.sh",
   LOCALHOST_IP: "127.0.0.1",
 } as const;

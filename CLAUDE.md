@@ -23,6 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - ALWAYS follow [SOLID guidelines](/Users/stephen/Projects/rzp-labs/rzp-infra/.agent/rules/SOLID-guidelines.md)
 - ALWAYS follow Test-Driven Development
+- ALWAYS use `repomix` when searching the codebase (is it far more efficient)
 - ALWAYS consider the impact on other components before making changes
 - ALWAYS check for existing utilities/helpers before creating new ones
 - ALWAYS read all lines when viewing or editing files
@@ -116,6 +117,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### File Naming Standards
 
 **Standardized kebab-case naming** for all TypeScript files:
+
 - ✅ `k3s-cluster.ts`, `proxmox-node.ts`, `vm-config.ts`
 - ✅ `provider-config.ts`, `network-config.ts`
 - ❌ ~~`K3sCluster.ts`, `ProxmoxNode.ts`~~ (old inconsistent pattern)

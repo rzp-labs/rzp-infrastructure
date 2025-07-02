@@ -3,7 +3,9 @@
  */
 
 import { K3sCluster } from "../../components/k3s/k3s-cluster";
-import { K3sInstaller } from "../../components/k3s/k3s-installer";
+import { K3sCredentials } from "../../components/k3s/k3s-credentials";
+import { K3sMaster } from "../../components/k3s/k3s-master";
+import { K3sWorker } from "../../components/k3s/k3s-worker";
 import { getStagingConfig } from "../../config/staging";
 import { getVmRole } from "../../shared/utils";
 
@@ -15,25 +17,56 @@ export const cluster = new K3sCluster("stg-k3s", {
   config,
 });
 
-// Install K3s on the cluster
-export const k3sInstaller = new K3sInstaller(
-  "k3s-installer",
+// Install K3s master
+export const masterInstall = new K3sMaster(
+  "k3s-master",
   {
-    masterNodes: cluster.masters.map((m) => m.config),
-    workerNodes: cluster.workers.map((w) => w.config),
-    sshPrivateKey: config.proxmox.ssh!.privateKey!,
+    node: cluster.masters.map((m) => m.config)[0],
     sshUsername: config.proxmox.ssh!.username!,
+    sshPrivateKey: config.proxmox.ssh!.privateKey!,
+    isFirstMaster: true,
   },
   {
-    dependsOn: [...cluster.masters, ...cluster.workers],
+    dependsOn: [...cluster.masters],
   },
+);
+
+// Retrieve K3s credentials
+export const credentials = new K3sCredentials(
+  "k3s-credentials",
+  {
+    masterNode: cluster.masters.map((m) => m.config)[0],
+    sshUsername: config.proxmox.ssh!.username!,
+    sshPrivateKey: config.proxmox.ssh!.privateKey!,
+  },
+  {
+    dependsOn: [masterInstall],
+  },
+);
+
+// Install K3s workers
+export const workerInstalls = cluster.workers.map(
+  (worker, index) =>
+    new K3sWorker(
+      `k3s-worker-${index}`,
+      {
+        node: worker.config,
+        sshUsername: config.proxmox.ssh!.username!,
+        sshPrivateKey: config.proxmox.ssh!.privateKey!,
+        token: credentials.result.token,
+        masterEndpoint: cluster.masters.map((m) => m.config)[0].ip4,
+      },
+      {
+        dependsOn: [credentials],
+      },
+    ),
 );
 
 // Export cluster information
 export const masterIps = cluster.masterIps;
 export const workerIps = cluster.workerIps;
 export const allNodes = cluster.allNodes;
-export const kubeconfig = k3sInstaller.result.kubeconfig;
+export const kubeconfig = credentials.result.kubeconfig;
 
 // Export utility function for role determination
 export const getVmRoleFromId = (vmId: number) =>
