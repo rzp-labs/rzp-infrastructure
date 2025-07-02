@@ -18,6 +18,11 @@ interface IVmConfigArgs {
   readonly userDataFile: proxmoxve.storage.File;
 }
 
+// TODO: Break up buildVmConfiguration into logical functions:
+// - getVmIdentity(nodeConfig, config) -> {name, nodeName, vmId, description}
+// - getVmState() -> {template: false, started: true, onBoot: true}
+// - getVmTags(nodeConfig) -> {tags: [...]}
+// - composeVmConfiguration(identity, state, tags, hardware, disks, network, cloudInit)
 export function buildVmConfiguration(args: IVmConfigArgs) {
   const capitalize = (str: string): string => str.charAt(0).toUpperCase() + str.slice(1);
 

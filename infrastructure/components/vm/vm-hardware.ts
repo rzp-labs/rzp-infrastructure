@@ -17,6 +17,8 @@ export function getVmHardwareConfig(nodeConfig: IK3sNodeConfig) {
     agent: { enabled: true, trim: true, type: "virtio", timeout: "15m" },
     cpu: { type: "host", cores: nodeConfig.resources.cores },
     memory: { dedicated: nodeConfig.resources.memory },
+    vga: { type: "std" },
+    serialDevice: { device: "socket" },
   };
 }
 
