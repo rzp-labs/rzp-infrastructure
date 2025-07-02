@@ -5,9 +5,9 @@
 import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 import type { ComponentResourceOptions } from "@pulumi/pulumi";
 import { ComponentResource } from "@pulumi/pulumi";
-import type { IClusterOutput, IEnvironmentConfig, IK3sNodeConfig, INodeInfo } from "../shared/types";
-import { calculateNetworkIndex, generateIpv4, generateIpv6, generateVmName } from "../shared/utils";
-import { ProxmoxNode } from "./ProxmoxNode";
+import type { IClusterOutput, IEnvironmentConfig, IK3sNodeConfig, INodeInfo } from "../../shared/types";
+import { calculateNetworkIndex, generateIpv4, generateIpv6, generateVmName } from "../../shared/utils";
+import { ProxmoxNode } from "../proxmox-node";
 
 export interface IK3sClusterArgs {
   readonly config: IEnvironmentConfig;

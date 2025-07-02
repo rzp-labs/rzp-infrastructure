@@ -113,6 +113,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Implement new phases as plugins, not modifications
 - Security scanning with Trivy after dependency changes
 
+### File Naming Standards
+
+**Standardized kebab-case naming** for all TypeScript files:
+- ✅ `k3s-cluster.ts`, `proxmox-node.ts`, `vm-config.ts`
+- ✅ `provider-config.ts`, `network-config.ts`
+- ❌ ~~`K3sCluster.ts`, `ProxmoxNode.ts`~~ (old inconsistent pattern)
+
+This ensures consistent imports and improved readability across the codebase.
+
 ### Listen to the Guardrails
 
 **Key Principle**: SOLID principles and type checking are guides us toward better design, not hindrances to bypass.

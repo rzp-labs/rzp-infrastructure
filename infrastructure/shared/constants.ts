@@ -39,3 +39,15 @@ export const VM_DEFAULTS = {
   DISK_AIO: "io_uring",
   NETWORK_MODEL: "virtio",
 } as const;
+
+export const K3S_INSTALLATION = {
+  DOWNLOAD_URL: "https://get.k3s.io",
+  SERVER_FLAGS: "--cluster-init --disable traefik --disable servicelb --disable local-storage",
+  ADDITIONAL_SERVER_FLAGS: "--disable traefik --disable servicelb --disable local-storage",
+  TOKEN_FILE_PATH: "/var/lib/rancher/k3s/server/node-token",
+  KUBECONFIG_PATH: "/etc/rancher/k3s/k3s.yaml",
+  SERVER_PORT: "6443",
+  UNINSTALL_SERVER_CMD: "systemctl stop k3s && /usr/local/bin/k3s-uninstall.sh",
+  UNINSTALL_AGENT_CMD: "systemctl stop k3s-agent && /usr/local/bin/k3s-agent-uninstall.sh",
+  LOCALHOST_IP: "127.0.0.1",
+} as const;

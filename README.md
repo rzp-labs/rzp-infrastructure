@@ -31,6 +31,15 @@ Key commands:
 This project adheres to SOLID principles, recognizing that infrastructure-as-code demands the same engineering rigor as
 application development. When contributing to the Pulumi codebase, follow these guidelines:
 
+### File Naming Conventions
+
+**Standardized kebab-case naming** for all TypeScript files:
+- ✅ `k3s-cluster.ts`, `proxmox-node.ts`, `vm-config.ts`
+- ✅ `provider-config.ts`, `network-config.ts`
+- ❌ ~~`K3sCluster.ts`, `ProxmoxNode.ts`~~ (old inconsistent pattern)
+
+This ensures consistent imports and improved readability across the codebase.
+
 ### SOLID Principles for Infrastructure Code
 
 **Single Responsibility Principle (SRP)**
