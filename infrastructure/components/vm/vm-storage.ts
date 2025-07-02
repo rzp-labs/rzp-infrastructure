@@ -2,9 +2,9 @@
  * VM storage and disk configuration utilities
  */
 
-import type { IK3sNodeConfig, IProxmoxConfig } from "../../shared/types";
-import { VM_DEFAULTS } from "../../shared/constants";
 import type { DebianCloudImage } from "../../resources/storage/images";
+import { VM_DEFAULTS } from "../../shared/constants";
+import type { IK3sNodeConfig, IProxmoxConfig } from "../../shared/types";
 
 export function getVmDiskConfig(nodeConfig: IK3sNodeConfig, config: IProxmoxConfig, cloudImage: DebianCloudImage) {
   return [createOsDisk(nodeConfig, config, cloudImage), createDataDisk(nodeConfig, config)];

@@ -3,6 +3,7 @@
  */
 
 import * as pulumi from "@pulumi/pulumi";
+
 import { DEFAULT_VM_RESOURCES } from "../shared/constants";
 
 interface IVmHardware {

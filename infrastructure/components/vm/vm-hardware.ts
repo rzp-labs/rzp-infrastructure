@@ -2,8 +2,8 @@
  * VM hardware configuration utilities
  */
 
-import type { IK3sNodeConfig } from "../../shared/types";
 import { VM_DEFAULTS } from "../../shared/constants";
+import type { IK3sNodeConfig } from "../../shared/types";
 
 export function getVmHardwareConfig(nodeConfig: IK3sNodeConfig) {
   return {

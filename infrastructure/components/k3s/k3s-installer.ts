@@ -2,10 +2,11 @@
  * K3s installation and cluster setup component
  */
 
-import * as pulumi from "@pulumi/pulumi";
 import * as command from "@pulumi/command";
-import type { IK3sNodeConfig } from "../../shared/types";
+import * as pulumi from "@pulumi/pulumi";
+
 import { K3S_INSTALLATION } from "../../shared/constants";
+import type { IK3sNodeConfig } from "../../shared/types";
 
 interface IK3sInstallerArgs {
   readonly masterNodes: IK3sNodeConfig[];
@@ -65,7 +66,7 @@ export class K3sInstaller extends pulumi.ComponentResource {
       "k3s-get-token",
       {
         connection: this.createConnection(args.masterNodes[0].ip4, args),
-        create: `cat ${K3S_INSTALLATION.TOKEN_FILE_PATH}`,
+        create: `sudo cat ${K3S_INSTALLATION.TOKEN_FILE_PATH}`,
       },
       { parent: this, dependsOn: [masterInstall] },
     );
@@ -108,7 +109,7 @@ export class K3sInstaller extends pulumi.ComponentResource {
       "k3s-get-kubeconfig",
       {
         connection: this.createConnection(args.masterNodes[0].ip4, args),
-        create: `cat ${K3S_INSTALLATION.KUBECONFIG_PATH}`,
+        create: `sudo cat ${K3S_INSTALLATION.KUBECONFIG_PATH}`,
       },
       { parent: this, dependsOn: [masterInstall] },
     );

@@ -3,8 +3,9 @@
  */
 
 import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
-import type { IProxmoxConfig } from "../../shared/types";
+
 import { DEBIAN_IMAGE } from "../../shared/constants";
+import type { IProxmoxConfig } from "../../shared/types";
 
 export class DebianCloudImage {
   public readonly resource: proxmoxve.download.File;

@@ -3,10 +3,11 @@
  */
 
 import * as pulumi from "@pulumi/pulumi";
+
 import type { INetworkConfig, IProxmoxConfig, IVmResourceConfig } from "../shared/types";
 
-import { getNodeConfig, getProviderAuth, getVmStorage } from "./provider-config";
 import { getIpv4Config, getIpv6Config, getNetworkBase } from "./network-config";
+import { getNodeConfig, getProviderAuth, getVmStorage } from "./provider-config";
 import { getVmDiskSizes, getVmHardware } from "./vm-resources";
 
 export function getProxmoxConfig(): IProxmoxConfig {

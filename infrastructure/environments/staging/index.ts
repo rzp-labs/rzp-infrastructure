@@ -3,8 +3,8 @@
  */
 
 import { K3sCluster } from "../../components/k3s/k3s-cluster";
-import { getStagingConfig } from "../../config/staging";
 import { K3sInstaller } from "../../components/k3s/k3s-installer";
+import { getStagingConfig } from "../../config/staging";
 import { getVmRole } from "../../shared/utils";
 
 // Get staging configuration

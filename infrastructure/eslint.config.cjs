@@ -1,6 +1,7 @@
 const js = require("@eslint/js");
 const ts = require("typescript-eslint");
 const prettier = require("eslint-plugin-prettier");
+const importPlugin = require("eslint-plugin-import");
 const globals = require("globals"); // ← built-in globals list
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
@@ -30,7 +31,10 @@ module.exports = [
                 globals: globals.node,
             },
         },
-        plugins: { "@typescript-eslint": ts.plugin },
+        plugins: { 
+            "@typescript-eslint": ts.plugin,
+            "import": importPlugin
+        },
         rules: {
             // Extend strict type-checked rules
             ...ts.configs.strictTypeChecked.rules,
@@ -80,6 +84,24 @@ module.exports = [
 
             // Import organization
             "sort-imports": ["error", { ignoreDeclarationSort: true }],
+            "import/order": [
+                "error",
+                {
+                    "groups": [
+                        "builtin",
+                        "external", 
+                        "internal",
+                        "parent",
+                        "sibling",
+                        "index"
+                    ],
+                    "newlines-between": "always",
+                    "alphabetize": {
+                        "order": "asc",
+                        "caseInsensitive": true
+                    }
+                }
+            ],
 
             // Naming conventions
             "@typescript-eslint/naming-convention": [

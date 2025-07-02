@@ -3,8 +3,10 @@
  */
 
 import * as pulumi from "@pulumi/pulumi";
-import type { IEnvironmentConfig, IK3sClusterConfig } from "../shared/types";
+
 import { VM_ID_RANGES } from "../shared/constants";
+import type { IEnvironmentConfig, IK3sClusterConfig } from "../shared/types";
+
 import { getNetworkConfig, getProxmoxConfig, getVmResourceConfig } from "./base";
 
 function getK3sClusterConfig(): IK3sClusterConfig {

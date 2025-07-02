@@ -3,14 +3,15 @@
  */
 
 import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
-import * as pulumi from "@pulumi/pulumi";
 import type { ComponentResourceOptions } from "@pulumi/pulumi";
+import * as pulumi from "@pulumi/pulumi";
 import { ComponentResource } from "@pulumi/pulumi";
-import type { IK3sNodeConfig, IProxmoxConfig } from "../shared/types";
 
 import { getSshPublicKey } from "../config/base";
 import { getInlineCloudInitConfig } from "../resources/storage/cloud-init";
 import { DebianCloudImage } from "../resources/storage/images";
+import type { IK3sNodeConfig, IProxmoxConfig } from "../shared/types";
+
 import { buildVmConfiguration } from "./vm/vm-config";
 
 export interface IProxmoxNodeArgs {

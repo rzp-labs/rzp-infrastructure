@@ -2,13 +2,15 @@
  * VM configuration builder utilities
  */
 
-import type { IK3sNodeConfig, IProxmoxConfig } from "../../shared/types";
-import { VM_DEFAULTS } from "../../shared/constants";
-import type { DebianCloudImage } from "../../resources/storage/images";
 import type * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
+
+import type { DebianCloudImage } from "../../resources/storage/images";
+import { VM_DEFAULTS } from "../../shared/constants";
+import type { IK3sNodeConfig, IProxmoxConfig } from "../../shared/types";
+
+import { getVmCloudInitConfig } from "./vm-cloud-init";
 import { getVmHardwareConfig } from "./vm-hardware";
 import { getVmDiskConfig } from "./vm-storage";
-import { getVmCloudInitConfig } from "./vm-cloud-init";
 
 interface IVmConfigArgs {
   readonly nodeConfig: IK3sNodeConfig;
