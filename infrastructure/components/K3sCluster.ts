@@ -73,20 +73,21 @@ export class K3sCluster extends ComponentResource {
 
   private createNodeConfig(role: "master" | "worker", roleIndex: number, config: IEnvironmentConfig): IK3sNodeConfig {
     const vmId = role === "master" ? config.k3s.masterVmidStart + roleIndex : config.k3s.workerVmidStart + roleIndex;
-
     const name = generateVmName(role, roleIndex);
-    const networkIndex = calculateNetworkIndex(role, roleIndex, config.k3s.masterCount);
-
-    const ip4 = generateIpv4(config.k3s.network.net4Prefix, config.k3s.network.ipHostBase, networkIndex);
-    const ip6 = generateIpv6(config.k3s.network.net6Prefix, config.k3s.network.ipHostBase, networkIndex);
+    const networkIndex = calculateNetworkIndex({
+      role,
+      roleIndex,
+      masterCount: config.k3s.masterCount,
+      vmIdStart: config.k3s.workerVmidStart,
+    });
 
     return {
       vmId,
       role,
       roleIndex,
       name,
-      ip4,
-      ip6,
+      ip4: generateIpv4(config.k3s.network.net4Prefix, config.k3s.network.ipHostBase, networkIndex),
+      ip6: generateIpv6(config.k3s.network.net6Prefix, config.k3s.network.ipHostBase, networkIndex),
       resources: config.k3s.vmResources,
     };
   }

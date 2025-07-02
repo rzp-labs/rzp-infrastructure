@@ -18,41 +18,80 @@ interface IVmConfigArgs {
   readonly userDataFile: proxmoxve.storage.File;
 }
 
-// TODO: Break up buildVmConfiguration into logical functions:
-// - getVmIdentity(nodeConfig, config) -> {name, nodeName, vmId, description}
-// - getVmState() -> {template: false, started: true, onBoot: true}
-// - getVmTags(nodeConfig) -> {tags: [...]}
-// - composeVmConfiguration(identity, state, tags, hardware, disks, network, cloudInit)
-export function buildVmConfiguration(args: IVmConfigArgs) {
+/**
+ * Builds VM identity configuration including name, node, ID, and description
+ */
+function getVmIdentity(nodeConfig: IK3sNodeConfig, config: IProxmoxConfig) {
   const capitalize = (str: string): string => str.charAt(0).toUpperCase() + str.slice(1);
 
   return {
-    name: args.nodeConfig.name, // Explicit VM name to override Pulumi auto-generation
-    nodeName: args.config.node,
-    vmId: args.nodeConfig.vmId,
+    name: nodeConfig.name, // Explicit VM name to override Pulumi auto-generation
+    nodeName: config.node,
+    vmId: nodeConfig.vmId,
+    description: `K3s ${capitalize(nodeConfig.role)} Node ${nodeConfig.roleIndex + 1}`,
+  };
+}
 
+/**
+ * Builds VM state configuration for startup and template settings
+ */
+function getVmState() {
+  return {
     // Build from fresh cloud image instead of cloning
     template: false,
-
     started: true,
     onBoot: true,
-    tags: ["stg", "k3s", args.nodeConfig.role],
-    description: `K3s ${capitalize(args.nodeConfig.role)} Node ${args.nodeConfig.roleIndex + 1}`,
+  };
+}
 
-    // VM hardware configuration
-    ...getVmHardwareConfig(args.nodeConfig),
+/**
+ * Builds VM tags array based on node configuration
+ */
+function getVmTags(nodeConfig: IK3sNodeConfig) {
+  return {
+    tags: ["stg", "k3s", nodeConfig.role],
+  };
+}
 
-    // Storage configuration
+/**
+ * Composes the final VM configuration from all component parts
+ */
+/**
+ * Composes the final VM configuration from all component parts
+ */
+function composeVmConfiguration(parts: {
+  identity: ReturnType<typeof getVmIdentity>;
+  state: ReturnType<typeof getVmState>;
+  tags: ReturnType<typeof getVmTags>;
+  hardware: ReturnType<typeof getVmHardwareConfig>;
+  disks: ReturnType<typeof getVmDiskConfig>;
+  network: { bridge: string; model: string }[];
+  cloudInit: ReturnType<typeof getVmCloudInitConfig>;
+}) {
+  return {
+    ...parts.identity,
+    ...parts.state,
+    ...parts.tags,
+    ...parts.hardware,
+    disks: parts.disks,
+    networkDevices: parts.network,
+    initialization: parts.cloudInit,
+  };
+}
+
+export function buildVmConfiguration(args: IVmConfigArgs) {
+  return composeVmConfiguration({
+    identity: getVmIdentity(args.nodeConfig, args.config),
+    state: getVmState(),
+    tags: getVmTags(args.nodeConfig),
+    hardware: getVmHardwareConfig(args.nodeConfig),
     disks: getVmDiskConfig(args.nodeConfig, args.config, args.cloudImage),
-
-    networkDevices: [{ bridge: args.config.bridge, model: VM_DEFAULTS.NETWORK_MODEL }],
-
-    // Cloud-init configuration with separate metadata and user data files
-    initialization: getVmCloudInitConfig({
+    network: [{ bridge: args.config.bridge, model: VM_DEFAULTS.NETWORK_MODEL }],
+    cloudInit: getVmCloudInitConfig({
       nodeConfig: args.nodeConfig,
       config: args.config,
       metadataFile: args.metadataFile,
       userDataFile: args.userDataFile,
     }),
-  };
+  });
 }

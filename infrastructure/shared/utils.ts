@@ -46,8 +46,34 @@ export function generateVmName(role: "master" | "worker", roleIndex: number, pre
 }
 
 /**
- * Calculates the overall network index for IP assignment
+ * Calculates the network index for master nodes
+ * Masters use sequential indexing: 0 → .20, 1 → .21, etc.
  */
-export function calculateNetworkIndex(role: "master" | "worker", roleIndex: number, masterCount: number): number {
-  return role === "master" ? roleIndex : masterCount + roleIndex;
+function getMasterNetworkIndex(roleIndex: number): number {
+  return roleIndex;
+}
+
+/**
+ * Calculates the network index for worker nodes
+ * Workers use VM ID's last two digits: VM 130 → .30, VM 131 → .31, etc.
+ */
+function getWorkerNetworkIndex(roleIndex: number, workerVmidStart: number): number {
+  const workerVmId = workerVmidStart + roleIndex;
+  return workerVmId % 100;
+}
+
+/**
+ * Calculates the network index for IP assignment based on VM role
+ */
+export function calculateNetworkIndex(config: {
+  role: "master" | "worker";
+  roleIndex: number;
+  masterCount: number;
+  vmIdStart?: number;
+}): number {
+  if (config.role === "master") {
+    return getMasterNetworkIndex(config.roleIndex);
+  }
+
+  return getWorkerNetworkIndex(config.roleIndex, config.vmIdStart ?? 130);
 }
