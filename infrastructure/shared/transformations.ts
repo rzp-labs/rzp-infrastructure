@@ -28,6 +28,33 @@ function addHelmTimeouts(args: pulumi.ResourceTransformationArgs): pulumi.Resour
 /**
  * Standard transformation that applies common labels, annotations, and timeouts.
  */
+/**
+ * VM transformation that applies common VM tags and settings.
+ */
+export const applyVmTransformations: pulumi.ResourceTransformation = (args) => {
+  // Only apply to Proxmox VM resources
+  if (!args.type.includes("proxmoxve:vm/virtualMachine:VirtualMachine")) {
+    return args;
+  }
+
+  const vmProps = args.props as Record<string, unknown>;
+  const existingTags = vmProps.tags as string[] | undefined;
+
+  return {
+    ...args,
+    props: {
+      ...vmProps,
+      tags: [...(existingTags ?? []), "managed-by-pulumi", "infrastructure-rzp-one"],
+      // Ensure consistent VM state defaults
+      template: vmProps.template ?? false,
+      onBoot: vmProps.onBoot ?? true,
+    },
+  };
+};
+
+/**
+ * Standard transformation that applies common labels, annotations, and timeouts.
+ */
 export const applyStandardTransformations: pulumi.ResourceTransformation = (args) => {
   if (!args.type.includes("kubernetes:")) return args;
 

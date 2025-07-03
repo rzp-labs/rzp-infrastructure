@@ -2,7 +2,6 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import { CERT_MANAGER_DEFAULTS } from "../../shared/constants";
-
 import { createHelmChartOptions } from "../../shared/resource-options";
 
 interface ICertManagerChartProps {
@@ -30,7 +29,7 @@ export class CertManagerChart extends pulumi.ComponentResource {
   private createChart(name: string, props: ICertManagerChartProps): k8s.helm.v3.Chart {
     return new k8s.helm.v3.Chart(
       `${name}-chart`,
-{
+      {
         chart: CERT_MANAGER_DEFAULTS.CHART_NAME,
         fetchOpts: { repo: CERT_MANAGER_DEFAULTS.CHART_REPO },
         version: CERT_MANAGER_DEFAULTS.CHART_VERSION,

@@ -2,8 +2,8 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import { CERT_MANAGER_DEFAULTS } from "../../shared/constants";
-import { createNamespaceMetadata } from "../../shared/utils";
 import { namespaceResourceOptions } from "../../shared/resource-options";
+import { createNamespaceMetadata } from "../../shared/utils";
 
 /**
  * Cert-Manager Namespace Component
@@ -25,11 +25,9 @@ export class CertManagerNamespace extends pulumi.ComponentResource {
     return new k8s.core.v1.Namespace(
       `${name}-namespace`,
       {
-        metadata: createNamespaceMetadata(
-          CERT_MANAGER_DEFAULTS.NAMESPACE,
-          "cert-manager",
-          { "cert-manager.io/disable-validation": "true" },
-        ),
+        metadata: createNamespaceMetadata(CERT_MANAGER_DEFAULTS.NAMESPACE, "cert-manager", {
+          "cert-manager.io/disable-validation": "true",
+        }),
       },
       {
         ...namespaceResourceOptions,

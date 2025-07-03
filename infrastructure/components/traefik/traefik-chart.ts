@@ -2,7 +2,6 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import { createTraefikValues } from "../../config/traefik-config";
-
 import { TRAEFIK_DEFAULTS } from "../../shared/constants";
 import { createHelmChartOptions } from "../../shared/resource-options";
 
@@ -31,7 +30,7 @@ export class TraefikChart extends pulumi.ComponentResource {
   private createChart(name: string, props: ITraefikChartProps): k8s.helm.v3.Chart {
     return new k8s.helm.v3.Chart(
       `${name}-chart`,
-{
+      {
         chart: TRAEFIK_DEFAULTS.CHART_NAME,
         fetchOpts: { repo: TRAEFIK_DEFAULTS.CHART_REPO },
         version: TRAEFIK_DEFAULTS.CHART_VERSION,

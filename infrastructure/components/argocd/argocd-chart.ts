@@ -2,7 +2,6 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import { createArgoCdChartValues } from "../../config/argocd-config";
-
 import { ARGOCD_DEFAULTS } from "../../shared/constants";
 import { createHelmChartOptions } from "../../shared/resource-options";
 import type { IArgoCdBootstrapConfig } from "../../shared/types";
@@ -33,7 +32,7 @@ export class ArgoCdChart extends pulumi.ComponentResource {
   private createChart(name: string, props: IArgoCdChartProps): k8s.helm.v3.Chart {
     return new k8s.helm.v3.Chart(
       `${name}-chart`,
-{
+      {
         chart: ARGOCD_DEFAULTS.CHART_NAME,
         fetchOpts: { repo: ARGOCD_DEFAULTS.CHART_REPO },
         version: ARGOCD_DEFAULTS.CHART_VERSION,

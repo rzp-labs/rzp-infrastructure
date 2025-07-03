@@ -2,8 +2,8 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import { TRAEFIK_DEFAULTS } from "../../shared/constants";
-import { createNamespaceMetadata } from "../../shared/utils";
 import { namespaceResourceOptions } from "../../shared/resource-options";
+import { createNamespaceMetadata } from "../../shared/utils";
 
 /**
  * Traefik Namespace Component

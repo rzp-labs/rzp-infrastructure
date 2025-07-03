@@ -1,6 +1,6 @@
 import type * as pulumi from "@pulumi/pulumi";
 
-import { applyStandardTransformations } from "./transformations";
+import { applyStandardTransformations, applyVmTransformations } from "./transformations";
 
 /**
  * Standard resource options for Kubernetes resources.
@@ -65,6 +65,32 @@ export function createHelmChartOptions(
     ...helmChartResourceOptions,
     parent,
     dependsOn,
+    ...additionalOptions,
+  };
+}
+
+/**
+ * Resource options for VM resources with VM-specific transformations.
+ */
+export const vmResourceOptions: pulumi.ResourceOptions = {
+  transformations: [applyVmTransformations],
+  customTimeouts: {
+    create: "15m", // VMs can take longer to create
+    update: "10m",
+    delete: "5m",
+  },
+};
+
+/**
+ * Creates resource options for VM components with parent dependency.
+ */
+export function createVmResourceOptions(
+  parent: pulumi.Resource,
+  additionalOptions?: pulumi.ResourceOptions,
+): pulumi.ResourceOptions {
+  return {
+    ...vmResourceOptions,
+    parent,
     ...additionalOptions,
   };
 }
