@@ -27,12 +27,12 @@ export class K3sMaster extends pulumi.ComponentResource {
   public readonly result: IK3sMasterResult;
 
   constructor(name: string, args: IK3sMasterArgs, opts?: pulumi.ComponentResourceOptions) {
-    super("custom:k3s:K3sMaster", name, {}, opts);
+    super("rzp:k3s:K3sMaster", name, {}, opts);
 
     const installCommand = this.createInstallCommand(args);
 
     this.result = {
-      installComplete: installCommand.stdout.apply(() => true),
+      installComplete: installCommand.stdout.apply((stdout) => stdout !== undefined),
       node: args.node,
     };
 

@@ -20,7 +20,7 @@ export class K3sCluster extends ComponentResource {
   public readonly workers: readonly ProxmoxNode[];
 
   constructor(name: string, args: IK3sClusterArgs, opts?: ComponentResourceOptions) {
-    super("custom:k3s:K3sCluster", name, {}, opts);
+    super("rzp:k3s:K3sCluster", name, {}, opts);
 
     const { config } = args;
 

@@ -27,12 +27,12 @@ export class K3sWorker extends pulumi.ComponentResource {
   public readonly result: IK3sWorkerResult;
 
   constructor(name: string, args: IK3sWorkerArgs, opts?: pulumi.ComponentResourceOptions) {
-    super("custom:k3s:K3sWorker", name, {}, opts);
+    super("rzp:k3s:K3sWorker", name, {}, opts);
 
     const installCommand = this.createInstallCommand(args);
 
     this.result = {
-      installComplete: installCommand.stdout.apply(() => true),
+      installComplete: installCommand.stdout.apply((stdout) => stdout !== undefined),
       node: args.node,
     };
 

@@ -27,7 +27,7 @@ export class ProxmoxNode extends ComponentResource {
   public readonly userDataFile: proxmoxve.storage.File;
 
   constructor(name: string, args: IProxmoxNodeArgs, opts?: ComponentResourceOptions) {
-    super("custom:proxmox:ProxmoxNode", name, {}, opts);
+    super("rzp:proxmox:ProxmoxNode", name, {}, opts);
 
     this.config = args.nodeConfig;
 

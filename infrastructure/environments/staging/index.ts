@@ -81,7 +81,7 @@ export const metallb = new MetalLBBootstrap(
 );
 
 // Deploy Traefik ingress controller (bootstrap)
-// Now depends on MetalLB functional readiness, not just deployment
+// Use simple chart dependency instead of custom readiness gate
 export const traefik = new TraefikBootstrap(
   "stg-traefik",
   {
@@ -92,7 +92,7 @@ export const traefik = new TraefikBootstrap(
     dashboard: true,
   },
   {
-    dependsOn: [metallb.readinessGate],
+    dependsOn: [metallb.chart], // Direct chart dependency
   },
 );
 

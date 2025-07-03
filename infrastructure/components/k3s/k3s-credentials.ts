@@ -25,19 +25,16 @@ export class K3sCredentials extends pulumi.ComponentResource {
   public readonly result: IK3sCredentialsResult;
 
   constructor(name: string, args: IK3sCredentialsArgs, opts?: pulumi.ComponentResourceOptions) {
-    super("custom:k3s:K3sCredentials", name, {}, opts);
+    super("rzp:k3s:K3sCredentials", name, {}, opts);
 
     const tokenCommand = this.createTokenCommand(args);
     const kubeconfigCommand = this.createKubeconfigCommand(args);
 
     this.result = {
       token: tokenCommand.stdout,
-      kubeconfig: kubeconfigCommand.stdout.apply((config) => {
-        if (!config) {
-          return "";
-        }
-        return config.replace(K3S_INSTALLATION.LOCALHOST_IP, args.masterNode.ip4);
-      }),
+      kubeconfig: pulumi.interpolate`${kubeconfigCommand.stdout}`.apply((config) =>
+        config.replace(K3S_INSTALLATION.LOCALHOST_IP, args.masterNode.ip4),
+      ),
     };
 
     this.registerOutputs(this.result);

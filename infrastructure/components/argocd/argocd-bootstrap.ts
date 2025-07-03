@@ -19,6 +19,7 @@ import type { IArgoCdBootstrapConfig } from "../../shared/types";
  */
 export class ArgoCdBootstrap extends pulumi.ComponentResource {
   public readonly namespace: k8s.core.v1.Namespace;
+  public readonly chart: k8s.helm.v3.Chart;
   public readonly argoCdApp: k8s.apiextensions.CustomResource;
   public readonly ingress: k8s.networking.v1.Ingress;
   public readonly adminSecret: k8s.core.v1.Secret;
@@ -34,20 +35,16 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
     this.adminSecret = createArgoCdAdminSecret(name, config, this.namespace, k8sProvider, this);
 
     // Deploy ArgoCD
-    const chart = createArgoCdChart(name, config, this.namespace, k8sProvider, this);
+    this.chart = createArgoCdChart(name, config, this.namespace, k8sProvider, this);
 
     // Create networking and self-management
     this.ingress = createArgoCdIngress(name, config, this.namespace, k8sProvider, this);
     this.argoCdApp = createArgoCdSelfApp(name, config, this.namespace, k8sProvider, this);
 
-    // Ensure proper dependency ordering
-    pulumi.all([chart, this.adminSecret]).apply(() => {
-      // Dependencies are established through resource creation order
-    });
-
-    // Register outputs
+    // Register outputs - Pulumi handles dependency ordering automatically
     this.registerOutputs({
       namespace: this.namespace,
+      chart: this.chart,
       adminSecret: this.adminSecret,
       ingress: this.ingress,
       argoCdApp: this.argoCdApp,
