@@ -1,12 +1,11 @@
 import type * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import {
-  createTraefikChart,
-  createTraefikDashboard,
-  createTraefikNamespace,
-} from "../../resources/kubernetes/traefik-resources";
+import { createTraefikDashboard } from "../../resources/kubernetes/traefik-resources";
 import type { ITraefikBootstrapConfig } from "../../shared/types";
+
+import { TraefikChart } from "./traefik-chart";
+import { TraefikNamespace } from "./traefik-namespace";
 
 /**
  * Traefik Bootstrap Component
@@ -16,6 +15,8 @@ import type { ITraefikBootstrapConfig } from "../../shared/types";
  * ArgoCD to manage Traefik configuration in GitOps mode later.
  */
 export class TraefikBootstrap extends pulumi.ComponentResource {
+  public readonly namespaceComponent: TraefikNamespace;
+  public readonly chartComponent: TraefikChart;
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
   public readonly dashboard: k8s.networking.v1.Ingress | undefined;
@@ -23,9 +24,15 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
   constructor(name: string, config: ITraefikBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:traefik:TraefikBootstrap", name, {}, opts);
 
-    // Create Traefik resources
-    this.namespace = createTraefikNamespace(name, this);
-    this.chart = createTraefikChart(name, config, this.namespace, this);
+    // Create Traefik namespace using ComponentResource
+    this.namespaceComponent = new TraefikNamespace(name, { parent: this });
+    this.namespace = this.namespaceComponent.namespace;
+
+    // Deploy Traefik using ComponentResource
+    this.chartComponent = new TraefikChart(name, { namespace: this.namespace }, { parent: this });
+    this.chart = this.chartComponent.chart;
+
+    // Create dashboard using factory (to be refactored later)
     this.dashboard = createTraefikDashboard(name, config, this.namespace, this);
 
     this.registerOutputs({

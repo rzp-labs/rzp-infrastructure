@@ -3,12 +3,13 @@ import * as pulumi from "@pulumi/pulumi";
 
 import {
   createArgoCdAdminSecret,
-  createArgoCdChart,
   createArgoCdIngress,
-  createArgoCdNamespace,
   createArgoCdSelfApp,
 } from "../../resources/kubernetes/argocd-resources";
 import type { IArgoCdBootstrapConfig } from "../../shared/types";
+
+import { ArgoCdChart } from "./argocd-chart";
+import { ArgoCdNamespace } from "./argocd-namespace";
 
 /**
  * ArgoCD Bootstrap Component
@@ -18,6 +19,8 @@ import type { IArgoCdBootstrapConfig } from "../../shared/types";
  * to be deployed via GitOps patterns.
  */
 export class ArgoCdBootstrap extends pulumi.ComponentResource {
+  public readonly namespaceComponent: ArgoCdNamespace;
+  public readonly chartComponent: ArgoCdChart;
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
   public readonly argoCdApp: k8s.apiextensions.CustomResource;
@@ -27,14 +30,18 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
   constructor(name: string, config: IArgoCdBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:argocd:Bootstrap", name, {}, opts);
 
-    // Create ArgoCD resources
-    this.namespace = createArgoCdNamespace(name, this);
+    // Create ArgoCD namespace using ComponentResource
+    this.namespaceComponent = new ArgoCdNamespace(name, { parent: this });
+    this.namespace = this.namespaceComponent.namespace;
+
+    // Create admin secret using factory (to be refactored later)
     this.adminSecret = createArgoCdAdminSecret(name, config, this.namespace, this);
 
-    // Deploy ArgoCD
-    this.chart = createArgoCdChart(name, config, this.namespace, this);
+    // Deploy ArgoCD using ComponentResource
+    this.chartComponent = new ArgoCdChart(name, { config, namespace: this.namespace }, { parent: this });
+    this.chart = this.chartComponent.chart;
 
-    // Create networking and self-management
+    // Create networking and self-management using factories (to be refactored later)
     this.ingress = createArgoCdIngress(name, config, this.namespace, this);
     this.argoCdApp = createArgoCdSelfApp(name, config, this.namespace, this);
 

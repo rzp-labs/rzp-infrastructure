@@ -1,13 +1,12 @@
 import type * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import {
-  createCertManagerChart,
-  createCertManagerClusterIssuer,
-  createCertManagerNamespace,
-  createCertManagerSecret,
-} from "../../resources/kubernetes/cert-manager-resources";
 import type { ICertManagerBootstrapConfig } from "../../shared/types";
+
+import { CertManagerChart } from "./cert-manager-chart";
+import { CertManagerClusterIssuer } from "./cert-manager-cluster-issuer";
+import { CertManagerNamespace } from "./cert-manager-namespace";
+import { CertManagerSecret } from "./cert-manager-secret";
 
 /**
  * cert-manager Bootstrap Component
@@ -16,6 +15,10 @@ import type { ICertManagerBootstrapConfig } from "../../shared/types";
  * using Let's Encrypt with DNS challenges via Cloudflare.
  */
 export class CertManagerBootstrap extends pulumi.ComponentResource {
+  public readonly namespaceComponent: CertManagerNamespace;
+  public readonly chartComponent: CertManagerChart;
+  public readonly secretComponent: CertManagerSecret;
+  public readonly clusterIssuerComponent: CertManagerClusterIssuer;
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
   public readonly cloudflareSecret: k8s.core.v1.Secret;
@@ -24,11 +27,21 @@ export class CertManagerBootstrap extends pulumi.ComponentResource {
   constructor(name: string, config: ICertManagerBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:cert-manager:CertManagerBootstrap", name, {}, opts);
 
-    // Create cert-manager resources
-    this.namespace = createCertManagerNamespace(name, this);
-    this.chart = createCertManagerChart(name, this.namespace, this);
-    this.cloudflareSecret = createCertManagerSecret(name, config, this.namespace, this);
-    this.clusterIssuer = createCertManagerClusterIssuer(name, config, this);
+    // Create cert-manager namespace using ComponentResource
+    this.namespaceComponent = new CertManagerNamespace(name, { parent: this });
+    this.namespace = this.namespaceComponent.namespace;
+
+    // Deploy cert-manager using ComponentResource
+    this.chartComponent = new CertManagerChart(name, { namespace: this.namespace }, { parent: this });
+    this.chart = this.chartComponent.chart;
+
+    // Create Cloudflare secret using ComponentResource
+    this.secretComponent = new CertManagerSecret(name, { config, namespace: this.namespace }, { parent: this });
+    this.cloudflareSecret = this.secretComponent.secret;
+
+    // Create cluster issuer using ComponentResource
+    this.clusterIssuerComponent = new CertManagerClusterIssuer(name, { config }, { parent: this });
+    this.clusterIssuer = this.clusterIssuerComponent.clusterIssuer;
 
     this.registerOutputs({
       namespace: this.namespace,

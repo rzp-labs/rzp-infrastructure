@@ -2,6 +2,8 @@
  * Shared utility functions for the infrastructure project
  */
 
+import type * as pulumi from "@pulumi/pulumi";
+
 import type { VmRole } from "./types";
 
 /**
@@ -106,4 +108,37 @@ export function isTruthy(value: unknown): boolean {
  */
 export function withDefault<T>(value: T | undefined, defaultValue: T): T {
   return value ?? defaultValue;
+}
+
+/**
+ * Kubernetes utilities
+ */
+
+/**
+ * Creates standard Kubernetes app labels for a component
+ */
+export function createKubernetesLabels(appName: string, component?: string): Record<string, string> {
+  const labels: Record<string, string> = {
+    "app.kubernetes.io/name": appName,
+    "app.kubernetes.io/part-of": appName,
+  };
+
+  if (component) {
+    labels["app.kubernetes.io/component"] = component;
+  }
+
+  return labels;
+}
+
+/**
+ * Creates namespace metadata with standard labels
+ */
+export function createNamespaceMetadata(namespaceName: string, appName: string, extraLabels?: Record<string, string>) {
+  return {
+    name: namespaceName,
+    labels: {
+      ...createKubernetesLabels(appName, "namespace"),
+      ...extraLabels,
+    },
+  };
 }
