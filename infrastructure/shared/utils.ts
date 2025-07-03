@@ -78,3 +78,32 @@ export function calculateNetworkIndex(config: {
 
   return getWorkerNetworkIndex(config.roleIndex, config.vmIdStart ?? 130);
 }
+
+/**
+ * Simple string utilities
+ */
+
+/**
+ * Capitalizes the first letter of a string
+ */
+export function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Boolean utilities
+ */
+
+/**
+ * Safely checks if a value is truthy, handling null/undefined
+ */
+export function isTruthy(value: unknown): boolean {
+  return Boolean(value);
+}
+
+/**
+ * Provides a default value for optional boolean properties
+ */
+export function withDefault<T>(value: T | undefined, defaultValue: T): T {
+  return value ?? defaultValue;
+}

@@ -126,6 +126,40 @@ This ensures consistent imports and improved readability across the codebase.
 - Fix root causes rather than symptoms
 - Work with the language and tools, not against them
 
+### Directory Structure Guidelines
+
+**Clear separation of concerns** across the infrastructure codebase:
+
+#### **`/shared`** - Centralized Definitions
+- **`shared/types.ts`** - All shared TypeScript interfaces and types
+- **`shared/constants.ts`** - All shared constants (versions, URLs, defaults)
+- **`shared/utils.ts`** - Simple, pure utilities with **wide applicability across domains**
+  - String manipulation (`capitalize`)
+  - Boolean validation (`isTruthy`)
+  - Type guards and simple calculations
+  - **Characteristics:** Small, no dependencies, general-purpose
+
+#### **`/helpers`** - Domain-Specific Builders
+- **`helpers/domain/`** - Complex, **domain-specific** builders/factories/orchestrators
+  - `helpers/vm/vm-configuration-builder.ts` - Multi-step VM composition
+  - `helpers/k3s/k8s-test-client-factory.ts` - Test infrastructure factories
+  - **Characteristics:** Complex logic, multiple imports, domain-specific orchestration
+
+#### **`/config`** - Configuration Retrieval
+- Simple functions that read from external sources (Pulumi config, environment variables)
+- **Pattern:** `getXxxConfig()` functions using `pulumi.Config()`
+
+#### **`/resources`** - Resource Creation
+- Actual Pulumi/cloud resource creators organized by provider
+- `resources/kubernetes/` - K8s resource creators
+- `resources/storage/` - Storage resource creators
+
+#### **`/components`** - Business Logic Orchestration
+- High-level components that orchestrate resources, configs, and helpers
+- **Pattern:** Pulumi `ComponentResource` classes that compose multiple resources
+
+**Key Principle:** Simple, reusable utilities belong in `/shared/utils.ts`. Complex, domain-specific logic belongs in `/helpers/domain/`. This maintains clean architecture while ensuring shared definitions remain truly general-purpose.
+
 ### OpenMemory Integration
 
 **Workspace ID:** `/Users/stephen/Projects/rzp-infra`

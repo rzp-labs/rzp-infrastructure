@@ -8,7 +8,7 @@ import type { INetworkConfig, IProxmoxConfig, IVmResourceConfig } from "../share
 
 import { getIpv4Config, getIpv6Config, getNetworkBase } from "./network-config";
 import { getNodeConfig, getProviderAuth, getVmStorage } from "./provider-config";
-import { getVmDiskSizes, getVmHardware } from "./vm-resources";
+import { getVmDiskSizes, getVmHardware } from "./vm-hardware-config";
 
 export function getProxmoxConfig(): IProxmoxConfig {
   const auth = getProviderAuth();

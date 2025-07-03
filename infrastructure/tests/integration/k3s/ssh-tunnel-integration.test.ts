@@ -3,6 +3,28 @@ import { K8sTestClient } from "../../helpers/k3s/k8s-test-client";
 import type { IK8sTestClient } from "../../helpers/k3s/k8s-test-client-interface";
 import { type IPulumiTunnelResult, createK3sTunnelProvisioner } from "../../helpers/k3s/pulumi-tunnel-provisioner";
 
+// K8s API response types
+interface IK8sNodeInfo {
+  kubeletVersion?: string;
+}
+
+interface IK8sNodeStatus {
+  nodeInfo?: IK8sNodeInfo;
+}
+
+interface IK8sNodeMetadata {
+  name?: string;
+}
+
+interface IK8sNode {
+  metadata?: IK8sNodeMetadata;
+  status?: IK8sNodeStatus;
+}
+
+interface IK8sNodesResponse {
+  items: IK8sNode[];
+}
+
 /**
  * Integration Tests for SSH Tunnel Functionality using Pulumi Automation SDK
  *
@@ -82,7 +104,7 @@ current-context: k3s
 
       // Log cluster info for verification
       console.log(`Connected to cluster with ${nodesResponse.items.length} node(s)`);
-      nodesResponse.items.forEach((node: any) => {
+      (nodesResponse as IK8sNodesResponse).items.forEach((node: IK8sNode) => {
         console.log(`- Node: ${node.metadata?.name} (${node.status?.nodeInfo?.kubeletVersion})`);
       });
     });
@@ -103,13 +125,13 @@ current-context: k3s
       expect(Array.isArray(podsResponse.items)).toBe(true);
 
       // Should have K3s system pods
-      const podNames = podsResponse.items.map((pod: any) => pod.metadata?.name);
+      const podNames = podsResponse.items.map((pod: { metadata?: { name?: string } }) => pod.metadata?.name);
       console.log(`Found ${podNames.length} pods in kube-system namespace`);
 
       // Verify some expected K3s system components
       const expectedComponents = ["coredns", "local-path-provisioner", "metrics-server"];
       expectedComponents.forEach((component) => {
-        const found = podNames.some((name: any) => name?.includes(component));
+        const found = podNames.some((name: string | undefined) => Boolean(name?.includes(component)));
         if (found) {
           console.log(`✓ Found ${component} pod`);
         }
@@ -153,8 +175,8 @@ current-context: k3s
       ]);
 
       // Assert - All calls should succeed
-      results.forEach((result: any, index: number) => {
-        expect(result.items ?? result).toBeDefined();
+      results.forEach((result: { items?: unknown[] } | unknown, index: number) => {
+        expect((result as { items?: unknown[] }).items ?? result).toBeDefined();
         console.log(`API call ${index + 1} completed successfully`);
       });
     });

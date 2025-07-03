@@ -1,5 +1,8 @@
 /**
- * VM resource configuration utilities
+ * VM hardware configuration utilities
+ *
+ * Retrieves VM hardware specifications (CPU, memory, disk sizes)
+ * from Pulumi configuration with sensible defaults.
  */
 
 import * as pulumi from "@pulumi/pulumi";

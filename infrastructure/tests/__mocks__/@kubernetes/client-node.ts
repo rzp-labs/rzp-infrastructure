@@ -3,6 +3,9 @@
  * Matches real Kubernetes API interfaces for type safety
  */
 
+/* eslint-disable @typescript-eslint/naming-convention */
+// These interfaces mock the Kubernetes client-node library APIs, not our own APIs
+
 // Define proper interfaces matching Kubernetes API
 interface IObjectMeta {
   name?: string;
@@ -315,7 +318,6 @@ export class AppsV1Api {
 }
 
 // Export properly typed interfaces (must match K8s API naming)
-/* eslint-disable @typescript-eslint/naming-convention */
 export interface V1Node extends INodeResponse {}
 export interface V1Pod extends IPodResponse {}
 export interface V1Service {
@@ -344,4 +346,3 @@ export interface V1Endpoints {
 export interface V1ComponentStatusList {
   items: Array<{ metadata: IObjectMeta }>;
 }
-/* eslint-enable @typescript-eslint/naming-convention */

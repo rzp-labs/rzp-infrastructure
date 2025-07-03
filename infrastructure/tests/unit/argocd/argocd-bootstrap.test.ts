@@ -2,16 +2,79 @@ import * as pulumi from "@pulumi/pulumi";
 
 import { ArgoCdBootstrap } from "../../../components/argocd/argocd-bootstrap";
 
-// Mock Pulumi runtime for testing
-pulumi.runtime.setMocks({
-  newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: any } => {
+// Mock Pulumi runtime for testing - specific typed interfaces
+interface IK8sMetadata {
+  name: string;
+  namespace: string;
+  labels?: Record<string, string>;
+  annotations?: Record<string, string>;
+}
+
+interface IHelmChartInputs {
+  name: string;
+  chart: string;
+  version?: string;
+  namespace?: string;
+  values?: Record<string, unknown>;
+}
+
+interface ISecretInputs {
+  name: string;
+  metadata: IK8sMetadata;
+  type?: string;
+  data?: Record<string, string>;
+}
+
+interface IIngressInputs {
+  name: string;
+  metadata: IK8sMetadata;
+  spec?: {
+    rules?: Array<{
+      host?: string;
+      http?: {
+        paths?: Array<{
+          path?: string;
+          pathType?: string;
+          backend?: {
+            service?: {
+              name?: string;
+              port?: { number?: number };
+            };
+          };
+        }>;
+      };
+    }>;
+    tls?: Array<{
+      hosts?: string[];
+      secretName?: string;
+    }>;
+  };
+}
+
+interface INamespaceInputs {
+  name: string;
+  metadata: IK8sMetadata;
+}
+
+interface IArgoCdAppInputs {
+  name: string;
+  metadata: IK8sMetadata;
+  spec?: Record<string, unknown>;
+}
+
+// Union type for all ArgoCD-related resource inputs
+type MockResourceInputs = IHelmChartInputs | ISecretInputs | IIngressInputs | INamespaceInputs | IArgoCdAppInputs;
+
+void pulumi.runtime.setMocks({
+  newResource: (args: pulumi.runtime.MockResourceArgs): pulumi.runtime.MockResourceResult => {
+    const inputs = args.inputs as MockResourceInputs;
     return {
-      id: `${args.name}-id`,
-      state: args.inputs,
+      id: `${inputs.name}_id`,
+      state: inputs,
     };
   },
-  call: (args: pulumi.runtime.MockCallArgs) => {
-    return args.inputs;
+  call: (args: pulumi.runtime.MockCallArgs): pulumi.Inputs => {
+    return args.inputs as pulumi.Inputs;
   },
 });
 

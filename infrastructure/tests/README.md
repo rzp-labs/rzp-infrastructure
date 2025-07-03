@@ -79,7 +79,7 @@ The testing infrastructure uses **Pulumi Automation SDK** for SSH tunnel provisi
 ✅ **Eliminates Manual Secret Extraction**: No more complex `Output<string>` handling  
 ✅ **Architectural Consistency**: Uses same SSH patterns as production K3sMaster/K3sWorker components  
 ✅ **Industry Best Practices**: Follows Pulumi's official recommendations for infrastructure testing  
-✅ **Proper Lifecycle Management**: Infrastructure provisioning with clean setup/teardown  
+✅ **Proper Lifecycle Management**: Infrastructure provisioning with clean setup/teardown
 
 ### Tunnel Provisioner Usage
 
@@ -168,17 +168,20 @@ pnpm run test:k3s:integration
 ## Environment Requirements
 
 ### For Unit Tests
+
 - No external dependencies required
 - All mocking handled internally
 
 ### For Integration Tests with SSH Tunnels
+
 - **Pulumi Configuration**: Proper Pulumi stack setup with SSH credentials
 - **Proxmox Access**: SSH connectivity to target Proxmox nodes
-- **Environment Variables**: 
+- **Environment Variables**:
   - `PULUMI_CONFIG_PASSPHRASE` (for encrypted configs)
   - `PULUMI_ACCESS_TOKEN` (for Pulumi service)
 
 ### Test Execution Flow
+
 1. **Provision Infrastructure**: Pulumi Automation SDK creates SSH tunnel
 2. **Run Tests**: Connect to cluster via localhost tunnel
 3. **Clean Up**: Destroy tunnel infrastructure automatically

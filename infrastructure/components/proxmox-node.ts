@@ -8,11 +8,10 @@ import * as pulumi from "@pulumi/pulumi";
 import { ComponentResource } from "@pulumi/pulumi";
 
 import { getSshPublicKey } from "../config/base";
+import { buildVmConfiguration } from "../helpers/vm/vm-configuration-builder";
 import { getInlineCloudInitConfig } from "../resources/storage/cloud-init";
 import { DebianCloudImage } from "../resources/storage/images";
 import type { IK3sNodeConfig, IProxmoxConfig } from "../shared/types";
-
-import { buildVmConfiguration } from "./vm/vm-config";
 
 export interface IProxmoxNodeArgs {
   readonly config: IProxmoxConfig;

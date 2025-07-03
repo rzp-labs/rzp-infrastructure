@@ -78,3 +78,83 @@ export interface IClusterOutput {
   readonly masters: readonly INodeInfo[];
   readonly workers: readonly INodeInfo[];
 }
+
+// ArgoCD Configuration Types
+export interface IArgoCdBootstrapConfig {
+  readonly kubeconfig: pulumi.Output<string>;
+  readonly repositoryUrl: string;
+  readonly adminPassword?: pulumi.Output<string>;
+  readonly domain?: string;
+}
+
+export interface IArgoCdChartValues {
+  readonly global: { domain: string };
+  readonly server: {
+    service: { type: string };
+    ingress: { enabled: boolean };
+    config: {
+      repositories: Record<
+        string,
+        {
+          url: string;
+          name: string;
+          type: string;
+        }
+      >;
+    };
+  };
+  readonly configs: { secret: { createSecret: boolean } };
+}
+
+// Traefik Configuration Types
+export interface ITraefikBootstrapConfig {
+  readonly kubeconfig: pulumi.Output<string>;
+  readonly domain?: string;
+  readonly email?: string;
+  readonly staging?: boolean;
+  readonly dashboard?: boolean;
+}
+
+export interface ICloudflareConfig {
+  apiToken: pulumi.Input<string>;
+  zoneId: string;
+  domain: string;
+}
+
+export interface ICloudflareDNSConfig {
+  zoneId: string;
+  environment: string;
+  loadBalancerIP?: string;
+  services: Array<{
+    name: string;
+    subdomain?: string;
+  }>;
+}
+
+export interface ICertManagerBootstrapConfig {
+  kubeconfig: pulumi.Input<string>;
+  email: string;
+  staging: boolean;
+  cloudflareApiToken: pulumi.Input<string>;
+}
+
+export interface IMetalLBBootstrapConfig {
+  kubeconfig: pulumi.Input<string>;
+  ipRange: string;
+}
+
+export interface IMetalLBChartValues {
+  readonly controller: { enabled: boolean };
+  readonly speaker: { enabled: boolean };
+  readonly extraResources: unknown[];
+}
+
+export interface ITraefikChartValues {
+  readonly deployment: { replicas: number };
+  readonly service: { type: string };
+  readonly ports: unknown;
+  readonly ingressRoute: unknown;
+  readonly certificatesResolvers: unknown;
+  readonly globalArguments: string[];
+  readonly additionalArguments: string[];
+}

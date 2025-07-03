@@ -7,14 +7,8 @@ import {
   createArgoCdIngress,
   createArgoCdNamespace,
   createArgoCdSelfApp,
-} from "./argocd-resources";
-
-export interface IArgoCdBootstrapConfig {
-  readonly kubeconfig: pulumi.Input<string>;
-  readonly repositoryUrl: string;
-  readonly adminPassword?: pulumi.Input<string>;
-  readonly domain?: string;
-}
+} from "../../resources/kubernetes/argocd-resources";
+import type { IArgoCdBootstrapConfig } from "../../shared/types";
 
 /**
  * ArgoCD Bootstrap Component

@@ -1,16 +1,19 @@
 /**
  * VM configuration builder utilities
+ *
+ * Provides helper functions to compose complete VM configurations
+ * from various configuration sources and component builders.
  */
 
 import type * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 
+import { getVmCloudInitConfig } from "../../components/vm/vm-cloud-init";
+import { getVmHardwareConfig } from "../../components/vm/vm-hardware";
+import { getVmDiskConfig } from "../../components/vm/vm-storage";
 import type { DebianCloudImage } from "../../resources/storage/images";
 import { VM_DEFAULTS } from "../../shared/constants";
 import type { IK3sNodeConfig, IProxmoxConfig } from "../../shared/types";
-
-import { getVmCloudInitConfig } from "./vm-cloud-init";
-import { getVmHardwareConfig } from "./vm-hardware";
-import { getVmDiskConfig } from "./vm-storage";
+import { capitalize } from "../../shared/utils";
 
 interface IVmConfigArgs {
   readonly nodeConfig: IK3sNodeConfig;
@@ -24,10 +27,8 @@ interface IVmConfigArgs {
  * Builds VM identity configuration including name, node, ID, and description
  */
 function getVmIdentity(nodeConfig: IK3sNodeConfig, config: IProxmoxConfig) {
-  const capitalize = (str: string): string => str.charAt(0).toUpperCase() + str.slice(1);
-
   return {
-    name: nodeConfig.name, // Explicit VM name to override Pulumi auto-generation
+    name: nodeConfig.name,
     nodeName: config.node,
     vmId: nodeConfig.vmId,
     description: `K3s ${capitalize(nodeConfig.role)} Node ${nodeConfig.roleIndex + 1}`,
@@ -39,7 +40,6 @@ function getVmIdentity(nodeConfig: IK3sNodeConfig, config: IProxmoxConfig) {
  */
 function getVmState() {
   return {
-    // Build from fresh cloud image instead of cloning
     template: false,
     started: true,
     onBoot: true,
@@ -55,9 +55,6 @@ function getVmTags(nodeConfig: IK3sNodeConfig) {
   };
 }
 
-/**
- * Composes the final VM configuration from all component parts
- */
 /**
  * Composes the final VM configuration from all component parts
  */
@@ -81,6 +78,9 @@ function composeVmConfiguration(parts: {
   };
 }
 
+/**
+ * Builds complete VM configuration by composing all necessary parts
+ */
 export function buildVmConfiguration(args: IVmConfigArgs) {
   return composeVmConfiguration({
     identity: getVmIdentity(args.nodeConfig, args.config),

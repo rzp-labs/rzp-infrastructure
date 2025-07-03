@@ -1,2 +1,2 @@
-export { ArgoCdBootstrap, type IArgoCdBootstrapConfig } from "./argocd-bootstrap";
-export * from "./argocd-resources";
+export { ArgoCdBootstrap } from "./argocd-bootstrap";
+export type { IArgoCdBootstrapConfig } from "../../shared/types";

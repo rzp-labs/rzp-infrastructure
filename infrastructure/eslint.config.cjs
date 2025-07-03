@@ -31,7 +31,7 @@ module.exports = [
                 globals: globals.node,
             },
         },
-        plugins: { 
+        plugins: {
             "@typescript-eslint": ts.plugin,
             "import": importPlugin
         },
@@ -89,7 +89,7 @@ module.exports = [
                 {
                     "groups": [
                         "builtin",
-                        "external", 
+                        "external",
                         "internal",
                         "parent",
                         "sibling",
@@ -129,6 +129,16 @@ module.exports = [
                     format: ["UPPER_CASE"],
                 },
             ],
+        },
+    },
+
+    /* Resource files - relaxed parameter limits */
+    {
+        files: ["**/resources/**/*.ts"],
+        rules: {
+            // Pulumi resource creators follow standard 5-parameter pattern:
+            // (name, config, namespace/parent, provider, parent)
+            "max-params": ["error", 5],
         },
     },
 

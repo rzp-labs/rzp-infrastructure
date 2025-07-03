@@ -23,7 +23,7 @@ await tunnelResult.destroy(); // Clean infrastructure
 ✅ **Reuses Production SSH Patterns**: Same connection logic as K3sMaster/K3sWorker components  
 ✅ **Eliminates Manual Secret Handling**: Native Pulumi secret resolution  
 ✅ **Proper Lifecycle Management**: Infrastructure provisioning with setup/teardown  
-✅ **Architectural Consistency**: Maintains single source of truth for SSH credentials  
+✅ **Architectural Consistency**: Maintains single source of truth for SSH credentials
 
 ## Setup Requirements
 
@@ -68,6 +68,7 @@ pnpm test tests/integration/k3s/ssh-tunnel-integration.test.ts
 ```
 
 **What it validates:**
+
 - Pulumi tunnel provisioner functionality
 - SSH connectivity using production credentials
 - K3s API access via tunnel
@@ -100,17 +101,20 @@ pnpm test tests/integration/k3s/ssh-tunnel-integration.test.ts --verbose
 ## Test Behavior
 
 ### ✅ Successful Execution
+
 - Provisions SSH tunnel infrastructure via Pulumi
 - Connects to K3s cluster through localhost tunnel
 - Validates cluster functionality
 - Destroys tunnel infrastructure cleanly
 
 ### ⚠️ Environment Not Available
+
 - Tests skip gracefully with warning messages
 - No infrastructure provisioning attempted
 - Clear indication of missing requirements
 
 ### ❌ Configuration Errors
+
 - Missing Pulumi configuration: Clear error about setup requirements
 - SSH connectivity issues: Network/credential problems indicated
 - Cluster unavailable: API connectivity problems reported
@@ -120,6 +124,7 @@ pnpm test tests/integration/k3s/ssh-tunnel-integration.test.ts --verbose
 ### Common Issues
 
 **"Cannot find Pulumi stack"**
+
 ```bash
 # Initialize Pulumi stack if needed
 cd infrastructure
@@ -129,11 +134,13 @@ pulumi config set proxmox:endpoint "https://your-proxmox:8006"
 ```
 
 **"SSH connection refused"**
+
 - Verify SSH key has access to target Proxmox nodes
 - Check network connectivity: `ssh admin_ops@10.10.0.20`
 - Verify Pulumi SSH configuration: `pulumi config get proxmox:sshUsername`
 
 **"Tunnel provision timeout"**
+
 - Check Proxmox node availability
 - Verify SSH key format and permissions
 - Ensure Pulumi has access to encrypted secrets
@@ -153,12 +160,14 @@ pnpm test tests/integration/k3s/ssh-tunnel-integration.test.ts --verbose
 ## Security Guidelines
 
 ### ✅ **Secure Practices**
+
 - SSH credentials stored in encrypted Pulumi config
 - No secrets in code or environment variables
 - Automatic cleanup of tunnel infrastructure
 - Uses same security patterns as production components
 
 ### ❌ **Avoid These**
+
 - Never commit SSH keys or credentials to Git
 - Don't store `PULUMI_CONFIG_PASSPHRASE` in plain text files
 - Avoid bypassing Pulumi's secret management
@@ -185,6 +194,7 @@ env:
 ### Alternative Approaches
 
 For CI environments without Proxmox access:
+
 - Use mock implementations for SSH connectivity tests
 - Focus on unit tests for CI pipelines
 - Run integration tests in dedicated environments

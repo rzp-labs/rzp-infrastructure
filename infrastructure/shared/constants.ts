@@ -51,3 +51,51 @@ export const K3S_INSTALLATION = {
   UNINSTALL_AGENT_CMD: "sudo systemctl stop k3s-agent && sudo /usr/local/bin/k3s-agent-uninstall.sh",
   LOCALHOST_IP: "127.0.0.1",
 } as const;
+
+// ArgoCD Constants
+export const ARGOCD_DEFAULTS = {
+  CHART_NAME: "argo-cd",
+  CHART_REPO: "https://argoproj.github.io/argo-helm",
+  CHART_VERSION: "5.51.6",
+  NAMESPACE: "argocd",
+  DEFAULT_DOMAIN: "argocd.local",
+  SERVICE_TYPE: "ClusterIP",
+} as const;
+
+// Traefik Constants
+export const TRAEFIK_DEFAULTS = {
+  CHART_NAME: "traefik",
+  CHART_REPO: "https://traefik.github.io/charts",
+  CHART_VERSION: "28.3.0",
+  NAMESPACE: "traefik-system",
+  REPLICAS: 1,
+  SERVICE_TYPE: "LoadBalancer",
+  WEB_PORT: 8000,
+  WEBSECURE_PORT: 8443,
+  DASHBOARD_PORT: 9000,
+} as const;
+
+// MetalLB Constants
+export const METALLB_DEFAULTS = {
+  CHART_NAME: "metallb",
+  CHART_REPO: "https://metallb.github.io/metallb",
+  CHART_VERSION: "0.14.8",
+  NAMESPACE: "metallb-system",
+  // IP range allocation: 200-205 staging, 206-210 production
+  STAGING_IP_RANGE: "10.10.0.200-10.10.0.205",
+  PRODUCTION_IP_RANGE: "10.10.0.206-10.10.0.210",
+} as const;
+
+// cert-manager Constants
+export const CERT_MANAGER_DEFAULTS = {
+  CHART_NAME: "cert-manager",
+  CHART_REPO: "https://charts.jetstack.io",
+  CHART_VERSION: "v1.15.3",
+  NAMESPACE: "cert-manager",
+} as const;
+
+// Let's Encrypt Constants
+export const LETSENCRYPT = {
+  PROD_SERVER: "https://acme-v02.api.letsencrypt.org/directory",
+  STAGING_SERVER: "https://acme-staging-v02.api.letsencrypt.org/directory",
+} as const;
