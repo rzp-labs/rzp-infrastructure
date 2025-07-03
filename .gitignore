@@ -173,6 +173,7 @@ alembic.ini
 .proxmox/
 .claude/
 .agent/
+.mcp.json
 
 # =========================
 # Pulumi

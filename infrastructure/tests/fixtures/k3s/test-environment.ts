@@ -11,45 +11,53 @@ export class TestEnvironment {
   private namespaceManager?: TestNamespaceManager;
   private resourceManager?: TestResourceManager;
   private isInitialized = false;
+  private clusterAvailable = false;
 
   async setup(): Promise<void> {
     try {
       // Initialize K8s client
       this.k8sClient = new K8sTestClient();
       await this.k8sClient.initialize();
+      this.clusterAvailable = this.k8sClient.isClusterAvailable();
 
-      // Initialize managers
-      this.namespaceManager = new TestNamespaceManager(this.k8sClient.getCoreApi());
-      this.resourceManager = new TestResourceManager(this.k8sClient.getCoreApi(), this.k8sClient.getAppsApi());
+      if (this.clusterAvailable) {
+        // Initialize managers only if cluster is available
+        this.namespaceManager = new TestNamespaceManager(this.k8sClient.getCoreApi());
+        this.resourceManager = new TestResourceManager(this.k8sClient.getCoreApi(), this.k8sClient.getAppsApi());
 
-      // Create test namespace
-      await this.namespaceManager.createTestNamespace();
+        // Create test namespace
+        await this.namespaceManager.createTestNamespace();
+      }
 
       this.isInitialized = true;
     } catch (error) {
-      await this.teardown();
-      throw new Error(`Failed to setup test environment: ${error}`);
+      // Set cluster as unavailable but don't fail setup
+      this.clusterAvailable = false;
+      this.isInitialized = true;
+      console.warn(`Test environment setup with limited functionality: ${error}`);
     }
   }
 
   async teardown(): Promise<void> {
     const errors: Error[] = [];
 
-    try {
-      // Clean up resources in reverse order
-      if (this.resourceManager) {
-        await this.resourceManager.cleanupAll();
+    if (this.clusterAvailable) {
+      try {
+        // Clean up resources in reverse order
+        if (this.resourceManager) {
+          await this.resourceManager.cleanupAll();
+        }
+      } catch (error) {
+        errors.push(new Error(`Resource cleanup failed: ${error}`));
       }
-    } catch (error) {
-      errors.push(new Error(`Resource cleanup failed: ${error}`));
-    }
 
-    try {
-      if (this.namespaceManager) {
-        await this.namespaceManager.cleanupTestNamespace();
+      try {
+        if (this.namespaceManager) {
+          await this.namespaceManager.cleanupTestNamespace();
+        }
+      } catch (error) {
+        errors.push(new Error(`Namespace cleanup failed: ${error}`));
       }
-    } catch (error) {
-      errors.push(new Error(`Namespace cleanup failed: ${error}`));
     }
 
     try {
@@ -61,15 +69,23 @@ export class TestEnvironment {
     }
 
     this.isInitialized = false;
+    this.clusterAvailable = false;
 
     if (errors.length > 0) {
       throw new Error(`Teardown errors: ${errors.map((e) => e.message).join(", ")}`);
     }
   }
 
+  isClusterAvailable(): boolean {
+    return this.clusterAvailable;
+  }
+
   getK8sClient(): K8sTestClient {
     if (!this.isInitialized || !this.k8sClient) {
       throw new Error("Test environment not initialized. Call setup() first.");
+    }
+    if (!this.clusterAvailable) {
+      throw new Error("K8s cluster not available. Integration tests require cluster access.");
     }
     return this.k8sClient;
   }
@@ -78,12 +94,18 @@ export class TestEnvironment {
     if (!this.isInitialized || !this.namespaceManager) {
       throw new Error("Test environment not initialized. Call setup() first.");
     }
+    if (!this.clusterAvailable) {
+      throw new Error("K8s cluster not available. Integration tests require cluster access.");
+    }
     return this.namespaceManager;
   }
 
   getResourceManager(): TestResourceManager {
     if (!this.isInitialized || !this.resourceManager) {
       throw new Error("Test environment not initialized. Call setup() first.");
+    }
+    if (!this.clusterAvailable) {
+      throw new Error("K8s cluster not available. Integration tests require cluster access.");
     }
     return this.resourceManager;
   }

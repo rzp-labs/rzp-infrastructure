@@ -127,7 +127,20 @@ export class CoreV1Api {
     return {
       items: [
         {
-          metadata: { name: "test-node" },
+          metadata: {
+            name: "master-0",
+            labels: { "node-role.kubernetes.io/control-plane": "true" },
+          },
+          status: {
+            conditions: [{ type: "Ready", status: "True" }],
+            addresses: [{ type: "InternalIP", address: "10.10.0.10" }],
+          },
+        },
+        {
+          metadata: {
+            name: "worker-0",
+            labels: {},
+          },
           status: {
             conditions: [{ type: "Ready", status: "True" }],
             addresses: [{ type: "InternalIP", address: "10.10.0.20" }],
@@ -160,6 +173,27 @@ export class CoreV1Api {
 
   async listNamespacedPod(request: IListNamespacedPodRequest): Promise<IPodListResponse> {
     void request.labelSelector; // Use parameter to avoid unused warning
+
+    // Return different pods based on namespace to support different test scenarios
+    if (request.namespace === "kube-system") {
+      return {
+        items: [
+          {
+            metadata: { name: "coredns-12345", namespace: "kube-system" },
+            status: { phase: "Running" },
+          },
+          {
+            metadata: { name: "metrics-server-67890", namespace: "kube-system" },
+            status: { phase: "Running" },
+          },
+          {
+            metadata: { name: "k3s-agent-abcde", namespace: "kube-system" },
+            status: { phase: "Running" },
+          },
+        ],
+      };
+    }
+
     return {
       items: [
         {
