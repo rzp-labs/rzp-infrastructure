@@ -1,4 +1,4 @@
-import * as k8s from "@pulumi/kubernetes";
+import type * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import {
@@ -23,13 +23,10 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
   constructor(name: string, config: ITraefikBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:traefik:TraefikBootstrap", name, {}, opts);
 
-    // Create Kubernetes provider
-    const k8sProvider = new k8s.Provider(`${name}-k8s-provider`, { kubeconfig: config.kubeconfig }, { parent: this });
-
     // Create Traefik resources
-    this.namespace = createTraefikNamespace(name, k8sProvider, this);
-    this.chart = createTraefikChart(name, config, this.namespace, k8sProvider, this);
-    this.dashboard = createTraefikDashboard(name, config, this.namespace, k8sProvider, this);
+    this.namespace = createTraefikNamespace(name, this);
+    this.chart = createTraefikChart(name, config, this.namespace, this);
+    this.dashboard = createTraefikDashboard(name, config, this.namespace, this);
 
     this.registerOutputs({
       namespace: this.namespace,

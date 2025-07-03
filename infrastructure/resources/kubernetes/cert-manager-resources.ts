@@ -4,11 +4,7 @@ import * as pulumi from "@pulumi/pulumi";
 import { CERT_MANAGER_DEFAULTS } from "../../shared/constants";
 import type { ICertManagerBootstrapConfig } from "../../shared/types";
 
-export function createCertManagerNamespace(
-  name: string,
-  provider: k8s.Provider,
-  parent: pulumi.Resource,
-): k8s.core.v1.Namespace {
+export function createCertManagerNamespace(name: string, parent: pulumi.Resource): k8s.core.v1.Namespace {
   return new k8s.core.v1.Namespace(
     `${name}-namespace`,
     {
@@ -20,18 +16,17 @@ export function createCertManagerNamespace(
         },
       },
     },
-    { provider, parent },
+    { parent },
   );
 }
 
 export function createCertManagerChart(
   name: string,
   namespace: k8s.core.v1.Namespace,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.helm.v3.Chart {
   const chartConfig = createCertManagerChartConfig(namespace);
-  const chartOptions = createCertManagerChartOptions(provider, parent, namespace);
+  const chartOptions = createCertManagerChartOptions(parent, namespace);
 
   return new k8s.helm.v3.Chart(`${name}-chart`, chartConfig, chartOptions);
 }
@@ -55,23 +50,18 @@ function createCertManagerChartValues() {
   };
 }
 
-function createCertManagerChartOptions(
-  provider: k8s.Provider,
-  parent: pulumi.Resource,
-  namespace: k8s.core.v1.Namespace,
-) {
-  return { provider, parent, dependsOn: [namespace] };
+function createCertManagerChartOptions(parent: pulumi.Resource, namespace: k8s.core.v1.Namespace) {
+  return { parent, dependsOn: [namespace] };
 }
 
 export function createCertManagerSecret(
   name: string,
   config: ICertManagerBootstrapConfig,
   namespace: k8s.core.v1.Namespace,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.core.v1.Secret {
   const secretConfig = createCertManagerSecretConfig(config, namespace);
-  const secretOptions = createCertManagerSecretOptions(provider, parent, namespace);
+  const secretOptions = createCertManagerSecretOptions(parent, namespace);
 
   return new k8s.core.v1.Secret(`${name}-cloudflare-secret`, secretConfig, secretOptions);
 }
@@ -91,22 +81,17 @@ function createCertManagerSecretConfig(config: ICertManagerBootstrapConfig, name
   };
 }
 
-function createCertManagerSecretOptions(
-  provider: k8s.Provider,
-  parent: pulumi.Resource,
-  namespace: k8s.core.v1.Namespace,
-) {
-  return { provider, parent, dependsOn: [namespace] };
+function createCertManagerSecretOptions(parent: pulumi.Resource, namespace: k8s.core.v1.Namespace) {
+  return { parent, dependsOn: [namespace] };
 }
 
 export function createCertManagerClusterIssuer(
   name: string,
   config: ICertManagerBootstrapConfig,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.apiextensions.CustomResource {
   const issuerConfig = createClusterIssuerConfig(config);
-  const resourceOptions = createClusterIssuerOptions(provider, parent);
+  const resourceOptions = createClusterIssuerOptions(parent);
 
   return new k8s.apiextensions.CustomResource(`${name}-cluster-issuer`, issuerConfig, resourceOptions);
 }
@@ -144,6 +129,6 @@ function createClusterIssuerSpec(config: ICertManagerBootstrapConfig, issuerName
   };
 }
 
-function createClusterIssuerOptions(provider: k8s.Provider, parent: pulumi.Resource) {
-  return { provider, parent };
+function createClusterIssuerOptions(parent: pulumi.Resource) {
+  return { parent };
 }

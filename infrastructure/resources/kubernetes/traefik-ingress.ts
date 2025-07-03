@@ -9,7 +9,6 @@ export function createTraefikDashboardIngress(
   name: string,
   config: ITraefikBootstrapConfig,
   namespace: k8s.core.v1.Namespace,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.networking.v1.Ingress | undefined {
   if (!shouldCreateDashboard(config)) {
@@ -22,7 +21,7 @@ export function createTraefikDashboardIngress(
       metadata: createIngressMetadata(config, namespace),
       spec: createIngressSpec(config),
     },
-    { provider, parent },
+    { parent },
   );
 }
 

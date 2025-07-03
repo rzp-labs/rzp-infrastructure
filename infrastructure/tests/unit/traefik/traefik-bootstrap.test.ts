@@ -69,7 +69,6 @@ describe("TraefikBootstrap", () => {
   it("should create TraefikBootstrap component with required resources", async () => {
     // Arrange
     const config = {
-      kubeconfig: pulumi.output("mock-kubeconfig"),
       domain: "example.local",
       email: "admin@example.local",
       staging: true,
@@ -89,7 +88,6 @@ describe("TraefikBootstrap", () => {
   it("should create namespace with correct metadata", async () => {
     // Arrange
     const config = {
-      kubeconfig: pulumi.output("mock-kubeconfig"),
       domain: "example.local",
       dashboard: false,
     };
@@ -105,7 +103,6 @@ describe("TraefikBootstrap", () => {
   it("should create Helm chart with correct configuration", async () => {
     // Arrange
     const config = {
-      kubeconfig: pulumi.output("mock-kubeconfig"),
       domain: "example.local",
       email: "admin@example.local",
       staging: false,
@@ -123,7 +120,6 @@ describe("TraefikBootstrap", () => {
   it("should create dashboard ingress when domain and dashboard are provided", async () => {
     // Arrange
     const config = {
-      kubeconfig: pulumi.output("mock-kubeconfig"),
       domain: "example.local",
       dashboard: true,
     };
@@ -139,7 +135,6 @@ describe("TraefikBootstrap", () => {
   it("should not create dashboard ingress when dashboard is disabled", async () => {
     // Arrange
     const config = {
-      kubeconfig: pulumi.output("mock-kubeconfig"),
       domain: "example.local",
       dashboard: false,
     };
@@ -154,7 +149,6 @@ describe("TraefikBootstrap", () => {
   it("should follow SOLID principles with clear single responsibility", async () => {
     // Arrange
     const config = {
-      kubeconfig: pulumi.output("mock-kubeconfig"),
       domain: "example.local",
       email: "admin@example.local",
       staging: true,
@@ -172,9 +166,7 @@ describe("TraefikBootstrap", () => {
 
   it("should handle minimal configuration", async () => {
     // Arrange
-    const config = {
-      kubeconfig: pulumi.output("mock-kubeconfig"),
-    };
+    const config = {};
 
     // Act
     const traefik = new TraefikBootstrap("test-traefik", config);

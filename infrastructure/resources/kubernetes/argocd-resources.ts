@@ -11,11 +11,7 @@ import { ARGOCD_DEFAULTS } from "../../shared/constants";
 import type { IArgoCdBootstrapConfig } from "../../shared/types";
 import { withDefault } from "../../shared/utils";
 
-export function createArgoCdNamespace(
-  name: string,
-  provider: k8s.Provider,
-  parent: pulumi.Resource,
-): k8s.core.v1.Namespace {
+export function createArgoCdNamespace(name: string, parent: pulumi.Resource): k8s.core.v1.Namespace {
   return new k8s.core.v1.Namespace(
     `${name}-namespace`,
     {
@@ -27,7 +23,7 @@ export function createArgoCdNamespace(
         },
       },
     },
-    { provider, parent },
+    { parent },
   );
 }
 
@@ -51,7 +47,6 @@ export function createArgoCdAdminSecret(
   name: string,
   config: IArgoCdBootstrapConfig,
   namespace: k8s.core.v1.Namespace,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.core.v1.Secret {
   const adminPassword = resolveAdminPassword(config);
@@ -65,7 +60,7 @@ export function createArgoCdAdminSecret(
         password: pulumi.output(adminPassword).apply((pwd: string) => Buffer.from(pwd).toString("base64")),
       },
     },
-    { provider, parent },
+    { parent },
   );
 }
 
@@ -73,11 +68,10 @@ export function createArgoCdChart(
   name: string,
   config: IArgoCdBootstrapConfig,
   namespace: k8s.core.v1.Namespace,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.helm.v3.Chart {
   const chartConfig = createArgoCdChartConfig(config, namespace);
-  const chartOptions = createArgoCdChartOptions(provider, parent);
+  const chartOptions = createArgoCdChartOptions(parent);
 
   return new k8s.helm.v3.Chart(`${name}-chart`, chartConfig, chartOptions);
 }
@@ -92,8 +86,8 @@ function createArgoCdChartConfig(config: IArgoCdBootstrapConfig, namespace: k8s.
   };
 }
 
-function createArgoCdChartOptions(provider: k8s.Provider, parent: pulumi.Resource) {
-  return { provider, parent };
+function createArgoCdChartOptions(parent: pulumi.Resource) {
+  return { parent };
 }
 
 function createIngressMetadata(namespace: pulumi.Output<string>) {
@@ -108,7 +102,6 @@ export function createArgoCdIngress(
   name: string,
   config: IArgoCdBootstrapConfig,
   namespace: k8s.core.v1.Namespace,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.networking.v1.Ingress {
   const domain = withDefault(config.domain, ARGOCD_DEFAULTS.DEFAULT_DOMAIN);
@@ -119,7 +112,7 @@ export function createArgoCdIngress(
       metadata: createIngressMetadata(namespace.metadata.name),
       spec: createArgoCdIngressSpec(domain),
     },
-    { provider, parent },
+    { parent },
   );
 }
 
@@ -134,7 +127,6 @@ export function createArgoCdSelfApp(
   name: string,
   config: IArgoCdBootstrapConfig,
   namespace: k8s.core.v1.Namespace,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.apiextensions.CustomResource {
   return new k8s.apiextensions.CustomResource(
@@ -145,6 +137,6 @@ export function createArgoCdSelfApp(
       metadata: createApplicationMetadata(namespace.metadata.name),
       spec: createArgoCdApplicationSpec(config, namespace.metadata.name),
     },
-    { provider, parent },
+    { parent },
   );
 }

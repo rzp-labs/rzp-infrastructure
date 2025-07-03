@@ -81,7 +81,6 @@ export interface IClusterOutput {
 
 // ArgoCD Configuration Types
 export interface IArgoCdBootstrapConfig {
-  readonly kubeconfig: pulumi.Output<string>;
   readonly repositoryUrl: string;
   readonly adminPassword?: pulumi.Output<string>;
   readonly domain?: string;
@@ -108,7 +107,6 @@ export interface IArgoCdChartValues {
 
 // Traefik Configuration Types
 export interface ITraefikBootstrapConfig {
-  readonly kubeconfig: pulumi.Output<string>;
   readonly domain?: string;
   readonly email?: string;
   readonly staging?: boolean;
@@ -132,14 +130,12 @@ export interface ICloudflareDNSConfig {
 }
 
 export interface ICertManagerBootstrapConfig {
-  kubeconfig: pulumi.Input<string>;
   email: string;
   staging: boolean;
   cloudflareApiToken: pulumi.Input<string>;
 }
 
 export interface IMetalLBBootstrapConfig {
-  kubeconfig: pulumi.Input<string>;
   ipRange: string;
 }
 

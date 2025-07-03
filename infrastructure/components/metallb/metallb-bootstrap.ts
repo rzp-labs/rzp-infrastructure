@@ -20,17 +20,14 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
   constructor(name: string, config: IMetalLBBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:metallb:MetalLBBootstrap", name, {}, opts);
 
-    // Create Kubernetes provider
-    const k8sProvider = new k8s.Provider(`${name}-k8s-provider`, { kubeconfig: config.kubeconfig }, { parent: this });
-
     // Create MetalLB namespace
-    this.namespace = this.createMetalLBNamespace(name, k8sProvider);
+    this.namespace = this.createMetalLBNamespace(name);
 
     // Deploy MetalLB Helm chart
-    this.chart = this.createMetalLBChart(name, config, k8sProvider);
+    this.chart = this.createMetalLBChart(name, config);
 
     // Create readiness gate that waits for MetalLB to be functionally ready
-    this.readinessGate = this.createReadinessGate(name, config);
+    this.readinessGate = this.createReadinessGate(name);
 
     this.registerOutputs({
       namespace: this.namespace,
@@ -39,7 +36,7 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
     });
   }
 
-  private createMetalLBNamespace(name: string, k8sProvider: k8s.Provider): k8s.core.v1.Namespace {
+  private createMetalLBNamespace(name: string): k8s.core.v1.Namespace {
     return new k8s.core.v1.Namespace(
       `${name}-namespace`,
       {
@@ -54,17 +51,13 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
           },
         },
       },
-      { provider: k8sProvider, parent: this },
+      { parent: this },
     );
   }
 
-  private createMetalLBChart(
-    name: string,
-    config: IMetalLBBootstrapConfig,
-    k8sProvider: k8s.Provider,
-  ): k8s.helm.v3.Chart {
+  private createMetalLBChart(name: string, config: IMetalLBBootstrapConfig): k8s.helm.v3.Chart {
     const chartConfig = this.createChartConfig(config);
-    const chartOptions = this.createChartOptions(k8sProvider);
+    const chartOptions = this.createChartOptions();
 
     return new k8s.helm.v3.Chart(`${name}-chart`, chartConfig, chartOptions);
   }
@@ -79,20 +72,17 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
     };
   }
 
-  private createChartOptions(k8sProvider: k8s.Provider) {
+  private createChartOptions() {
     return {
-      provider: k8sProvider,
       parent: this,
       dependsOn: [this.namespace],
     };
   }
 
-  private createReadinessGate(name: string, config: IMetalLBBootstrapConfig): MetalLBReadinessGate {
+  private createReadinessGate(name: string): MetalLBReadinessGate {
     return new MetalLBReadinessGate(
       `${name}-readiness-gate`,
-      {
-        kubeconfig: config.kubeconfig,
-      },
+      {},
       {
         parent: this,
         dependsOn: [this.chart],

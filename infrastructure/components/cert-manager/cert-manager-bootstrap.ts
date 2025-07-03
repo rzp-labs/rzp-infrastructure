@@ -1,4 +1,4 @@
-import * as k8s from "@pulumi/kubernetes";
+import type * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import {
@@ -24,14 +24,11 @@ export class CertManagerBootstrap extends pulumi.ComponentResource {
   constructor(name: string, config: ICertManagerBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:cert-manager:CertManagerBootstrap", name, {}, opts);
 
-    // Create Kubernetes provider
-    const k8sProvider = new k8s.Provider(`${name}-k8s-provider`, { kubeconfig: config.kubeconfig }, { parent: this });
-
     // Create cert-manager resources
-    this.namespace = createCertManagerNamespace(name, k8sProvider, this);
-    this.chart = createCertManagerChart(name, this.namespace, k8sProvider, this);
-    this.cloudflareSecret = createCertManagerSecret(name, config, this.namespace, k8sProvider, this);
-    this.clusterIssuer = createCertManagerClusterIssuer(name, config, k8sProvider, this);
+    this.namespace = createCertManagerNamespace(name, this);
+    this.chart = createCertManagerChart(name, this.namespace, this);
+    this.cloudflareSecret = createCertManagerSecret(name, config, this.namespace, this);
+    this.clusterIssuer = createCertManagerClusterIssuer(name, config, this);
 
     this.registerOutputs({
       namespace: this.namespace,

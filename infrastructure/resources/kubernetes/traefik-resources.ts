@@ -7,11 +7,7 @@ import type { ITraefikBootstrapConfig } from "../../shared/types";
 
 import { createTraefikDashboardIngress } from "./traefik-ingress";
 
-export function createTraefikNamespace(
-  name: string,
-  provider: k8s.Provider,
-  parent: pulumi.Resource,
-): k8s.core.v1.Namespace {
+export function createTraefikNamespace(name: string, parent: pulumi.Resource): k8s.core.v1.Namespace {
   return new k8s.core.v1.Namespace(
     `${name}-namespace`,
     {
@@ -23,7 +19,7 @@ export function createTraefikNamespace(
         },
       },
     },
-    { provider, parent },
+    { parent },
   );
 }
 
@@ -31,11 +27,10 @@ export function createTraefikChart(
   name: string,
   config: ITraefikBootstrapConfig,
   namespace: k8s.core.v1.Namespace,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.helm.v3.Chart {
   const chartConfig = createTraefikChartConfig(namespace);
-  const chartOptions = createTraefikChartOptions(provider, parent, namespace);
+  const chartOptions = createTraefikChartOptions(parent, namespace);
 
   return new k8s.helm.v3.Chart(`${name}-chart`, chartConfig, chartOptions);
 }
@@ -50,16 +45,15 @@ function createTraefikChartConfig(namespace: k8s.core.v1.Namespace) {
   };
 }
 
-function createTraefikChartOptions(provider: k8s.Provider, parent: pulumi.Resource, namespace: k8s.core.v1.Namespace) {
-  return { provider, parent, dependsOn: [namespace] };
+function createTraefikChartOptions(parent: pulumi.Resource, namespace: k8s.core.v1.Namespace) {
+  return { parent, dependsOn: [namespace] };
 }
 
 export function createTraefikDashboard(
   name: string,
   config: ITraefikBootstrapConfig,
   namespace: k8s.core.v1.Namespace,
-  provider: k8s.Provider,
   parent: pulumi.Resource,
 ): k8s.networking.v1.Ingress | undefined {
-  return createTraefikDashboardIngress(name, config, namespace, provider, parent);
+  return createTraefikDashboardIngress(name, config, namespace, parent);
 }

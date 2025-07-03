@@ -1,4 +1,4 @@
-import * as k8s from "@pulumi/kubernetes";
+import type * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import {
@@ -27,19 +27,16 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
   constructor(name: string, config: IArgoCdBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:argocd:Bootstrap", name, {}, opts);
 
-    // Create Kubernetes provider
-    const k8sProvider = new k8s.Provider(`${name}-k8s-provider`, { kubeconfig: config.kubeconfig }, { parent: this });
-
     // Create ArgoCD resources
-    this.namespace = createArgoCdNamespace(name, k8sProvider, this);
-    this.adminSecret = createArgoCdAdminSecret(name, config, this.namespace, k8sProvider, this);
+    this.namespace = createArgoCdNamespace(name, this);
+    this.adminSecret = createArgoCdAdminSecret(name, config, this.namespace, this);
 
     // Deploy ArgoCD
-    this.chart = createArgoCdChart(name, config, this.namespace, k8sProvider, this);
+    this.chart = createArgoCdChart(name, config, this.namespace, this);
 
     // Create networking and self-management
-    this.ingress = createArgoCdIngress(name, config, this.namespace, k8sProvider, this);
-    this.argoCdApp = createArgoCdSelfApp(name, config, this.namespace, k8sProvider, this);
+    this.ingress = createArgoCdIngress(name, config, this.namespace, this);
+    this.argoCdApp = createArgoCdSelfApp(name, config, this.namespace, this);
 
     // Register outputs - Pulumi handles dependency ordering automatically
     this.registerOutputs({

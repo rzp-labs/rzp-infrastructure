@@ -81,12 +81,10 @@ void pulumi.runtime.setMocks({
 describe("ArgoCdBootstrap Component", () => {
   test("should create ArgoCD bootstrap component with valid configuration", async () => {
     // Arrange
-    const mockKubeconfig = pulumi.output("mock-kubeconfig");
     const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd", {
-      kubeconfig: mockKubeconfig,
       repositoryUrl,
       domain: "argocd.test.local",
     });
@@ -101,12 +99,10 @@ describe("ArgoCdBootstrap Component", () => {
 
   test("should handle default domain when not provided", async () => {
     // Arrange
-    const mockKubeconfig = pulumi.output("mock-kubeconfig");
     const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd-default", {
-      kubeconfig: mockKubeconfig,
       repositoryUrl,
     });
 
@@ -117,13 +113,11 @@ describe("ArgoCdBootstrap Component", () => {
 
   test("should handle custom admin password", async () => {
     // Arrange
-    const mockKubeconfig = pulumi.output("mock-kubeconfig");
     const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
     const customPassword = pulumi.secret("custom-admin-password");
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd-custom", {
-      kubeconfig: mockKubeconfig,
       repositoryUrl,
       adminPassword: customPassword,
       domain: "argocd.custom.local",
@@ -136,12 +130,10 @@ describe("ArgoCdBootstrap Component", () => {
 
   test("should maintain SOLID principles", async () => {
     // Arrange
-    const mockKubeconfig = pulumi.output("mock-kubeconfig");
     const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd-solid", {
-      kubeconfig: mockKubeconfig,
       repositoryUrl,
     });
 
@@ -156,12 +148,10 @@ describe("ArgoCdBootstrap Component", () => {
 describe("ArgoCD Component Architecture", () => {
   test("should follow component resource pattern", async () => {
     // Arrange
-    const mockKubeconfig = pulumi.output("mock-kubeconfig");
     const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd-arch", {
-      kubeconfig: mockKubeconfig,
       repositoryUrl,
     });
 

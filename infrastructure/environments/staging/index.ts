@@ -2,6 +2,8 @@
  * Staging environment deployment
  */
 
+import * as k8s from "@pulumi/kubernetes";
+
 import { ArgoCdBootstrap } from "../../components/argocd/argocd-bootstrap";
 import { K3sCluster } from "../../components/k3s/k3s-cluster";
 import { K3sCredentials } from "../../components/k3s/k3s-credentials";
@@ -50,6 +52,11 @@ export const credentials = new K3sCredentials(
   },
 );
 
+// Configure default Kubernetes provider for all resources
+const defaultK8sProvider = new k8s.Provider("default-k8s", {
+  kubeconfig: credentials.result.kubeconfig,
+});
+
 // Install K3s workers
 export const workerInstalls = cluster.workers.map(
   (worker, index) =>
@@ -72,11 +79,11 @@ export const workerInstalls = cluster.workers.map(
 export const metallb = new MetalLBBootstrap(
   "stg-metallb",
   {
-    kubeconfig: credentials.result.kubeconfig,
     ipRange: METALLB_DEFAULTS.STAGING_IP_RANGE,
   },
   {
     dependsOn: [...workerInstalls],
+    providers: { kubernetes: defaultK8sProvider },
   },
 );
 
@@ -85,7 +92,6 @@ export const metallb = new MetalLBBootstrap(
 export const traefik = new TraefikBootstrap(
   "stg-traefik",
   {
-    kubeconfig: credentials.result.kubeconfig,
     domain: cloudflareConfig.domain,
     email: "admin@rzp.one",
     staging: true, // Use Let's Encrypt staging for testing
@@ -93,6 +99,7 @@ export const traefik = new TraefikBootstrap(
   },
   {
     dependsOn: [metallb.chart], // Direct chart dependency
+    providers: { kubernetes: defaultK8sProvider },
   },
 );
 
@@ -100,13 +107,13 @@ export const traefik = new TraefikBootstrap(
 export const argocd = new ArgoCdBootstrap(
   "stg-argocd",
   {
-    kubeconfig: credentials.result.kubeconfig,
     repositoryUrl: "https://github.com/stephen/rzp-infra.git", // Update with actual repo URL
     // adminPassword will be read from Pulumi config: pulumi config set --secret argoCdAdminPassword
     domain: `stg.argocd.${cloudflareConfig.domain}`,
   },
   {
     dependsOn: [traefik],
+    providers: { kubernetes: defaultK8sProvider },
   },
 );
 
