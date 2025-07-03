@@ -6,30 +6,22 @@ Accepted
 
 ## Context
 
-As our homelab infrastructure scales beyond 70 services, the traditional approach of categorizing services by their
-technical function creates cognitive friction during both development and incident response. Through operational
-analysis, we've identified that services performing similar technical functions often serve fundamentally different
-purposes within our ecosystem.
+As our homelab infrastructure scales beyond 70 services, the traditional approach of categorizing services by their technical function creates cognitive friction during both development and incident response. Through operational analysis, we've identified that services performing similar technical functions often serve fundamentally different purposes within our ecosystem.
 
-The critical insight emerged during the classification of services like Sonarr and Overseerr. While both technically
-"download content," their organizational purposes differ fundamentally:
+The critical insight emerged during the classification of services like Sonarr and Overseerr. While both technically "download content," their organizational purposes differ fundamentally:
 
 - Sonarr's purpose: Automate media acquisition workflows
 - Overseerr's purpose: Manage human requests for media
 
-This distinction becomes operationally significant during troubleshooting. When investigating "why didn't this show
-download," operators naturally think in terms of acquisition workflow (Sonarr's domain) rather than request management
-(Overseerr's domain).
+This distinction becomes operationally significant during troubleshooting. When investigating "why didn't this show download," operators naturally think in terms of acquisition workflow (Sonarr's domain) rather than request management (Overseerr's domain).
 
 ## Decision
 
-We will organize services based on their **purpose** - the job they were deployed to accomplish - rather than their
-technical function or capabilities.
+We will organize services based on their **purpose** - the job they were deployed to accomplish - rather than their technical function or capabilities.
 
 Service placement will follow these principles:
 
-1. **Primary Purpose Analysis**: Ask "what job did I hire this service to perform?" rather than "what does this service
-   technically do?"
+1. **Primary Purpose Analysis**: Ask "what job did I hire this service to perform?" rather than "what does this service technically do?"
 
 2. **Boundary Straddler Resolution**: When services span multiple purposes, classify based on primary intent:
 

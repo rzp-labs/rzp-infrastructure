@@ -4,16 +4,13 @@
 
 ## Overview
 
-This monorepo implements a comprehensive homelab infrastructure that spans from Proxmox VM provisioning to Kubernetes
-application deployment, all managed through a unified Pulumi codebase. The architecture demonstrates enterprise-grade
-practices—strict GitOps workflows, centralized secret management, and comprehensive observability—while maintaining
-single-operator sustainability at 70+ service scale.
+This monorepo implements a comprehensive homelab infrastructure that spans from Proxmox VM provisioning to Kubernetes application deployment, all managed through a unified Pulumi codebase. The architecture demonstrates enterprise-grade practices—strict GitOps workflows, centralized secret management, and comprehensive observability—while maintaining single-operator sustainability at 70+ service scale.
 
 ### Key Architectural Decisions
 
-- **Unified Infrastructure Control**: Single Pulumi program manages Proxmox VMs, Talos Kubernetes, and all applications
+- **Unified Infrastructure Control**: Single Pulumi program manages Proxmox VMs, k3s Kubernetes, and all applications
 - **Strict GitOps Workflow**: Harness CI/CD enforces all changes through Git with approval gates
-- **Centralized Secret Management**: Infisical serves as single source of truth, with ESO for runtime injection
+- **Centralized Secret Management**: Infisical serves as single source of truth with ESO for runtime injection
 - **Purpose-Driven Taxonomy**: Services organized by operational intent within a hierarchical configuration
 - **Comprehensive Observability**: Vector → OpenObserve pipeline with Netdata real-time metrics
 
@@ -22,18 +19,19 @@ single-operator sustainability at 70+ service scale.
 For development commands, code quality checks, and infrastructure operations, see [CLAUDE.md](./CLAUDE.md).
 
 Key commands:
+
 - `npx eslint . --fix` - Auto-fix linting and import sorting
-- `pnpm run format` - Format code with Prettier  
+- `pnpm run format` - Format code with Prettier
 - `pnpm run type-check` - TypeScript validation
 
 ## Code Quality Standards
 
-This project adheres to SOLID principles, recognizing that infrastructure-as-code demands the same engineering rigor as
-application development. When contributing to the Pulumi codebase, follow these guidelines:
+This project adheres to SOLID principles, recognizing that infrastructure-as-code demands the same engineering rigor as application development. When contributing to the Pulumi codebase, follow these guidelines:
 
 ### File Naming Conventions
 
 **Standardized kebab-case naming** for all TypeScript files:
+
 - ✅ `k3s-cluster.ts`, `proxmox-node.ts`, `vm-config.ts`
 - ✅ `provider-config.ts`, `network-config.ts`
 - ❌ ~~`K3sCluster.ts`, `ProxmoxNode.ts`~~ (old inconsistent pattern)
@@ -44,8 +42,7 @@ This ensures consistent imports and improved readability across the codebase.
 
 **Single Responsibility Principle (SRP)**
 
-- Each Pulumi component should manage one infrastructure concern (e.g., `PostgreSQLCluster`, not
-  `DatabaseAndBackupAndMonitoring`)
+- Each Pulumi component should manage one infrastructure concern (e.g., `PostgreSQLCluster`, not `DatabaseAndBackupAndMonitoring`)
 - Service modules under `infrastructure/src/apps/` should focus on a single domain
 - Separate provisioning logic from configuration management
 
@@ -186,6 +183,43 @@ The unified Pulumi program manages infrastructure in layers:
 The structure enforces a 5-level directory depth limit based on empirical performance testing (see
 [ADR-002](docs/architecture/decisions/ADR-002-five-level-directory-limit.md)).
 
+## Testing Architecture
+
+The testing infrastructure follows [ADR-003](docs/architecture/decisions/ADR-003-pulumi-automation-sdk-for-integration-tests.md) and uses **Pulumi Automation SDK** for infrastructure-as-code testing patterns.
+
+### Test Categories
+
+- **Unit Tests** (`infrastructure/tests/unit/`): Component behavior validation using mocks
+- **Integration Tests** (`infrastructure/tests/integration/`): End-to-end testing with real infrastructure
+- **SSH Tunnel Tests**: Use Pulumi Automation SDK for tunnel provisioning to remote clusters
+
+### Key Testing Features
+
+✅ **Infrastructure-as-Code Testing**: Provision SSH tunnels using Pulumi LocalWorkspace  
+✅ **Architectural Consistency**: Same SSH patterns as production K3sMaster/K3sWorker components  
+✅ **Proper Lifecycle Management**: Automatic tunnel provisioning and cleanup  
+✅ **No Manual Secret Extraction**: Native Pulumi secret resolution  
+
+### Running Tests
+
+```bash
+cd infrastructure
+
+# Run all tests
+pnpm test
+
+# Run by category
+pnpm run test:unit           # Unit tests only
+pnpm run test:integration    # Integration tests only
+pnpm run test:k3s           # All K3s tests
+
+# SSH tunnel integration tests (requires Pulumi configuration)
+export PULUMI_CONFIG_PASSPHRASE="your-passphrase"
+pnpm test tests/integration/k3s/ssh-tunnel-integration.test.ts
+```
+
+See [Testing Documentation](infrastructure/tests/README.md) for detailed setup and usage.
+
 ## Service Domains
 
 Planned orchestration of 70+ services across purpose-driven domains. Examples include:
@@ -193,7 +227,7 @@ Planned orchestration of 70+ services across purpose-driven domains. Examples in
 ### Platform Services
 
 - **Virtualization**: Proxmox cluster with automated VM provisioning
-- **Kubernetes**: Talos Linux for immutable, secure control plane
+- **Kubernetes**: k3s Linux for immutable, secure control plane
 - **Databases**: PostgreSQL (HA), Redis Sentinel
 - **Observability**: Vector, OpenObserve, Netdata
 - **Security**: Zitadel (identity), cert-manager, Infisical (secrets)

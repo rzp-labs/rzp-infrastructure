@@ -4,8 +4,8 @@
  */
 
 import { FailureSimulatorFactory } from "../../helpers/k3s/failure-simulator-factory";
-import { MockK8sTestClient } from "../../helpers/k3s/mock-k8s-test-client";
 import type { IMasterFailureSimulator } from "../../helpers/k3s/master-failure-simulator";
+import { MockK8sTestClient } from "../../helpers/k3s/mock-k8s-test-client";
 import { NodeValidator } from "../../helpers/k3s/node-validator";
 import { PodValidator } from "../../helpers/k3s/pod-validator";
 import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";

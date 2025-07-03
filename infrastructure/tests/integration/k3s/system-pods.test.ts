@@ -11,13 +11,13 @@ describe("System Pods", () => {
   beforeAll(async () => {
     testEnv = new TestEnvironment();
     await testEnv.setup();
-    
+
     // Skip all tests if cluster is not available
     if (!testEnv.isClusterAvailable()) {
       console.warn("K8s cluster not available - skipping integration tests");
       return;
     }
-    
+
     podValidator = new PodValidator(testEnv.getK8sClient().getCoreApi());
   });
 

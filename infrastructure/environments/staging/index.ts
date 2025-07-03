@@ -2,6 +2,7 @@
  * Staging environment deployment
  */
 
+import { ArgoCdBootstrap } from "../../components/argocd/argocd-bootstrap";
 import { K3sCluster } from "../../components/k3s/k3s-cluster";
 import { K3sCredentials } from "../../components/k3s/k3s-credentials";
 import { K3sMaster } from "../../components/k3s/k3s-master";
@@ -62,11 +63,26 @@ export const workerInstalls = cluster.workers.map(
     ),
 );
 
+// Deploy ArgoCD for GitOps
+export const argocd = new ArgoCdBootstrap(
+  "stg-argocd",
+  {
+    kubeconfig: credentials.result.kubeconfig,
+    repositoryUrl: "https://github.com/stephen/rzp-infra.git", // Update with actual repo URL
+    // adminPassword will be read from Pulumi config: pulumi config set --secret argoCdAdminPassword
+    domain: "argocd.staging.rzp.local",
+  },
+  {
+    dependsOn: [...workerInstalls],
+  },
+);
+
 // Export cluster information
 export const masterIps = cluster.masterIps;
 export const workerIps = cluster.workerIps;
 export const allNodes = cluster.allNodes;
 export const kubeconfig = credentials.result.kubeconfig;
+export const argoCdUrl = `https://${argocd.ingress.spec.rules[0].host}`;
 
 // Export utility function for role determination
 export const getVmRoleFromId = (vmId: number) =>

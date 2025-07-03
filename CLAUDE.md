@@ -6,23 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - You **MUST** complete the checklist below before responding to **ANY** user request:
 
-```text
 [SESSION START CHECKLIST]
-□ 1. Read all files from @.agent/rules and @docs/
-□ 2. Retreive context from ConPort (if database exists):
-   □ get_product_context
-   □ get_active_context
-   □ get_decisions (limit 5)
-   □ get_progress (limit 5)
-   □ get_recent_activity_summary
-```
+□ 1. Activate the project in `serena`
+□ 2. Read all files from `@.agent/rules` and `@docs/`
+□ 3. Retreive context from `openmemory`
 
 ## Agent Rules and Communication
 
 ### [ALWAYS]
 
 - ALWAYS follow [SOLID guidelines](/Users/stephen/Projects/rzp-labs/rzp-infra/.agent/rules/SOLID-guidelines.md)
-- ALWAYS follow Test-Driven Development
 - ALWAYS use `repomix` when searching the codebase (is it far more efficient)
 - ALWAYS consider the impact on other components before making changes
 - ALWAYS check for existing utilities/helpers before creating new ones
@@ -30,71 +23,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ALWAYS form your tool use using the XML format specified for each tool
 - ALWAYS use <thinking> tags for every tool call or response
 - ALWAYS remove temporary files when no longer needed
-- ALWAYS include Actions/Expected/Actual in EVERY `ConPort` log entry
+- ALWAYS include Actions/Expected/Actual in EVERY `openmemory` log entry
 
 ### [NEVER]
 
 - NEVER sacrifice accuracy
-- NEVER use #noqa to bypass linting requirements
+- NEVER use #noqa to bypass linting or type checking requirements
+- NEVER use _any_ - types should **always** be defined
 - NEVER begin editing a file when the user only asks a question
 - NEVER ask the user to perform an action that you are capable of
 - NEVER ask the user for information before searching
 - NEVER deviate from existing project standards and patterns
 - NEVER make architectural decisions without explicit approval
-- NEVER use #noqa to bypass linting or type checking
-- NEVER respond without a confidence score
 
-## Test-Driven Development
+## Testing Architecture (ADR-003)
 
-**The TDD Cycle:**
+The testing infrastructure uses **Pulumi Automation SDK** for SSH tunnel provisioning, following ADR-003 for infrastructure-as-code testing patterns.
 
-1. **RED**: Write a failing test for one method's contract/intent
-2. **GREEN**: Write minimal code to make the test pass
-3. **REFACTOR**: Improve code while keeping tests green
-4. **Repeat**: One method at a time, never skip phases
+### Testing Evolution
 
-### RED Phase Excellence
+- **Start with unit tests** - Individual component validation first
+- **Progress to integration tests** - Component interaction workflows using Pulumi tunnel provisioning
+- **Test realistic infrastructure patterns** - Complete workflows that mirror production deployment
+- **Validate component interaction** - Ensure components work together using actual SSH connections
 
-- **Test interface compliance first** - Validate protocol implementation before behavior
-- **Test what exists, not what's imagined** - Avoid testing non-existent HTTP functionality
-- **Use meaningful stub implementations** - Return realistic data that satisfies test assertions
-- **Start with basic contracts** - Type validation, non-empty responses, interface requirements
-- **One failing test at a time** - Focus on single method's contract/intent
+### Pulumi Automation SDK Integration
 
-### GREEN Phase Progression
-
-- **Implement minimal code to pass tests** - No more functionality than required
-- **One method at a time** - Complete RED→GREEN→REFACTOR cycle before next method
-- **Maintain test passing state** - Never break existing tests while implementing new features
-- **Use proper HTTP mocking** - Mock external dependencies (httpx, aiohttp) for isolation
-- **Test actual implementation behavior** - Validate real HTTP calls, endpoints, headers
-
-### Integration Testing Evolution
-
-- **Start with unit tests** - Individual method validation first
-- **Progress to integration tests** - Method interaction workflows (create_session → use_session)
-- **Test realistic user journeys** - Complete workflows users will actually perform
-- **Validate method interaction** - Ensure methods work together correctly
+- **Tunnel Provisioning**: Use `PulumiTunnelProvisioner` for SSH connectivity in integration tests
+- **Infrastructure Lifecycle**: Provision → Test → Destroy pattern for proper resource management
+- **Consistent SSH Patterns**: Reuse same connection logic as K3sMaster/K3sWorker components
+- **No Manual Secret Extraction**: Native Pulumi secret resolution eliminates complex credential handling
 
 ### Test Quality Standards
 
-- **Clear test naming** - `test_method_name_does_specific_thing`
-- **Comprehensive documentation** - Explain what behavior is being validated
-- **Arrange/Act/Assert structure** - Clear test organization
+- **Clear test naming** - `test_component_does_specific_behavior`
+- **Comprehensive documentation** - Explain what infrastructure behavior is being validated
+- **Arrange/Act/Assert structure** - Clear test organization with infrastructure setup
 - **Single assertion focus** - Each test validates one specific behavior
-- **Proper async handling** - Use pytest.mark.asyncio for async methods
+- **Proper async handling** - Use proper async/await for Pulumi operations
 
 ### Architecture Validation
 
-- **Test intended architecture** - HTTPLLMProvider → Wrapper Service, not direct API calls
-- **Validate endpoint contracts** - Test correct URLs, headers, request/response formats
-- **Mock at the right level** - Mock HTTP client, not business logic
-- **Maintain architectural boundaries** - Don't test implementation details across layers
+- **Test intended architecture** - K3sMaster/K3sWorker → SSH → K3s API, not direct connections
+- **Validate infrastructure contracts** - Test correct SSH connections, tunnel creation, API access
+- **Mock at the right level** - Mock infrastructure components, not Pulumi core functionality
+- **Maintain architectural boundaries** - Don't test implementation details across component layers
 
 ### Common Anti-Patterns to Avoid
 
 - **Testing mocks instead of behavior** - Mocking unimplemented functionality
-- **Jumping to GREEN phase** - Writing tests for complex HTTP behavior before basic contracts
 - **Testing implementation details** - Focus on interface contracts, not internal structure
 - **Ignoring test failures** - All tests should pass; failing tests indicate missing implementation
 - **Architectural confusion** - Testing wrong endpoints/APIs for the intended architecture
@@ -144,16 +121,16 @@ This ensures consistent imports and improved readability across the codebase.
 
 **Successful Pattern:**
 
+- Let SOLID principles emerge naturally from good design choices
 - Listen to what tools are telling us about our design
 - Fix root causes rather than symptoms
 - Work with the language and tools, not against them
-- Let SOLID principles emerge naturally from good design choices
 
-### ConPort Integration
+### OpenMemory Integration
 
 **Workspace ID:** `/Users/stephen/Projects/rzp-infra`
 
-**ConPort Logging Requirements** - Every ConPort log entry MUST include:
+**OpenMemory Logging Requirements** - Every `openmemory` log entry MUST include:
 
 1. **Actions Performed**: Detailed description of what was done
 2. **Expected Result**: What outcome was anticipated
@@ -167,13 +144,11 @@ This ensures consistent imports and improved readability across the codebase.
 
 ## Project Overview
 
-rzp Infrastructure is a GitOps-managed homelab infrastructure repository that powers 100+ services using Infrastructure
-as Code (IaC) principles with Pulumi and Python.
+rzp Infrastructure is a GitOps-managed homelab infrastructure repository that powers 100+ services using Infrastructure as Code (IaC) principles with Pulumi and TypeScript.
 
 ### Purpose
 
-Manage complete homelab infrastructure through code with automated deployment, scaling, full observability, and disaster
-recovery capabilities.
+Manage complete homelab infrastructure through code with automated deployment, scaling, full observability, and disaster recovery capabilities.
 
 ### Technology Stack
 
@@ -195,7 +170,6 @@ recovery capabilities.
 4. **Clear Separation**: Configuration in Git, runtime data backed up separately
 5. **Standards by Default**: Every service gets monitoring, backups, and network policies
 6. **Strict SOLID Principles**: Enforced through linting and code review
-7. **Test-Driven Development**: RED→GREEN→REFACTOR cycle mandatory
 
 ### Service Organization
 
@@ -206,10 +180,6 @@ Services are categorized by purpose across 100+ applications:
 - `dev-tools/` - Development and CI/CD tools
 - `ai/` - AI/ML services and inference
 - `platform/` - Shared platform services (databases, observability)
-
-### Current Status
-
-Initial setup phase - documentation complete, ConPort initialized, infrastructure code to be implemented
 
 ## Development Commands
 
@@ -279,8 +249,41 @@ cd infrastructure/
 # Run all tests
 pnpm test
 
+# Run specific test categories
+pnpm run test:unit          # Unit tests only
+pnpm run test:integration   # Integration tests only
+
+# Run component-specific tests
+pnpm run test:k3s           # All K3s tests (unit + integration)
+pnpm run test:k3s:unit      # K3s unit tests only
+pnpm run test:k3s:integration # K3s integration tests only
+pnpm run test:proxmox       # All Proxmox tests
+pnpm run test:cluster       # Cluster-level integration tests
+
 # Run with coverage
 pnpm run test:coverage
+
+# Development testing
+pnpm run test:watch         # Watch mode for development
+pnpm run test:ci            # CI-optimized test run
+```
+
+### SSH Tunnel Integration Tests
+
+Integration tests use Pulumi Automation SDK for SSH tunnel provisioning:
+
+```bash
+# Prerequisites: Pulumi stack with SSH configuration
+pulumi config set proxmox:sshUsername "admin_ops"
+pulumi config set --secret proxmox:sshPrivateKey "$(cat ~/.ssh/proxmox_key)"
+export PULUMI_CONFIG_PASSPHRASE="your-passphrase"
+
+# Run SSH tunnel integration tests
+pnpm test tests/integration/k3s/ssh-tunnel-integration.test.ts
+
+# Debug tunnel provisioning
+export PULUMI_LOG_LEVEL=debug
+pnpm test tests/integration/k3s/ssh-tunnel-integration.test.ts --verbose
 ```
 
 ## Configuration

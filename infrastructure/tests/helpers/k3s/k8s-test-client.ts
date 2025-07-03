@@ -1,4 +1,5 @@
 import * as k8s from "@kubernetes/client-node";
+
 import type { IK8sTestClient } from "./k8s-test-client-interface";
 
 /**
@@ -10,12 +11,16 @@ export class K8sTestClient implements IK8sTestClient {
   private k8sAppsApi!: k8s.AppsV1Api;
   private isConnected = false;
 
+  constructor(private readonly kubeconfig?: string) {}
+
   async initialize(): Promise<void> {
     this.kc = new k8s.KubeConfig();
 
     try {
-      // Try to load from environment or default locations
-      if (process.env.KUBECONFIG) {
+      // Configure kubeconfig
+      if (this.kubeconfig !== undefined) {
+        this.kc.loadFromString(this.kubeconfig);
+      } else if (process.env.KUBECONFIG !== undefined) {
         this.kc.loadFromFile(process.env.KUBECONFIG);
       } else {
         this.kc.loadFromDefault();
@@ -23,10 +28,10 @@ export class K8sTestClient implements IK8sTestClient {
 
       // Test connection to verify cluster accessibility
       const tempApi = this.kc.makeApiClient(k8s.CoreV1Api);
-      
+
       // Use listNode instead of listNamespace (more reliable across versions)
       await tempApi.listNode({});
-      
+
       this.k8sApi = tempApi;
       this.k8sAppsApi = this.kc.makeApiClient(k8s.AppsV1Api);
       this.isConnected = true;

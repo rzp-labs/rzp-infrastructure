@@ -1,4 +1,5 @@
-import * as k8s from "@kubernetes/client-node";
+import type * as k8s from "@kubernetes/client-node";
+
 import type { IK8sTestClient } from "./k8s-test-client-interface";
 
 /**
@@ -6,8 +7,8 @@ import type { IK8sTestClient } from "./k8s-test-client-interface";
  * Single Responsibility: Provide mocked Kubernetes API clients for unit testing
  */
 export class MockK8sTestClient implements IK8sTestClient {
-  private mockCoreApi: jest.Mocked<k8s.CoreV1Api>;
-  private mockAppsApi: jest.Mocked<k8s.AppsV1Api>;
+  private readonly mockCoreApi: jest.Mocked<k8s.CoreV1Api>;
+  private readonly mockAppsApi: jest.Mocked<k8s.AppsV1Api>;
 
   constructor() {
     // Create mocked API clients with comprehensive method coverage
@@ -17,65 +18,65 @@ export class MockK8sTestClient implements IK8sTestClient {
       createNamespace: jest.fn().mockResolvedValue({}),
       deleteNamespace: jest.fn().mockResolvedValue({}),
       readNamespace: jest.fn().mockResolvedValue({}),
-      
+
       // Node operations
-      listNode: jest.fn().mockResolvedValue({ 
+      listNode: jest.fn().mockResolvedValue({
         items: [
           {
             metadata: { name: "mock-master", labels: { "node-role.kubernetes.io/control-plane": "true" } },
-            status: { conditions: [{ type: "Ready", status: "True" }] }
+            status: { conditions: [{ type: "Ready", status: "True" }] },
           },
           {
             metadata: { name: "mock-worker", labels: {} },
-            status: { conditions: [{ type: "Ready", status: "True" }] }
-          }
-        ]
+            status: { conditions: [{ type: "Ready", status: "True" }] },
+          },
+        ],
       }),
-      
-      // Pod operations  
-      listNamespacedPod: jest.fn().mockImplementation(({ namespace, labelSelector }) => {
+
+      // Pod operations
+      listNamespacedPod: jest.fn().mockImplementation(async ({ namespace }) => {
         const mockPods = [];
-        
+
         if (namespace === "kube-system") {
           // CoreDNS pods
           mockPods.push({
             metadata: { name: "coredns-123", namespace: "kube-system" },
-            status: { phase: "Running" }
+            status: { phase: "Running" },
           });
-          
+
           // Metrics server pods
           mockPods.push({
             metadata: { name: "metrics-server-456", namespace: "kube-system" },
-            status: { phase: "Running" }
+            status: { phase: "Running" },
           });
-          
+
           // K3s system pods
           mockPods.push({
             metadata: { name: "k3s-server-789", namespace: "kube-system" },
-            status: { phase: "Running" }
+            status: { phase: "Running" },
           });
         }
-        
+
         return Promise.resolve({ items: mockPods });
       }),
       createNamespacedPod: jest.fn().mockResolvedValue({}),
       deleteNamespacedPod: jest.fn().mockResolvedValue({}),
       readNamespacedPod: jest.fn().mockResolvedValue({}),
-      
+
       // Service operations
       createNamespacedService: jest.fn().mockResolvedValue({}),
       deleteNamespacedService: jest.fn().mockResolvedValue({}),
-      
+
       // Endpoints operations
       readNamespacedEndpoints: jest.fn().mockResolvedValue({
-        subsets: [{ addresses: [{ ip: "10.0.0.1" }] }]
+        subsets: [{ addresses: [{ ip: "10.0.0.1" }] }],
       }),
-      
+
       // Generic pod operations
       listPod: jest.fn().mockResolvedValue({ items: [] }),
       createPod: jest.fn().mockResolvedValue({}),
       deletePod: jest.fn().mockResolvedValue({}),
-      readPod: jest.fn().mockResolvedValue({})
+      readPod: jest.fn().mockResolvedValue({}),
     } as unknown as jest.Mocked<k8s.CoreV1Api>;
 
     this.mockAppsApi = {
@@ -86,7 +87,7 @@ export class MockK8sTestClient implements IK8sTestClient {
       deleteDeployment: jest.fn().mockResolvedValue({}),
       deleteNamespacedDeployment: jest.fn().mockResolvedValue({}),
       readDeployment: jest.fn().mockResolvedValue({}),
-      readNamespacedDeployment: jest.fn().mockResolvedValue({})
+      readNamespacedDeployment: jest.fn().mockResolvedValue({}),
     } as unknown as jest.Mocked<k8s.AppsV1Api>;
   }
 

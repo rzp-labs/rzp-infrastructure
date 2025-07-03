@@ -1,0 +1,62 @@
+import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
+
+import {
+  createArgoCdAdminSecret,
+  createArgoCdChart,
+  createArgoCdIngress,
+  createArgoCdNamespace,
+  createArgoCdSelfApp,
+} from "./argocd-resources";
+
+export interface IArgoCdBootstrapConfig {
+  readonly kubeconfig: pulumi.Input<string>;
+  readonly repositoryUrl: string;
+  readonly adminPassword?: pulumi.Input<string>;
+  readonly domain?: string;
+}
+
+/**
+ * ArgoCD Bootstrap Component
+ *
+ * Deploys ArgoCD to K3s cluster to enable GitOps workflow.
+ * This is the foundation component that enables all other services
+ * to be deployed via GitOps patterns.
+ */
+export class ArgoCdBootstrap extends pulumi.ComponentResource {
+  public readonly namespace: k8s.core.v1.Namespace;
+  public readonly argoCdApp: k8s.apiextensions.CustomResource;
+  public readonly ingress: k8s.networking.v1.Ingress;
+  public readonly adminSecret: k8s.core.v1.Secret;
+
+  constructor(name: string, config: IArgoCdBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
+    super("rzp:argocd:Bootstrap", name, {}, opts);
+
+    // Create Kubernetes provider
+    const k8sProvider = new k8s.Provider(`${name}-k8s-provider`, { kubeconfig: config.kubeconfig }, { parent: this });
+
+    // Create ArgoCD resources
+    this.namespace = createArgoCdNamespace(name, k8sProvider, this);
+    this.adminSecret = createArgoCdAdminSecret(name, config, this.namespace, k8sProvider, this);
+
+    // Deploy ArgoCD
+    const chart = createArgoCdChart(name, config, this.namespace, k8sProvider, this);
+
+    // Create networking and self-management
+    this.ingress = createArgoCdIngress(name, config, this.namespace, k8sProvider, this);
+    this.argoCdApp = createArgoCdSelfApp(name, config, this.namespace, k8sProvider, this);
+
+    // Ensure proper dependency ordering
+    pulumi.all([chart, this.adminSecret]).apply(() => {
+      // Dependencies are established through resource creation order
+    });
+
+    // Register outputs
+    this.registerOutputs({
+      namespace: this.namespace,
+      adminSecret: this.adminSecret,
+      ingress: this.ingress,
+      argoCdApp: this.argoCdApp,
+    });
+  }
+}
