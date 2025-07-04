@@ -111,11 +111,6 @@ local-hostname: ${args.nodeConfig.name}`;
     return {
       provider,
       parent: this,
-      customTimeouts: {
-        create: "5m",
-        update: "3m",
-        delete: "2m",
-      },
     };
   }
 

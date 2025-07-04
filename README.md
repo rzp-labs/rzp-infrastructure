@@ -1,4 +1,4 @@
-# RZP Infrastructure
+# rzp labs Infrastructure
 
 > Unified infrastructure-as-code platform orchestrating bare metal to application layer through a single Pulumi program
 
@@ -195,10 +195,10 @@ The testing infrastructure follows [ADR-003](docs/architecture/decisions/ADR-003
 
 ### Key Testing Features
 
-✅ **Infrastructure-as-Code Testing**: Provision SSH tunnels using Pulumi LocalWorkspace  
-✅ **Architectural Consistency**: Same SSH patterns as production K3sMaster/K3sWorker components  
-✅ **Proper Lifecycle Management**: Automatic tunnel provisioning and cleanup  
-✅ **No Manual Secret Extraction**: Native Pulumi secret resolution  
+✅ **Infrastructure-as-Code Testing**: Provision SSH tunnels using Pulumi LocalWorkspace
+✅ **Architectural Consistency**: Same SSH patterns as production K3sMaster/K3sWorker components
+✅ **Proper Lifecycle Management**: Automatic tunnel provisioning and cleanup
+✅ **No Manual Secret Extraction**: Native Pulumi secret resolution
 
 ### Running Tests
 
