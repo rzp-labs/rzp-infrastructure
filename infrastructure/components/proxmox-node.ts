@@ -84,7 +84,7 @@ local-hostname: ${args.nodeConfig.name}`;
           data: metadataContent,
         },
       },
-      { provider: args.provider, parent: this },
+      this.getStorageFileOptions(args.provider),
     );
   }
 
@@ -103,8 +103,20 @@ local-hostname: ${args.nodeConfig.name}`;
           data: pulumi.secret(userDataContent),
         },
       },
-      { provider: args.provider, parent: this },
+      this.getStorageFileOptions(args.provider),
     );
+  }
+
+  private getStorageFileOptions(provider: proxmoxve.Provider): ComponentResourceOptions {
+    return {
+      provider,
+      parent: this,
+      customTimeouts: {
+        create: "5m",
+        update: "3m",
+        delete: "2m",
+      },
+    };
   }
 
   get vmId(): number {

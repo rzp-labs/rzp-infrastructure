@@ -26,6 +26,7 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
     this.chart = this.createMetalLBChart(name);
 
     // Create IPAddressPool and L2Advertisement as separate resources
+    // Wait for chart.ready to ensure all MetalLB components (including webhooks) are ready
     this.ipAddressPool = this.createIPAddressPool(name, config);
     this.l2Advertisement = this.createL2Advertisement(name);
 
@@ -84,25 +85,31 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
     };
   }
 
+  // Removed createWebhookHealthCheck - using chart.ready dependency instead
+  // This aligns with production best practices for MetalLB orchestration
+
   private createIPAddressPool(name: string, config: IMetalLBBootstrapConfig): k8s.apiextensions.CustomResource {
-    return new k8s.apiextensions.CustomResource(
-      `${name}-ip-pool`,
-      {
-        apiVersion: "metallb.io/v1beta1",
-        kind: "IPAddressPool",
-        metadata: {
-          name: "default-pool",
-          namespace: this.namespace.metadata.name,
-        },
-        spec: {
-          addresses: [config.ipRange],
+    const resourceConfig = this.buildIPAddressPoolConfig(config);
+    // Use chart.ready to wait for all chart resources including webhooks
+    const options = { parent: this, dependsOn: [this.chart] };
+
+    return new k8s.apiextensions.CustomResource(`${name}-ip-pool`, resourceConfig, options);
+  }
+
+  private buildIPAddressPoolConfig(config: IMetalLBBootstrapConfig) {
+    return {
+      apiVersion: "metallb.io/v1beta1",
+      kind: "IPAddressPool",
+      metadata: {
+        name: "default-pool",
+        namespace: this.namespace.metadata.name,
+        annotations: {
+          "pulumi.com/waitFor": "jsonpath={.metadata.name}",
+          "pulumi.com/timeoutSeconds": "120",
         },
       },
-      {
-        parent: this,
-        dependsOn: [this.chart],
-      },
-    );
+      spec: { addresses: [config.ipRange] },
+    };
   }
 
   private createL2Advertisement(name: string): k8s.apiextensions.CustomResource {

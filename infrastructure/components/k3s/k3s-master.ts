@@ -3,6 +3,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 import { K3S_INSTALLATION } from "../../shared/constants";
 import type { IK3sNodeConfig } from "../../shared/types";
+import { type IHealthCheckConfig, createK3sHealthCheck, createVmHealthCheck } from "../../shared/utils";
 
 export interface IK3sMasterArgs {
   readonly node: IK3sNodeConfig;
@@ -25,14 +26,33 @@ export interface IK3sMasterResult {
  */
 export class K3sMaster extends pulumi.ComponentResource {
   public readonly result: IK3sMasterResult;
+  public readonly vmHealthCheck: command.remote.Command;
+  public readonly k3sHealthCheck: command.remote.Command;
 
   constructor(name: string, args: IK3sMasterArgs, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:k3s:K3sMaster", name, {}, opts);
 
+    // Create health check configuration
+    const healthConfig: IHealthCheckConfig = {
+      host: args.node.ip4,
+      user: args.sshUsername,
+      privateKey: pulumi.output(args.sshPrivateKey),
+    };
+
+    // Add VM health check to wait for cloud-init and networking
+    this.vmHealthCheck = createVmHealthCheck(name, healthConfig, { parent: this });
+
+    // Install K3s after VM is healthy
     const installCommand = this.createInstallCommand(args);
 
+    // Add K3s health check after installation
+    this.k3sHealthCheck = createK3sHealthCheck(name, healthConfig, {
+      parent: this,
+      dependsOn: [installCommand],
+    });
+
     this.result = {
-      installComplete: installCommand.stdout.apply((stdout) => stdout !== undefined),
+      installComplete: this.k3sHealthCheck.stdout.apply((stdout) => stdout !== undefined),
       node: args.node,
     };
 
@@ -41,22 +61,30 @@ export class K3sMaster extends pulumi.ComponentResource {
 
   private createInstallCommand(args: IK3sMasterArgs): command.remote.Command {
     const installScript = this.buildInstallScript(args);
+    const connectionConfig = this.buildConnectionConfig(args);
 
     return new command.remote.Command(
       `k3s-master-install-${args.node.name}`,
       {
-        connection: {
-          host: args.node.ip4,
-          user: args.sshUsername,
-          privateKey: args.sshPrivateKey,
-          dialErrorLimit: 20, // Retry SSH connection up to 20 times
-          perDialTimeout: 30, // 30 second timeout per attempt
-        },
+        connection: connectionConfig,
         create: installScript,
         delete: K3S_INSTALLATION.UNINSTALL_SERVER_CMD,
       },
-      { parent: this },
+      {
+        parent: this,
+        dependsOn: [this.vmHealthCheck], // Wait for VM to be healthy before installing
+      },
     );
+  }
+
+  private buildConnectionConfig(args: IK3sMasterArgs) {
+    return {
+      host: args.node.ip4,
+      user: args.sshUsername,
+      privateKey: args.sshPrivateKey,
+      dialErrorLimit: 20, // Retry SSH connection up to 20 times
+      perDialTimeout: 30, // 30 second timeout per attempt
+    };
   }
 
   private buildInstallScript(args: IK3sMasterArgs): string {
@@ -66,12 +94,11 @@ export class K3sMaster extends pulumi.ComponentResource {
       ? `curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | sh -s - server ${K3S_INSTALLATION.SERVER_FLAGS}`
       : `curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | sh -s - server --server ${args.serverEndpoint} ${K3S_INSTALLATION.ADDITIONAL_SERVER_FLAGS}`;
 
-    // Wait for cloud-init to complete before installing K3s
+    // Install K3s (cloud-init completion is handled by VM health check)
     return `
-      echo "Waiting for cloud-init to complete..."
-      cloud-init status --wait
-      echo "Cloud-init completed, installing K3s..."
+      echo "Installing K3s server..."
       ${k3sInstall}
+      echo "K3s server installation completed"
     `;
   }
 }

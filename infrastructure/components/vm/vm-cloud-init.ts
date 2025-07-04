@@ -4,6 +4,7 @@
 
 import type * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 
+import { DNS_DEFAULTS } from "../../shared/constants";
 import type { IK3sNodeConfig, IProxmoxConfig } from "../../shared/types";
 
 interface IVmCloudInitArgs {
@@ -28,8 +29,8 @@ export function getVmCloudInitConfig(args: IVmCloudInitArgs) {
 
 function getDnsConfig() {
   return {
-    servers: ["1.1.1.1"],
-    domain: "local",
+    servers: [...DNS_DEFAULTS.SERVERS], // Convert readonly array to mutable array
+    domain: DNS_DEFAULTS.DOMAIN,
   };
 }
 

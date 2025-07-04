@@ -9,6 +9,7 @@ export interface ITraefikDashboardArgs {
   readonly config: ITraefikBootstrapConfig;
   readonly namespace: k8s.core.v1.Namespace;
   readonly serviceName: string;
+  readonly chart: k8s.helm.v3.Chart;
 }
 
 /**
@@ -46,7 +47,15 @@ export class TraefikDashboard extends pulumi.ComponentResource {
         metadata: this.createIngressMetadata(args.config, args.namespace),
         spec: this.createIngressSpec(args),
       },
-      { parent: this },
+      {
+        parent: this,
+        dependsOn: [args.chart], // Wait for Traefik chart to be fully deployed
+        customTimeouts: {
+          create: "10m", // Give more time for LoadBalancer IP allocation
+          update: "5m",
+          delete: "5m",
+        },
+      },
     );
   }
 

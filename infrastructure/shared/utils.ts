@@ -2,7 +2,16 @@
  * Shared utility functions for the infrastructure project
  */
 
+import type { IVmHealthCheckConfig } from "../helpers/health/vm-health-check";
+
 import type { VmRole } from "./types";
+
+// Re-export health check utilities from dedicated modules
+export { createVmHealthCheck, type IVmHealthCheckConfig } from "../helpers/health/vm-health-check";
+export { createK3sHealthCheck, type IK3sHealthCheckConfig } from "../helpers/health/k3s-health-check";
+
+// For backward compatibility, alias the interfaces
+export type IHealthCheckConfig = IVmHealthCheckConfig;
 
 /**
  * Determines the role of a VM based on its VM ID

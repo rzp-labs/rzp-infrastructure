@@ -39,7 +39,7 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
     // Create dashboard using ComponentResource with correct service name
     this.dashboardComponent = new TraefikDashboard(
       name,
-      { config, namespace: this.namespace, serviceName },
+      { config, namespace: this.namespace, serviceName, chart: this.chart },
       { parent: this },
     );
     this.dashboard = this.dashboardComponent.ingress;

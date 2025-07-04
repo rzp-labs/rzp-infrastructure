@@ -3,6 +3,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 import { K3S_INSTALLATION } from "../../shared/constants";
 import type { IK3sNodeConfig } from "../../shared/types";
+import { type IHealthCheckConfig, createK3sHealthCheck, createVmHealthCheck } from "../../shared/utils";
 
 export interface IK3sWorkerArgs {
   readonly node: IK3sNodeConfig;
@@ -25,14 +26,32 @@ export interface IK3sWorkerResult {
  */
 export class K3sWorker extends pulumi.ComponentResource {
   public readonly result: IK3sWorkerResult;
+  private readonly vmHealthCheck: command.remote.Command;
+  private readonly k3sHealthCheck: command.remote.Command;
 
   constructor(name: string, args: IK3sWorkerArgs, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:k3s:K3sWorker", name, {}, opts);
 
+    const healthConfig: IHealthCheckConfig = {
+      host: args.node.ip4,
+      user: args.sshUsername,
+      privateKey: pulumi.output(args.sshPrivateKey),
+    };
+
+    // Create VM health check
+    this.vmHealthCheck = createVmHealthCheck(`${name}-vm`, healthConfig, { parent: this });
+
+    // Install K3s agent after VM is healthy
     const installCommand = this.createInstallCommand(args);
 
+    // Create K3s health check after installation
+    this.k3sHealthCheck = createK3sHealthCheck(`${name}-k3s`, healthConfig, {
+      parent: this,
+      dependsOn: [installCommand],
+    });
+
     this.result = {
-      installComplete: installCommand.stdout.apply((stdout) => stdout !== undefined),
+      installComplete: this.k3sHealthCheck.stdout.apply((stdout) => stdout !== undefined),
       node: args.node,
     };
 
@@ -50,7 +69,7 @@ export class K3sWorker extends pulumi.ComponentResource {
         create: installScript,
         delete: K3S_INSTALLATION.UNINSTALL_AGENT_CMD,
       },
-      { parent: this },
+      { parent: this, dependsOn: [this.vmHealthCheck] },
     );
   }
 

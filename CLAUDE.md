@@ -13,6 +13,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 □ 4. Retreive context from `openmemory` for the last 30 minutes
 □ 5. Read the last 5 created memories in `.serena/memories/`
 
+**DO NOT ADD A MEMORY FOR COMPLETING THE SESSION START CHECKLIST**
+
 ## Agent Rules and Communication
 
 ### [ALWAYS]

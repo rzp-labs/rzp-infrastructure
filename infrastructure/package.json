@@ -23,7 +23,9 @@
   "dependencies": {
     "@muhlba91/pulumi-proxmoxve": "^7.2.0",
     "@pulumi/command": "^1.1.0",
+    "@pulumi/docker": "^4.8.0",
     "@pulumi/kubernetes": "^4.23.0",
+    "@pulumi/postgresql": "^3.15.2",
     "@pulumi/pulumi": "^3.113.0"
   },
   "scripts": {

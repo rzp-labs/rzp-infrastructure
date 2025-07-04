@@ -14,9 +14,15 @@ importers:
       '@pulumi/command':
         specifier: ^1.1.0
         version: 1.1.0(typescript@5.8.3)
+      '@pulumi/docker':
+        specifier: ^4.8.0
+        version: 4.8.0(typescript@5.8.3)
       '@pulumi/kubernetes':
         specifier: ^4.23.0
         version: 4.23.0(typescript@5.8.3)
+      '@pulumi/postgresql':
+        specifier: ^3.15.2
+        version: 3.15.2(typescript@5.8.3)
       '@pulumi/pulumi':
         specifier: ^3.113.0
         version: 3.181.0(typescript@5.8.3)
@@ -652,8 +658,14 @@ packages:
   '@pulumi/command@1.1.0':
     resolution: {integrity: sha512-ovVec+gXeqpcm76xwYYZvfJym8bG9NRvlBGQWbn0+c0fKQziZIjiv5V+AxTKfb+dLWKe7Otyt206L1IWq41hyw==}
 
+  '@pulumi/docker@4.8.0':
+    resolution: {integrity: sha512-R1jDAokbz71VbljF6TJ4yNA4Tp1Gd+ISgIQmrcsUf/gNCP1hoA7putyTIta5q0zzy83aPeeeySYwx54iOfHrvQ==}
+
   '@pulumi/kubernetes@4.23.0':
     resolution: {integrity: sha512-sMNV8cNx+MdvwNXCze3EiYgfRCTilJ9PMq4hqT8lOz7hgX5Un9yyDILJCkrt0wlGlB11Dgbq39mjwCeoImOEgg==}
+
+  '@pulumi/postgresql@3.15.2':
+    resolution: {integrity: sha512-Gv0IaFhhNqGkYEJ/QWk5YJyX0IyxBloKVCgjWVy1zF27E9rHuLejys+W9V/cJ/uj6nUjBAg8phONOe1yDTAinQ==}
 
   '@pulumi/pulumi@3.181.0':
     resolution: {integrity: sha512-2Qrqpubcqdc9oHF1gacY6Ho8FGwPxvico1B+PexGABq2k4v4qxgP8pc5GS4SfzBHOQc10jpOfe9UziLs9w9x2Q==}
@@ -2727,6 +2739,10 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
+  semver@5.7.2:
+    resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
+    hasBin: true
+
   semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
@@ -4002,11 +4018,30 @@ snapshots:
       - ts-node
       - typescript
 
+  '@pulumi/docker@4.8.0(typescript@5.8.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.181.0(typescript@5.8.3)
+      semver: 5.7.2
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+      - ts-node
+      - typescript
+
   '@pulumi/kubernetes@4.23.0(typescript@5.8.3)':
     dependencies:
       '@pulumi/pulumi': 3.181.0(typescript@5.8.3)
       glob: 10.4.5
       shell-quote: 1.8.3
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@pulumi/postgresql@3.15.2(typescript@5.8.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.181.0(typescript@5.8.3)
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -6439,6 +6474,8 @@ snapshots:
 
   safer-buffer@2.1.2:
     optional: true
+
+  semver@5.7.2: {}
 
   semver@6.3.1: {}
 

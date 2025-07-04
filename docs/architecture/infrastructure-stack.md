@@ -7,6 +7,7 @@
 **Decision**: Use Pulumi with TypeScript for infrastructure management.
 
 **Rationale**:
+
 - **Type Safety**: Compile-time error checking prevents configuration mistakes
 - **IDE Support**: Full autocomplete and refactoring for infrastructure code
 - **Ecosystem**: Rich TypeScript ecosystem and tooling
@@ -61,8 +62,9 @@
 ### Hybrid Organization Pattern
 
 We use a **hybrid pattern** combining:
+
 - **Resource organization**: Storage, compute, networking
-- **Environment separation**: Staging, production configs  
+- **Environment separation**: Staging, production configs
 - **Shared foundation**: Types, utils, constants
 
 ### Type-Safe Configuration
@@ -80,10 +82,10 @@ function getStagingConfig(): IEnvironmentConfig {
   return {
     name: "staging",
     k3s: {
-      masterCount: 1,      // Single master for staging
-      workerCount: 2,      // Two workers for testing
-      vmidBase: 120,       // VM ID range 120-139
-    }
+      masterCount: 1, // Single master for staging
+      workerCount: 2, // Two workers for testing
+      vmidBase: 120, // VM ID range 120-139
+    },
   };
 }
 ```
@@ -95,7 +97,7 @@ function getStagingConfig(): IEnvironmentConfig {
 export class K3sCluster extends ComponentResource {
   public readonly masters: readonly ProxmoxNode[];
   public readonly workers: readonly ProxmoxNode[];
-  
+
   constructor(name: string, args: IK3sClusterArgs) {
     // Creates complete K3s cluster with proper networking,
     // cloud-init, and resource allocation

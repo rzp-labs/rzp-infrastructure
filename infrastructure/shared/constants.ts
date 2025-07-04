@@ -99,3 +99,9 @@ export const LETSENCRYPT = {
   PROD_SERVER: "https://acme-v02.api.letsencrypt.org/directory",
   STAGING_SERVER: "https://acme-staging-v02.api.letsencrypt.org/directory",
 } as const;
+
+// DNS Constants
+export const DNS_DEFAULTS = {
+  SERVERS: ["1.1.1.1", "1.0.0.1"], // Cloudflare DNS
+  DOMAIN: "local",
+} as const;

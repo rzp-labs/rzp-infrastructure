@@ -99,7 +99,7 @@ export const traefik = new TraefikBootstrap(
     dashboard: true,
   },
   {
-    dependsOn: [metallb.chart], // Direct chart dependency
+    dependsOn: [metallb.ipAddressPool], // Wait for MetalLB IP pool to be ready
     providers: { kubernetes: defaultK8sProvider },
   },
 );
