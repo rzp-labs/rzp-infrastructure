@@ -8,8 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 [SESSION START CHECKLIST]
 □ 1. Activate the project in `serena`
-□ 2. Read all files from `@.agent/rules` and `@docs/`
-□ 3. Retreive context from `openmemory`
+□ 2. Read all files from `@.agent/rules/`
+□ 3. Read all the files from `@docs/`
+□ 4. Retreive context from `openmemory` for the last 30 minutes
+□ 5. Read the last 5 created memories in `.serena/memories/`
 
 ## Agent Rules and Communication
 
@@ -131,6 +133,7 @@ This ensures consistent imports and improved readability across the codebase.
 **Clear separation of concerns** across the infrastructure codebase:
 
 #### **`/shared`** - Centralized Definitions
+
 - **`shared/types.ts`** - All shared TypeScript interfaces and types
 - **`shared/constants.ts`** - All shared constants (versions, URLs, defaults)
 - **`shared/utils.ts`** - Simple, pure utilities with **wide applicability across domains**
@@ -140,21 +143,25 @@ This ensures consistent imports and improved readability across the codebase.
   - **Characteristics:** Small, no dependencies, general-purpose
 
 #### **`/helpers`** - Domain-Specific Builders
+
 - **`helpers/domain/`** - Complex, **domain-specific** builders/factories/orchestrators
   - `helpers/vm/vm-configuration-builder.ts` - Multi-step VM composition
   - `helpers/k3s/k8s-test-client-factory.ts` - Test infrastructure factories
   - **Characteristics:** Complex logic, multiple imports, domain-specific orchestration
 
 #### **`/config`** - Configuration Retrieval
+
 - Simple functions that read from external sources (Pulumi config, environment variables)
 - **Pattern:** `getXxxConfig()` functions using `pulumi.Config()`
 
 #### **`/resources`** - Resource Creation
+
 - Actual Pulumi/cloud resource creators organized by provider
 - `resources/kubernetes/` - K8s resource creators
 - `resources/storage/` - Storage resource creators
 
 #### **`/components`** - Business Logic Orchestration
+
 - High-level components that orchestrate resources, configs, and helpers
 - **Pattern:** Pulumi `ComponentResource` classes that compose multiple resources
 

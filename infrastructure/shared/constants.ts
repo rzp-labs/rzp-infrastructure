@@ -56,7 +56,7 @@ export const K3S_INSTALLATION = {
 export const ARGOCD_DEFAULTS = {
   CHART_NAME: "argo-cd",
   CHART_REPO: "https://argoproj.github.io/argo-helm",
-  CHART_VERSION: "5.51.6",
+  CHART_VERSION: "5.51.6", // Keep current stable version
   NAMESPACE: "argocd",
   DEFAULT_DOMAIN: "argocd.local",
   SERVICE_TYPE: "ClusterIP",
@@ -66,7 +66,7 @@ export const ARGOCD_DEFAULTS = {
 export const TRAEFIK_DEFAULTS = {
   CHART_NAME: "traefik",
   CHART_REPO: "https://traefik.github.io/charts",
-  CHART_VERSION: "28.3.0",
+  CHART_VERSION: "28.3.0", // Keep current stable version
   NAMESPACE: "traefik-system",
   REPLICAS: 1,
   SERVICE_TYPE: "LoadBalancer",
@@ -79,7 +79,7 @@ export const TRAEFIK_DEFAULTS = {
 export const METALLB_DEFAULTS = {
   CHART_NAME: "metallb",
   CHART_REPO: "https://metallb.github.io/metallb",
-  CHART_VERSION: "0.14.8",
+  CHART_VERSION: "0.15.2", // Updated from 0.14.8 to latest stable
   NAMESPACE: "metallb-system",
   // IP range allocation: 200-205 staging, 206-210 production
   STAGING_IP_RANGE: "10.10.0.200-10.10.0.205",
@@ -90,7 +90,7 @@ export const METALLB_DEFAULTS = {
 export const CERT_MANAGER_DEFAULTS = {
   CHART_NAME: "cert-manager",
   CHART_REPO: "https://charts.jetstack.io",
-  CHART_VERSION: "v1.15.3",
+  CHART_VERSION: "v1.18.2", // Updated from v1.15.3 to latest stable
   NAMESPACE: "cert-manager",
 } as const;
 

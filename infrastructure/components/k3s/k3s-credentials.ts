@@ -67,6 +67,8 @@ export class K3sCredentials extends pulumi.ComponentResource {
       host: args.masterNode.ip4,
       user: args.sshUsername,
       privateKey: args.sshPrivateKey,
+      dialErrorLimit: 20, // Retry SSH connection up to 20 times
+      perDialTimeout: 30, // 30 second timeout per attempt
     };
   }
 }

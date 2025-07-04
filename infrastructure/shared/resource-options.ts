@@ -9,9 +9,9 @@ import { applyStandardTransformations, applyVmTransformations } from "./transfor
 export const kubernetesResourceOptions: pulumi.ResourceOptions = {
   transformations: [applyStandardTransformations],
   customTimeouts: {
-    create: "5m",
-    update: "2m",
-    delete: "1m",
+    create: "10m", // Increased from 5m for LoadBalancer services
+    update: "5m", // Increased from 2m
+    delete: "3m", // Increased from 1m
   },
 };
 

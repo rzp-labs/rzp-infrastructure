@@ -40,20 +40,36 @@ export class K3sWorker extends pulumi.ComponentResource {
   }
 
   private createInstallCommand(args: IK3sWorkerArgs): command.remote.Command {
-    const installScript = pulumi.interpolate`curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | K3S_URL=https://${args.masterEndpoint}:${K3S_INSTALLATION.SERVER_PORT} K3S_TOKEN=${args.token} sh -`;
+    const installScript = this.buildInstallScript(args);
+    const connectionConfig = this.buildConnectionConfig(args);
 
     return new command.remote.Command(
       `k3s-worker-install-${args.node.name}`,
       {
-        connection: {
-          host: args.node.ip4,
-          user: args.sshUsername,
-          privateKey: args.sshPrivateKey,
-        },
+        connection: connectionConfig,
         create: installScript,
         delete: K3S_INSTALLATION.UNINSTALL_AGENT_CMD,
       },
       { parent: this },
     );
+  }
+
+  private buildInstallScript(args: IK3sWorkerArgs): pulumi.Output<string> {
+    return pulumi.interpolate`
+      echo "Waiting for cloud-init to complete..."
+      cloud-init status --wait
+      echo "Cloud-init completed, installing K3s agent..."
+      curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | K3S_URL=https://${args.masterEndpoint}:${K3S_INSTALLATION.SERVER_PORT} K3S_TOKEN=${args.token} sh -
+    `;
+  }
+
+  private buildConnectionConfig(args: IK3sWorkerArgs) {
+    return {
+      host: args.node.ip4,
+      user: args.sshUsername,
+      privateKey: args.sshPrivateKey,
+      dialErrorLimit: 20,
+      perDialTimeout: 30,
+    };
   }
 }

@@ -61,14 +61,16 @@ export class PulumiTunnelProvisioner {
       };
     };
 
-    // Create LocalWorkspace stack
+    // Create stack - use original working pattern but modify config reading
     const stack = await pulumi.automation.LocalWorkspace.createStack({
       stackName: this.config.stackName,
-      projectName: "tunnel-provisioner",
+      projectName: "tunnel-test",
       program: program,
     });
 
     this.stack = stack;
+
+    // Test stack should inherit configs from current project
 
     // Deploy the tunnel infrastructure
     await stack.up({ onOutput: console.log });

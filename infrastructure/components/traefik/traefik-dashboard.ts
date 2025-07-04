@@ -8,6 +8,7 @@ import { isTruthy, withDefault } from "../../shared/utils";
 export interface ITraefikDashboardArgs {
   readonly config: ITraefikBootstrapConfig;
   readonly namespace: k8s.core.v1.Namespace;
+  readonly serviceName: string;
 }
 
 /**
@@ -43,7 +44,7 @@ export class TraefikDashboard extends pulumi.ComponentResource {
       `${name}-dashboard`,
       {
         metadata: this.createIngressMetadata(args.config, args.namespace),
-        spec: this.createIngressSpec(args.config),
+        spec: this.createIngressSpec(args),
       },
       { parent: this },
     );
@@ -73,8 +74,8 @@ export class TraefikDashboard extends pulumi.ComponentResource {
     return baseAnnotations;
   }
 
-  private createIngressSpec(config: ITraefikBootstrapConfig) {
-    const host = `stg.traefik.${config.domain ?? ""}`;
+  private createIngressSpec(args: ITraefikDashboardArgs) {
+    const host = `stg.traefik.${args.config.domain ?? ""}`;
     return {
       rules: [
         {
@@ -84,7 +85,7 @@ export class TraefikDashboard extends pulumi.ComponentResource {
               {
                 path: "/",
                 pathType: "Prefix",
-                backend: { service: { name: "traefik", port: { number: TRAEFIK_DEFAULTS.DASHBOARD_PORT } } },
+                backend: { service: { name: args.serviceName, port: { number: TRAEFIK_DEFAULTS.DASHBOARD_PORT } } },
               },
             ],
           },

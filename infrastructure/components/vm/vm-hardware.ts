@@ -14,7 +14,7 @@ export function getVmHardwareConfig(nodeConfig: IK3sNodeConfig) {
     bootOrders: [...VM_DEFAULTS.BOOT_ORDERS], // Create mutable copy for type compatibility
     startup: getStartupConfig(nodeConfig),
     operatingSystem: { type: VM_DEFAULTS.OS_TYPE },
-    agent: { enabled: true, trim: true, type: "virtio", timeout: "15m" },
+    agent: { enabled: true, trim: true, type: "virtio" },
     cpu: { type: "host", cores: nodeConfig.resources.cores },
     memory: { dedicated: nodeConfig.resources.memory },
     vga: { type: "std" },

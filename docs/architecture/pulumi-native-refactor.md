@@ -151,3 +151,26 @@
      - https://www.pulumi.com/docs/using-pulumi/automation-api/
      - https://www.pulumi.com/docs/concepts/resources/dynamic-providers/
      - https://www.pulumi.com/docs/concepts/inputs-outputs/
+
+Perform a research round to learn how to write proper unit tests using Pulumi's native testing tools
+
+## Goal: find your knowledge gaps and assumptions
+
+- sequential-thinking (15 thoughts)
+- list out all your assumptions and knowledge gaps
+
+## Goal: search for evidence to validate AND disprove your assumptions
+
+- web-search and read through the pulumi docs
+- perplexity-ask to learn about best practices
+
+## Goal: integrate your findings into current problem
+
+- "mcp**sequential-thinking**sequentialthinking", (10 thoughts)
+
+## Goal: update your plan
+
+- "mcp**serena**think_about_collected_information"
+- "mcp**serena**think_about_whether_you_are_done"
+- "mcp**serena**summarize_changes"
+- "mcp**openmemory**add_memory"

@@ -57,7 +57,7 @@ const defaultK8sProvider = new k8s.Provider("default-k8s", {
   kubeconfig: credentials.result.kubeconfig,
 });
 
-// Install K3s workers
+// Install K3s workers - use individual worker dependencies instead of array spreading
 export const workerInstalls = cluster.workers.map(
   (worker, index) =>
     new K3sWorker(
@@ -82,7 +82,8 @@ export const metallb = new MetalLBBootstrap(
     ipRange: METALLB_DEFAULTS.STAGING_IP_RANGE,
   },
   {
-    dependsOn: [...workerInstalls],
+    // Fix: Avoid array spreading which can cause promise leaks on failure
+    dependsOn: workerInstalls,
     providers: { kubernetes: defaultK8sProvider },
   },
 );

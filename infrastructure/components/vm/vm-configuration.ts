@@ -49,11 +49,7 @@ export class VmConfiguration extends pulumi.ComponentResource {
       provider: props.provider,
       parent: this,
       transformations: [applyVmTransformations],
-      customTimeouts: {
-        create: "15m",
-        update: "10m",
-        delete: "5m",
-      },
+      // Remove customTimeouts - not supported by proxmoxve VMs
     });
   }
 

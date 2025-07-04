@@ -40,11 +40,7 @@ export class K3sMaster extends pulumi.ComponentResource {
   }
 
   private createInstallCommand(args: IK3sMasterArgs): command.remote.Command {
-    const isFirstMaster = args.isFirstMaster ?? true;
-
-    const installScript = isFirstMaster
-      ? `curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | sh -s - server ${K3S_INSTALLATION.SERVER_FLAGS}`
-      : `curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | sh -s - server --server ${args.serverEndpoint} ${K3S_INSTALLATION.ADDITIONAL_SERVER_FLAGS}`;
+    const installScript = this.buildInstallScript(args);
 
     return new command.remote.Command(
       `k3s-master-install-${args.node.name}`,
@@ -53,11 +49,29 @@ export class K3sMaster extends pulumi.ComponentResource {
           host: args.node.ip4,
           user: args.sshUsername,
           privateKey: args.sshPrivateKey,
+          dialErrorLimit: 20, // Retry SSH connection up to 20 times
+          perDialTimeout: 30, // 30 second timeout per attempt
         },
         create: installScript,
         delete: K3S_INSTALLATION.UNINSTALL_SERVER_CMD,
       },
       { parent: this },
     );
+  }
+
+  private buildInstallScript(args: IK3sMasterArgs): string {
+    const isFirstMaster = args.isFirstMaster ?? true;
+
+    const k3sInstall = isFirstMaster
+      ? `curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | sh -s - server ${K3S_INSTALLATION.SERVER_FLAGS}`
+      : `curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | sh -s - server --server ${args.serverEndpoint} ${K3S_INSTALLATION.ADDITIONAL_SERVER_FLAGS}`;
+
+    // Wait for cloud-init to complete before installing K3s
+    return `
+      echo "Waiting for cloud-init to complete..."
+      cloud-init status --wait
+      echo "Cloud-init completed, installing K3s..."
+      ${k3sInstall}
+    `;
   }
 }

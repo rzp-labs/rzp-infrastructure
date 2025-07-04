@@ -2,8 +2,6 @@
  * Shared utility functions for the infrastructure project
  */
 
-import type * as pulumi from "@pulumi/pulumi";
-
 import type { VmRole } from "./types";
 
 /**
@@ -123,7 +121,7 @@ export function createKubernetesLabels(appName: string, component?: string): Rec
     "app.kubernetes.io/part-of": appName,
   };
 
-  if (component) {
+  if (component !== undefined) {
     labels["app.kubernetes.io/component"] = component;
   }
 

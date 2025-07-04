@@ -33,8 +33,15 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
     this.chartComponent = new TraefikChart(name, { namespace: this.namespace }, { parent: this });
     this.chart = this.chartComponent.chart;
 
-    // Create dashboard using ComponentResource
-    this.dashboardComponent = new TraefikDashboard(name, { config, namespace: this.namespace }, { parent: this });
+    // Generate service name based on Helm chart naming convention: ${release-name}-chart
+    const serviceName = `${name}-chart`;
+
+    // Create dashboard using ComponentResource with correct service name
+    this.dashboardComponent = new TraefikDashboard(
+      name,
+      { config, namespace: this.namespace, serviceName },
+      { parent: this },
+    );
     this.dashboard = this.dashboardComponent.ingress;
 
     this.registerOutputs({

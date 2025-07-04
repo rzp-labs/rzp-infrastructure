@@ -1,7 +1,6 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import { createMetalLBChartValues } from "../../config/metallb-config";
 import { METALLB_DEFAULTS } from "../../shared/constants";
 import type { IMetalLBBootstrapConfig } from "../../shared/types";
 
@@ -14,6 +13,8 @@ import type { IMetalLBBootstrapConfig } from "../../shared/types";
 export class MetalLBBootstrap extends pulumi.ComponentResource {
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
+  public readonly ipAddressPool: k8s.apiextensions.CustomResource;
+  public readonly l2Advertisement: k8s.apiextensions.CustomResource;
 
   constructor(name: string, config: IMetalLBBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:metallb:MetalLBBootstrap", name, {}, opts);
@@ -22,11 +23,17 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
     this.namespace = this.createMetalLBNamespace(name);
 
     // Deploy MetalLB Helm chart
-    this.chart = this.createMetalLBChart(name, config);
+    this.chart = this.createMetalLBChart(name);
+
+    // Create IPAddressPool and L2Advertisement as separate resources
+    this.ipAddressPool = this.createIPAddressPool(name, config);
+    this.l2Advertisement = this.createL2Advertisement(name);
 
     this.registerOutputs({
       namespace: this.namespace,
       chart: this.chart,
+      ipAddressPool: this.ipAddressPool,
+      l2Advertisement: this.l2Advertisement,
     });
   }
 
@@ -49,20 +56,24 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
     );
   }
 
-  private createMetalLBChart(name: string, config: IMetalLBBootstrapConfig): k8s.helm.v3.Chart {
-    const chartConfig = this.createChartConfig(config);
+  private createMetalLBChart(name: string): k8s.helm.v3.Chart {
+    const chartConfig = this.createChartConfig();
     const chartOptions = this.createChartOptions();
 
     return new k8s.helm.v3.Chart(`${name}-chart`, chartConfig, chartOptions);
   }
 
-  private createChartConfig(config: IMetalLBBootstrapConfig) {
+  private createChartConfig() {
     return {
       chart: METALLB_DEFAULTS.CHART_NAME,
       fetchOpts: { repo: METALLB_DEFAULTS.CHART_REPO },
       version: METALLB_DEFAULTS.CHART_VERSION,
       namespace: this.namespace.metadata.name,
-      values: createMetalLBChartValues(config.ipRange),
+      // Remove extraResources - create as separate K8s resources instead
+      values: {
+        controller: { enabled: true },
+        speaker: { enabled: true },
+      },
     };
   }
 
@@ -71,5 +82,47 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
       parent: this,
       dependsOn: [this.namespace],
     };
+  }
+
+  private createIPAddressPool(name: string, config: IMetalLBBootstrapConfig): k8s.apiextensions.CustomResource {
+    return new k8s.apiextensions.CustomResource(
+      `${name}-ip-pool`,
+      {
+        apiVersion: "metallb.io/v1beta1",
+        kind: "IPAddressPool",
+        metadata: {
+          name: "default-pool",
+          namespace: this.namespace.metadata.name,
+        },
+        spec: {
+          addresses: [config.ipRange],
+        },
+      },
+      {
+        parent: this,
+        dependsOn: [this.chart],
+      },
+    );
+  }
+
+  private createL2Advertisement(name: string): k8s.apiextensions.CustomResource {
+    return new k8s.apiextensions.CustomResource(
+      `${name}-l2-advertisement`,
+      {
+        apiVersion: "metallb.io/v1beta1",
+        kind: "L2Advertisement",
+        metadata: {
+          name: "default-l2-advertisement",
+          namespace: this.namespace.metadata.name,
+        },
+        spec: {
+          ipAddressPools: ["default-pool"],
+        },
+      },
+      {
+        parent: this,
+        dependsOn: [this.ipAddressPool],
+      },
+    );
   }
 }
