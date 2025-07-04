@@ -1,21 +1,16 @@
 /**
- * Architecture Compliance Test Suite
+ * Architecture Compliance Test Suite - Native Pulumi Testing
  * Single Responsibility: Test architectural patterns and SOLID compliance
  */
 
 import { FailureSimulatorFactory } from "../../helpers/k3s/failure-simulator-factory";
 import { MockK8sTestClient } from "../../helpers/k3s/mock-k8s-test-client";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
 
 describe("Architecture Compliance", () => {
-  let pulumiTestSetup: PulumiTestSetup;
   let k8sClient: MockK8sTestClient;
   let factory: FailureSimulatorFactory;
 
   beforeEach(() => {
-    pulumiTestSetup = new PulumiTestSetup();
-    pulumiTestSetup.initialize();
-
     k8sClient = new MockK8sTestClient();
     void k8sClient.initialize();
 

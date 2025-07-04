@@ -1,21 +1,16 @@
 /**
- * FailureSimulatorFactory Unit Tests
+ * FailureSimulatorFactory Unit Tests - Native Pulumi Testing
  * Single Responsibility: Test FailureSimulatorFactory helper class functionality
  */
 
 import { FailureSimulatorFactory } from "../../helpers/k3s/failure-simulator-factory";
 import { MockK8sTestClient } from "../../helpers/k3s/mock-k8s-test-client";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
 
 describe("FailureSimulatorFactory", () => {
-  let pulumiTestSetup: PulumiTestSetup;
   let k8sClient: MockK8sTestClient;
   let factory: FailureSimulatorFactory;
 
   beforeEach(() => {
-    pulumiTestSetup = new PulumiTestSetup();
-    pulumiTestSetup.initialize();
-
     k8sClient = new MockK8sTestClient();
     void k8sClient.initialize();
 

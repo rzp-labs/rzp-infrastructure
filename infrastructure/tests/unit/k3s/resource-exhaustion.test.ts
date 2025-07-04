@@ -1,24 +1,19 @@
 /**
- * Resource Exhaustion Scenarios Test Suite
+ * Resource Exhaustion Scenarios Test Suite - Native Pulumi Testing
  * Single Responsibility: Test only resource exhaustion conditions
  */
 
 import { FailureSimulatorFactory } from "../../helpers/k3s/failure-simulator-factory";
 import { MockK8sTestClient } from "../../helpers/k3s/mock-k8s-test-client";
 import { PodValidator } from "../../helpers/k3s/pod-validator";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
 import type { IResourceFailureSimulator } from "../../helpers/k3s/resource-failure-simulator";
 
 describe("Resource Exhaustion", () => {
-  let pulumiTestSetup: PulumiTestSetup;
   let k8sClient: MockK8sTestClient;
   let resourceSimulator: IResourceFailureSimulator;
   let podValidator: PodValidator;
 
   beforeEach(() => {
-    pulumiTestSetup = new PulumiTestSetup();
-    pulumiTestSetup.initialize();
-
     k8sClient = new MockK8sTestClient();
     void k8sClient.initialize();
 

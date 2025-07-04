@@ -1,5 +1,5 @@
 /**
- * Master Node Failure Scenarios Test Suite
+ * Master Node Failure Scenarios Test Suite - Native Pulumi Testing
  * Single Responsibility: Test only master node failure conditions
  */
 
@@ -7,18 +7,13 @@ import { FailureSimulatorFactory } from "../../helpers/k3s/failure-simulator-fac
 import type { IMasterFailureSimulator } from "../../helpers/k3s/master-failure-simulator";
 import { MockK8sTestClient } from "../../helpers/k3s/mock-k8s-test-client";
 // NodeValidator available for future test expansion
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
 
 describe("Master Node Failures", () => {
-  let pulumiTestSetup: PulumiTestSetup;
   let k8sClient: MockK8sTestClient;
   let masterSimulator: IMasterFailureSimulator;
   // NodeValidator intentionally unused - available for future test expansion
 
   beforeEach(() => {
-    pulumiTestSetup = new PulumiTestSetup();
-    pulumiTestSetup.initialize();
-
     k8sClient = new MockK8sTestClient();
     void k8sClient.initialize();
 

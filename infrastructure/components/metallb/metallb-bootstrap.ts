@@ -2,7 +2,6 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import { createMetalLBChartValues } from "../../config/metallb-config";
-import { MetalLBReadinessGate } from "../../helpers/metallb/metallb-readiness-checker";
 import { METALLB_DEFAULTS } from "../../shared/constants";
 import type { IMetalLBBootstrapConfig } from "../../shared/types";
 
@@ -15,7 +14,6 @@ import type { IMetalLBBootstrapConfig } from "../../shared/types";
 export class MetalLBBootstrap extends pulumi.ComponentResource {
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
-  public readonly readinessGate: MetalLBReadinessGate;
 
   constructor(name: string, config: IMetalLBBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:metallb:MetalLBBootstrap", name, {}, opts);
@@ -26,13 +24,9 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
     // Deploy MetalLB Helm chart
     this.chart = this.createMetalLBChart(name, config);
 
-    // Create readiness gate that waits for MetalLB to be functionally ready
-    this.readinessGate = this.createReadinessGate(name);
-
     this.registerOutputs({
       namespace: this.namespace,
       chart: this.chart,
-      readinessGate: this.readinessGate,
     });
   }
 
@@ -77,16 +71,5 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
       parent: this,
       dependsOn: [this.namespace],
     };
-  }
-
-  private createReadinessGate(name: string): MetalLBReadinessGate {
-    return new MetalLBReadinessGate(
-      `${name}-readiness-gate`,
-      {},
-      {
-        parent: this,
-        dependsOn: [this.chart],
-      },
-    );
   }
 }

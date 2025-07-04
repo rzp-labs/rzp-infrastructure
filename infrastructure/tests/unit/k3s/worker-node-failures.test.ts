@@ -1,5 +1,5 @@
 /**
- * Worker Node Failure Scenarios Test Suite
+ * Worker Node Failure Scenarios Test Suite - Native Pulumi Testing
  * Single Responsibility: Test only worker node failure conditions
  */
 
@@ -8,11 +8,9 @@ import type { IMasterFailureSimulator } from "../../helpers/k3s/master-failure-s
 import { MockK8sTestClient } from "../../helpers/k3s/mock-k8s-test-client";
 import { NodeValidator } from "../../helpers/k3s/node-validator";
 import { PodValidator } from "../../helpers/k3s/pod-validator";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
 import type { IWorkerFailureSimulator } from "../../helpers/k3s/worker-failure-simulator";
 
 describe("Worker Node Failures", () => {
-  let pulumiTestSetup: PulumiTestSetup;
   let k8sClient: MockK8sTestClient;
   let masterSimulator: IMasterFailureSimulator;
   let workerSimulator: IWorkerFailureSimulator;
@@ -20,9 +18,6 @@ describe("Worker Node Failures", () => {
   let podValidator: PodValidator;
 
   beforeEach(() => {
-    pulumiTestSetup = new PulumiTestSetup();
-    pulumiTestSetup.initialize();
-
     k8sClient = new MockK8sTestClient();
     void k8sClient.initialize();
 

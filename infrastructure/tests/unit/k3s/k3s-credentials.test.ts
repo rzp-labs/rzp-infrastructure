@@ -1,24 +1,56 @@
+import * as pulumi from "@pulumi/pulumi";
+
 import { K3sCredentials } from "../../../components/k3s/k3s-credentials";
-import { MockNodeFactory } from "../../helpers/k3s/mock-node-factory";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
+import type { IK3sNodeConfig } from "../../../shared/types";
+
+/**
+ * K3sCredentials Component - Native Pulumi Testing
+ *
+ * Following official Pulumi testing patterns with proper dependency mocking
+ */
+
+// Set up Pulumi mocks FIRST
+void pulumi.runtime.setMocks({
+  newResource: (args: pulumi.runtime.MockResourceArgs): pulumi.runtime.MockResourceResult => {
+    return {
+      id: `${args.name}-mock-id`,
+      state: args.inputs as Record<string, unknown>,
+    };
+  },
+  call: (args: pulumi.runtime.MockCallArgs): pulumi.runtime.MockCallResult => {
+    return { outputs: args.inputs as Record<string, unknown> };
+  },
+});
 
 /**
  * Single Responsibility: Test K3sCredentials component only
  */
 describe("K3sCredentials Component", () => {
-  let pulumiSetup: PulumiTestSetup;
-  let mockNodeFactory: MockNodeFactory;
+  // Helper functions for creating test data (replacing MockNodeFactory)
+  const createMasterNode = (name = "test-master", vmId = 120): IK3sNodeConfig => ({
+    vmId,
+    name,
+    ip4: "10.10.0.20",
+    ip6: "fd00:10:10::20",
+    role: "master",
+    roleIndex: 0,
+    resources: {
+      cores: 2,
+      memory: 2048,
+      osDiskSize: 20,
+      dataDiskSize: 60,
+    },
+  });
 
-  beforeAll(() => {
-    pulumiSetup = new PulumiTestSetup();
-    pulumiSetup.initialize();
-    mockNodeFactory = new MockNodeFactory();
+  const createCredentials = () => ({
+    sshUsername: "testuser",
+    sshPrivateKey: "mock-private-key",
   });
 
   test("should create credentials component with valid configuration", async () => {
     // Arrange
-    const masterNode = mockNodeFactory.createMasterNode();
-    const credentials = mockNodeFactory.createCredentials();
+    const masterNode = createMasterNode();
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode,
       ...credentials,
@@ -36,8 +68,8 @@ describe("K3sCredentials Component", () => {
 
   test("should handle different master node configurations", async () => {
     // Arrange
-    const customMasterNode = mockNodeFactory.createMasterNode("custom-master", 125);
-    const credentials = mockNodeFactory.createCredentials();
+    const customMasterNode = createMasterNode("custom-master", 125);
+    const credentials = createCredentials();
     const customCredentialsConfig = {
       masterNode: customMasterNode,
       ...credentials,
@@ -52,8 +84,8 @@ describe("K3sCredentials Component", () => {
 
   test("should create SSH connection with correct parameters", () => {
     // Arrange
-    const masterNode = mockNodeFactory.createMasterNode();
-    const credentials = mockNodeFactory.createCredentials();
+    const masterNode = createMasterNode();
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode,
       ...credentials,
@@ -70,8 +102,8 @@ describe("K3sCredentials Component", () => {
 
   test("should handle kubeconfig IP replacement", async () => {
     // Arrange
-    const masterNode = mockNodeFactory.createMasterNode("ip-replacement-test", 130);
-    const credentials = mockNodeFactory.createCredentials();
+    const masterNode = createMasterNode("ip-replacement-test", 130);
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode,
       ...credentials,
@@ -88,8 +120,8 @@ describe("K3sCredentials Component", () => {
 
   test("should create token retrieval command", () => {
     // Arrange
-    const masterNode = mockNodeFactory.createMasterNode("token-test", 135);
-    const credentials = mockNodeFactory.createCredentials();
+    const masterNode = createMasterNode("token-test", 135);
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode,
       ...credentials,
@@ -105,8 +137,8 @@ describe("K3sCredentials Component", () => {
 
   test("should create kubeconfig retrieval command", () => {
     // Arrange
-    const masterNode = mockNodeFactory.createMasterNode("kubeconfig-test", 140);
-    const credentials = mockNodeFactory.createCredentials();
+    const masterNode = createMasterNode("kubeconfig-test", 140);
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode,
       ...credentials,
@@ -122,8 +154,8 @@ describe("K3sCredentials Component", () => {
 
   test("should register component outputs correctly", () => {
     // Arrange
-    const masterNode = mockNodeFactory.createMasterNode("outputs-test", 145);
-    const credentials = mockNodeFactory.createCredentials();
+    const masterNode = createMasterNode("outputs-test", 145);
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode,
       ...credentials,
@@ -140,8 +172,8 @@ describe("K3sCredentials Component", () => {
 
   test("should handle component resource options", () => {
     // Arrange
-    const masterNode = mockNodeFactory.createMasterNode("options-test", 150);
-    const credentials = mockNodeFactory.createCredentials();
+    const masterNode = createMasterNode("options-test", 150);
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode,
       ...credentials,
@@ -160,10 +192,10 @@ describe("K3sCredentials Component", () => {
   test("should create component with custom IP addresses", () => {
     // Arrange
     const customMasterNode = {
-      ...mockNodeFactory.createMasterNode("custom-ip-test", 155),
+      ...createMasterNode("custom-ip-test", 155),
       ip4: "192.168.1.100", // Custom IP to test connection creation
     };
-    const credentials = mockNodeFactory.createCredentials();
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode: customMasterNode,
       ...credentials,
@@ -180,7 +212,7 @@ describe("K3sCredentials Component", () => {
 
   test("should create component with different SSH credentials", () => {
     // Arrange
-    const masterNode = mockNodeFactory.createMasterNode("ssh-test", 160);
+    const masterNode = createMasterNode("ssh-test", 160);
     const customCredentials = {
       sshUsername: "custom-user",
       sshPrivateKey: "custom-private-key-content",
@@ -201,8 +233,8 @@ describe("K3sCredentials Component", () => {
 
   test("should create commands with correct parent relationship", () => {
     // Arrange
-    const masterNode = mockNodeFactory.createMasterNode("parent-test", 165);
-    const credentials = mockNodeFactory.createCredentials();
+    const masterNode = createMasterNode("parent-test", 165);
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode,
       ...credentials,
@@ -220,10 +252,10 @@ describe("K3sCredentials Component", () => {
   test("should handle IPv6 addresses in master node", () => {
     // Arrange
     const ipv6MasterNode = {
-      ...mockNodeFactory.createMasterNode("ipv6-test", 170),
+      ...createMasterNode("ipv6-test", 170),
       ip6: "2001:db8::1", // Custom IPv6 address
     };
-    const credentials = mockNodeFactory.createCredentials();
+    const credentials = createCredentials();
     const credentialsConfig = {
       masterNode: ipv6MasterNode,
       ...credentials,

@@ -5,8 +5,6 @@ import { createTraefikValues } from "../../config/traefik-config";
 import { TRAEFIK_DEFAULTS } from "../../shared/constants";
 import type { ITraefikBootstrapConfig } from "../../shared/types";
 
-import { createTraefikDashboardIngress } from "./traefik-ingress";
-
 export function createTraefikNamespace(name: string, parent: pulumi.Resource): k8s.core.v1.Namespace {
   return new k8s.core.v1.Namespace(
     `${name}-namespace`,
@@ -47,13 +45,4 @@ function createTraefikChartConfig(namespace: k8s.core.v1.Namespace) {
 
 function createTraefikChartOptions(parent: pulumi.Resource, namespace: k8s.core.v1.Namespace) {
   return { parent, dependsOn: [namespace] };
-}
-
-export function createTraefikDashboard(
-  name: string,
-  config: ITraefikBootstrapConfig,
-  namespace: k8s.core.v1.Namespace,
-  parent: pulumi.Resource,
-): k8s.networking.v1.Ingress | undefined {
-  return createTraefikDashboardIngress(name, config, namespace, parent);
 }

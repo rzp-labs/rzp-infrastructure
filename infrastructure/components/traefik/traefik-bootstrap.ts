@@ -1,10 +1,10 @@
 import type * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import { createTraefikDashboard } from "../../resources/kubernetes/traefik-resources";
 import type { ITraefikBootstrapConfig } from "../../shared/types";
 
 import { TraefikChart } from "./traefik-chart";
+import { TraefikDashboard } from "./traefik-dashboard";
 import { TraefikNamespace } from "./traefik-namespace";
 
 /**
@@ -17,6 +17,7 @@ import { TraefikNamespace } from "./traefik-namespace";
 export class TraefikBootstrap extends pulumi.ComponentResource {
   public readonly namespaceComponent: TraefikNamespace;
   public readonly chartComponent: TraefikChart;
+  public readonly dashboardComponent: TraefikDashboard;
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
   public readonly dashboard: k8s.networking.v1.Ingress | undefined;
@@ -32,8 +33,9 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
     this.chartComponent = new TraefikChart(name, { namespace: this.namespace }, { parent: this });
     this.chart = this.chartComponent.chart;
 
-    // Create dashboard using factory (to be refactored later)
-    this.dashboard = createTraefikDashboard(name, config, this.namespace, this);
+    // Create dashboard using ComponentResource
+    this.dashboardComponent = new TraefikDashboard(name, { config, namespace: this.namespace }, { parent: this });
+    this.dashboard = this.dashboardComponent.ingress;
 
     this.registerOutputs({
       namespace: this.namespace,

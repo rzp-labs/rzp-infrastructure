@@ -1,5 +1,5 @@
 /**
- * Network Failure Scenarios Test Suite
+ * Network Failure Scenarios Test Suite - Native Pulumi Testing
  * Single Responsibility: Test only network failure conditions
  */
 
@@ -7,18 +7,13 @@ import { FailureSimulatorFactory } from "../../helpers/k3s/failure-simulator-fac
 import { MockK8sTestClient } from "../../helpers/k3s/mock-k8s-test-client";
 import type { INetworkFailureSimulator } from "../../helpers/k3s/network-failure-simulator";
 import { PodValidator } from "../../helpers/k3s/pod-validator";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
 
 describe("Network Failures", () => {
-  let pulumiTestSetup: PulumiTestSetup;
   let k8sClient: MockK8sTestClient;
   let networkSimulator: INetworkFailureSimulator;
   let podValidator: PodValidator;
 
   beforeEach(() => {
-    pulumiTestSetup = new PulumiTestSetup();
-    pulumiTestSetup.initialize();
-
     k8sClient = new MockK8sTestClient();
     void k8sClient.initialize();
 

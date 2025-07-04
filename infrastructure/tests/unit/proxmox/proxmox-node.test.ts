@@ -1,25 +1,56 @@
 import type * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 import * as pulumi from "@pulumi/pulumi";
 
+/**
+ * Phase 3: Native Pulumi Unit Tests for ProxmoxNode Component
+ *
+ * Following official Pulumi testing patterns with proper dependency mocking
+ */
+
+// Set up mocks FIRST
+void pulumi.runtime.setMocks({
+  newResource: (args: pulumi.runtime.MockResourceArgs): pulumi.runtime.MockResourceResult => {
+    return {
+      id: `${args.name}-mock-id`,
+      state: args.inputs as Record<string, unknown>,
+    };
+  },
+  call: (args: pulumi.runtime.MockCallArgs): pulumi.runtime.MockCallResult => {
+    return { outputs: args.inputs as Record<string, unknown> };
+  },
+});
+
+// Mock the config module to avoid SSH key requirement
+jest.mock("../../../config/base", () => ({
+  getSshPublicKey: () => pulumi.output("ssh-rsa AAAAB3NzaC1yc2ETEST test@example.com"),
+}));
+
+// NOW import infrastructure after mocks
 import { type IProxmoxNodeArgs, ProxmoxNode } from "../../../components/proxmox-node";
 import type { IK3sNodeConfig, IProxmoxConfig } from "../../../shared/types";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
-// import { MockVmFactory } from "../../helpers/proxmox/mock-vm-factory"; // TODO: Use when implementing ProxmoxNode tests
 
-/**
- * Single Responsibility: Test ProxmoxNode component only
- */
-describe("ProxmoxNode Component", () => {
-  let pulumiSetup: PulumiTestSetup;
+describe("ProxmoxNode - Phase 3 Native Testing", () => {
+  let mockProxmoxConfig: IProxmoxConfig;
+  let mockNodeConfig: IK3sNodeConfig;
+  let mockProvider: proxmoxve.Provider;
 
-  beforeAll(() => {
-    pulumiSetup = new PulumiTestSetup();
-    pulumiSetup.initialize();
-  });
-
-  test("should create Proxmox VM with correct configuration", async () => {
-    // Arrange
-    const mockProxmoxConfig: IProxmoxConfig = {
+  beforeEach(() => {
+    // Create proper Provider mock
+    mockProvider = {
+      version: "1.0.0",
+      getPackage: () => ({ name: "proxmoxve", version: "1.0.0" }),
+      urn: pulumi.output("urn:pulumi:test::test::proxmoxve:index:Provider::test-provider"),
+      id: pulumi.output("test-provider-id"),
+      create: async () => ({ id: "mock-resource-id" }),
+      delete: async () => {},
+      update: async () => {},
+      diff: async () => ({ changes: [] }),
+      read: async () => ({ inputs: {}, outputs: {} }),
+      check: async () => ({ inputs: {} }),
+      invoke: async () => ({ outputs: {} }),
+      call: async () => ({ outputs: {} }),
+    } as unknown as proxmoxve.Provider;
+    mockProxmoxConfig = {
       endpoint: "https://test-proxmox:8006/api2/json",
       username: pulumi.output("test-user"),
       password: pulumi.output("test-pass"),
@@ -30,7 +61,7 @@ describe("ProxmoxNode Component", () => {
       bridge: "vmbr0",
     };
 
-    const mockNodeConfig: IK3sNodeConfig = {
+    mockNodeConfig = {
       vmId: 100,
       role: "master",
       roleIndex: 0,
@@ -44,92 +75,141 @@ describe("ProxmoxNode Component", () => {
         dataDiskSize: 60,
       },
     };
-
-    const mockProvider = {
-      getPackage: () => ({ name: "proxmoxve", version: "1.0.0" }),
-    } as unknown as proxmoxve.Provider;
-
-    const nodeArgs: IProxmoxNodeArgs = {
-      config: mockProxmoxConfig,
-      nodeConfig: mockNodeConfig,
-      provider: mockProvider,
-    };
-
-    // Act
-    const proxmoxNode = new ProxmoxNode("test-proxmox-node", nodeArgs);
-
-    // Assert
-    expect(proxmoxNode).toBeInstanceOf(ProxmoxNode);
-    expect(proxmoxNode.vmId).toBe(100);
   });
 
-  test("should handle different VM resource configurations", async () => {
-    // Arrange
-    const mockProxmoxConfig: IProxmoxConfig = {
-      endpoint: "https://test-proxmox:8006/api2/json",
-      username: pulumi.output("test-user"),
-      password: pulumi.output("test-pass"),
-      insecure: true,
-      node: "test-node",
-      isoStore: "local",
-      vmStore: "local-lvm",
-      bridge: "vmbr0",
-    };
+  describe("ComponentResource Pattern Validation", () => {
+    it("should create ProxmoxNode with VmConfiguration ComponentResource", () => {
+      // Arrange
+      const nodeArgs: IProxmoxNodeArgs = {
+        config: mockProxmoxConfig,
+        nodeConfig: mockNodeConfig,
+        provider: mockProvider,
+      };
 
-    const highResourceNodeConfig: IK3sNodeConfig = {
-      vmId: 101,
-      role: "worker",
-      roleIndex: 0,
-      name: "high-resource-node",
-      ip4: "10.10.0.21",
-      ip6: "fd00:10:10::21",
-      resources: {
-        cores: 8,
-        memory: 16384,
-        osDiskSize: 40,
-        dataDiskSize: 200,
-      },
-    };
+      // Act
+      const node = new ProxmoxNode("test-node", nodeArgs);
 
-    const lowResourceNodeConfig: IK3sNodeConfig = {
-      vmId: 102,
-      role: "worker",
-      roleIndex: 1,
-      name: "low-resource-node",
-      ip4: "10.10.0.22",
-      ip6: "fd00:10:10::22",
-      resources: {
-        cores: 1,
-        memory: 1024,
-        osDiskSize: 10,
-        dataDiskSize: 20,
-      },
-    };
+      // Assert - Validate Phase 2 ComponentResource architecture
+      expect(node).toBeInstanceOf(ProxmoxNode);
+      expect(node.config).toBe(mockNodeConfig);
+      expect(node.vmId).toBe(100);
+      expect(node.role).toBe("master");
+      expect(node.ip4).toBe("10.10.0.20");
+      expect(node.ip6).toBe("fd00:10:10::20");
+    });
 
-    const mockProvider = {
-      getPackage: () => ({ name: "proxmoxve", version: "1.0.0" }),
-    } as unknown as proxmoxve.Provider;
+    it("should handle worker node configuration", () => {
+      // Arrange
+      const workerConfig: IK3sNodeConfig = {
+        ...mockNodeConfig,
+        vmId: 101,
+        role: "worker",
+        roleIndex: 1,
+        name: "worker-node",
+      };
 
-    const highResourceArgs: IProxmoxNodeArgs = {
-      config: mockProxmoxConfig,
-      nodeConfig: highResourceNodeConfig,
-      provider: mockProvider,
-    };
+      const nodeArgs: IProxmoxNodeArgs = {
+        config: mockProxmoxConfig,
+        nodeConfig: workerConfig,
+        provider: mockProvider,
+      };
 
-    const lowResourceArgs: IProxmoxNodeArgs = {
-      config: mockProxmoxConfig,
-      nodeConfig: lowResourceNodeConfig,
-      provider: mockProvider,
-    };
+      // Act
+      const node = new ProxmoxNode("worker-node", nodeArgs);
 
-    // Act
-    const highResourceProxmoxNode = new ProxmoxNode("high-resource-node", highResourceArgs);
-    const lowResourceProxmoxNode = new ProxmoxNode("low-resource-node", lowResourceArgs);
+      // Assert
+      expect(node.vmId).toBe(101);
+      expect(node.role).toBe("worker");
+      expect(node.config.name).toBe("worker-node");
+    });
+  });
 
-    // Assert
-    expect(highResourceProxmoxNode).toBeInstanceOf(ProxmoxNode);
-    expect(lowResourceProxmoxNode).toBeInstanceOf(ProxmoxNode);
-    expect(highResourceProxmoxNode.vmId).toBe(101);
-    expect(lowResourceProxmoxNode.vmId).toBe(102);
+  describe("ComponentResource Architecture", () => {
+    it("should use VmConfiguration ComponentResource not factory functions", () => {
+      // Arrange
+      const nodeArgs: IProxmoxNodeArgs = {
+        config: mockProxmoxConfig,
+        nodeConfig: mockNodeConfig,
+        provider: mockProvider,
+      };
+
+      // Act
+      const node = new ProxmoxNode("test-node", nodeArgs);
+
+      // Assert - Uses ComponentResource pattern, not buildVmConfiguration factory
+      expect(node.vmConfiguration).toBeDefined();
+      expect(node.vmConfiguration.constructor.name).toBe("VmConfiguration");
+      expect(node.vm).toBeDefined();
+      expect(node.vm.constructor.name).toBe("VirtualMachine");
+    });
+
+    it("should apply VM transformations through ComponentResource", () => {
+      // Arrange
+      const customConfig: IK3sNodeConfig = {
+        vmId: 200,
+        role: "master",
+        roleIndex: 0,
+        name: "custom-node",
+        ip4: "10.10.0.30",
+        ip6: "fd00:10:10::30",
+        resources: {
+          cores: 4,
+          memory: 8192,
+          osDiskSize: 40,
+          dataDiskSize: 120,
+        },
+      };
+
+      const nodeArgs: IProxmoxNodeArgs = {
+        config: mockProxmoxConfig,
+        nodeConfig: customConfig,
+        provider: mockProvider,
+      };
+
+      // Act
+      const node = new ProxmoxNode("custom-node", nodeArgs);
+
+      // Assert - ComponentResource handles transformations properly
+      expect(node.config).toBe(customConfig);
+      expect(node.vmId).toBe(200);
+      expect(node.ip4).toBe("10.10.0.30");
+
+      // Verify VmConfiguration receives configuration correctly
+      expect(node.vmConfiguration.vm).toBeDefined();
+      expect(node.vmConfiguration.nodeConfig).toBe(customConfig);
+    });
+
+    it("should compose VM configuration through ComponentResource hierarchy", () => {
+      // Arrange - Test high-resource configuration
+      const highResourceConfig: IK3sNodeConfig = {
+        ...mockNodeConfig,
+        vmId: 300,
+        name: "high-resource-node",
+        resources: {
+          cores: 8,
+          memory: 16384,
+          osDiskSize: 100,
+          dataDiskSize: 500,
+        },
+      };
+
+      const nodeArgs: IProxmoxNodeArgs = {
+        config: mockProxmoxConfig,
+        nodeConfig: highResourceConfig,
+        provider: mockProvider,
+      };
+
+      // Act
+      const node = new ProxmoxNode("high-resource-node", nodeArgs);
+
+      // Assert - ComponentResource properly composes VM configuration
+      expect(node.vmConfiguration).toBeDefined();
+      expect(node.vmConfiguration.nodeConfig.resources.cores).toBe(8);
+      expect(node.vmConfiguration.nodeConfig.resources.memory).toBe(16384);
+
+      // Verify ComponentResource composition works for complex configurations
+      expect(node.vm).toBeDefined();
+      expect(typeof node.vmConfiguration).toBe("object");
+    });
   });
 });

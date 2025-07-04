@@ -59,17 +59,6 @@ describe("MetalLBBootstrap", () => {
     expect(metallb).toBeInstanceOf(MetalLBBootstrap);
     expect(metallb.namespace).toBeDefined();
     expect(metallb.chart).toBeDefined();
-    expect(metallb.readinessGate).toBeDefined();
-  });
-
-  it("should create readiness gate with proper dependencies", async () => {
-    // Arrange & Act
-    const metallb = new MetalLBBootstrap("test-metallb", mockConfig);
-
-    // Assert
-    expect(metallb.readinessGate).toBeDefined();
-    // The readiness gate should be created after the chart
-    // This ensures MetalLB is deployed before checking readiness
   });
 
   it("should follow SOLID principles with clear single responsibility", async () => {
@@ -79,7 +68,6 @@ describe("MetalLBBootstrap", () => {
     // Assert - Component should have clear single responsibility
     expect(typeof metallb.namespace).toBe("object");
     expect(typeof metallb.chart).toBe("object");
-    expect(typeof metallb.readinessGate).toBe("object");
   });
 
   it("should handle minimal configuration", async () => {
@@ -95,16 +83,5 @@ describe("MetalLBBootstrap", () => {
     // Assert
     expect(metallb.namespace).toBeDefined();
     expect(metallb.chart).toBeDefined();
-    expect(metallb.readinessGate).toBeDefined();
-  });
-
-  it("should expose readiness gate for proper dependency chaining", async () => {
-    // Act
-    const metallb = new MetalLBBootstrap("test-metallb", mockConfig);
-
-    // Assert
-    // The readiness gate should be accessible for dependent services like Traefik
-    expect(metallb.readinessGate).toBeDefined();
-    expect(typeof metallb.readinessGate).toBe("object");
   });
 });

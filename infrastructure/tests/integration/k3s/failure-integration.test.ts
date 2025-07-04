@@ -1,5 +1,5 @@
 /**
- * Failure Integration Test Suite
+ * Failure Integration Test Suite - Native Pulumi Testing
  * Single Responsibility: Test cross-simulator integration scenarios ONLY
  */
 
@@ -7,11 +7,9 @@ import { FailureSimulatorFactory } from "../../helpers/k3s/failure-simulator-fac
 import { K8sTestClient } from "../../helpers/k3s/k8s-test-client";
 import type { IMasterFailureSimulator } from "../../helpers/k3s/master-failure-simulator";
 import type { INetworkFailureSimulator } from "../../helpers/k3s/network-failure-simulator";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
 import type { IResourceFailureSimulator } from "../../helpers/k3s/resource-failure-simulator";
 
 describe("Failure Integration", () => {
-  let pulumiTestSetup: PulumiTestSetup;
   let k8sClient: K8sTestClient;
   let factory: FailureSimulatorFactory;
   let masterSimulator: IMasterFailureSimulator;
@@ -19,9 +17,6 @@ describe("Failure Integration", () => {
   let resourceSimulator: IResourceFailureSimulator;
 
   beforeEach(() => {
-    pulumiTestSetup = new PulumiTestSetup();
-    pulumiTestSetup.initialize();
-
     k8sClient = new K8sTestClient();
     void k8sClient.initialize();
 

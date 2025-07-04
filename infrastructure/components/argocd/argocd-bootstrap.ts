@@ -1,15 +1,13 @@
 import type * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import {
-  createArgoCdAdminSecret,
-  createArgoCdIngress,
-  createArgoCdSelfApp,
-} from "../../resources/kubernetes/argocd-resources";
 import type { IArgoCdBootstrapConfig } from "../../shared/types";
 
+import { ArgoCdAdminSecret } from "./argocd-admin-secret";
 import { ArgoCdChart } from "./argocd-chart";
+import { ArgoCdIngress } from "./argocd-ingress";
 import { ArgoCdNamespace } from "./argocd-namespace";
+import { ArgoCdSelfApp } from "./argocd-self-app";
 
 /**
  * ArgoCD Bootstrap Component
@@ -20,7 +18,10 @@ import { ArgoCdNamespace } from "./argocd-namespace";
  */
 export class ArgoCdBootstrap extends pulumi.ComponentResource {
   public readonly namespaceComponent: ArgoCdNamespace;
+  public readonly adminSecretComponent: ArgoCdAdminSecret;
   public readonly chartComponent: ArgoCdChart;
+  public readonly ingressComponent: ArgoCdIngress;
+  public readonly selfAppComponent: ArgoCdSelfApp;
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
   public readonly argoCdApp: k8s.apiextensions.CustomResource;
@@ -34,16 +35,21 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
     this.namespaceComponent = new ArgoCdNamespace(name, { parent: this });
     this.namespace = this.namespaceComponent.namespace;
 
-    // Create admin secret using factory (to be refactored later)
-    this.adminSecret = createArgoCdAdminSecret(name, config, this.namespace, this);
+    // Create admin secret using ComponentResource
+    this.adminSecretComponent = new ArgoCdAdminSecret(name, { config, namespace: this.namespace }, { parent: this });
+    this.adminSecret = this.adminSecretComponent.secret;
 
     // Deploy ArgoCD using ComponentResource
     this.chartComponent = new ArgoCdChart(name, { config, namespace: this.namespace }, { parent: this });
     this.chart = this.chartComponent.chart;
 
-    // Create networking and self-management using factories (to be refactored later)
-    this.ingress = createArgoCdIngress(name, config, this.namespace, this);
-    this.argoCdApp = createArgoCdSelfApp(name, config, this.namespace, this);
+    // Create ingress using ComponentResource
+    this.ingressComponent = new ArgoCdIngress(name, { config, namespace: this.namespace }, { parent: this });
+    this.ingress = this.ingressComponent.ingress;
+
+    // Create self-management application using ComponentResource
+    this.selfAppComponent = new ArgoCdSelfApp(name, { config, namespace: this.namespace }, { parent: this });
+    this.argoCdApp = this.selfAppComponent.application;
 
     // Register outputs - Pulumi handles dependency ordering automatically
     this.registerOutputs({

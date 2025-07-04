@@ -1,21 +1,16 @@
 /**
- * NodeValidator Unit Tests
+ * NodeValidator Unit Tests - Native Pulumi Testing
  * Single Responsibility: Test NodeValidator helper class functionality
  */
 
 import { MockK8sTestClient } from "../../helpers/k3s/mock-k8s-test-client";
 import { NodeValidator } from "../../helpers/k3s/node-validator";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
 
 describe("NodeValidator", () => {
-  let pulumiTestSetup: PulumiTestSetup;
   let k8sClient: MockK8sTestClient;
   let nodeValidator: NodeValidator;
 
   beforeEach(() => {
-    pulumiTestSetup = new PulumiTestSetup();
-    pulumiTestSetup.initialize();
-
     k8sClient = new MockK8sTestClient();
     void k8sClient.initialize();
 

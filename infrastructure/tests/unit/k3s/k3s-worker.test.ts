@@ -1,24 +1,56 @@
+import * as pulumi from "@pulumi/pulumi";
+
 import { K3sWorker } from "../../../components/k3s/k3s-worker";
-import { MockNodeFactory } from "../../helpers/k3s/mock-node-factory";
-import { PulumiTestSetup } from "../../helpers/k3s/pulumi-test-setup";
+import type { IK3sNodeConfig } from "../../../shared/types";
+
+/**
+ * K3sWorker Component - Native Pulumi Testing
+ *
+ * Following official Pulumi testing patterns with proper dependency mocking
+ */
+
+// Set up Pulumi mocks FIRST
+void pulumi.runtime.setMocks({
+  newResource: (args: pulumi.runtime.MockResourceArgs): pulumi.runtime.MockResourceResult => {
+    return {
+      id: `${args.name}-mock-id`,
+      state: args.inputs as Record<string, unknown>,
+    };
+  },
+  call: (args: pulumi.runtime.MockCallArgs): pulumi.runtime.MockCallResult => {
+    return { outputs: args.inputs as Record<string, unknown> };
+  },
+});
 
 /**
  * Single Responsibility: Test K3sWorker component only
  */
 describe("K3sWorker Component", () => {
-  let pulumiSetup: PulumiTestSetup;
-  let mockNodeFactory: MockNodeFactory;
+  // Helper functions for creating test data (replacing MockNodeFactory)
+  const createWorkerNode = (name = "test-worker", vmId = 130): IK3sNodeConfig => ({
+    vmId,
+    name,
+    ip4: "10.10.0.30",
+    ip6: "fd00:10:10::30",
+    role: "worker",
+    roleIndex: 0,
+    resources: {
+      cores: 2,
+      memory: 2048,
+      osDiskSize: 20,
+      dataDiskSize: 60,
+    },
+  });
 
-  beforeAll(() => {
-    pulumiSetup = new PulumiTestSetup();
-    pulumiSetup.initialize();
-    mockNodeFactory = new MockNodeFactory();
+  const createCredentials = () => ({
+    sshUsername: "testuser",
+    sshPrivateKey: "mock-private-key",
   });
 
   test("should create worker component with valid configuration", async () => {
     // Arrange
-    const workerNode = mockNodeFactory.createWorkerNode();
-    const credentials = mockNodeFactory.createCredentials();
+    const workerNode = createWorkerNode();
+    const credentials = createCredentials();
     const workerConfig = {
       node: workerNode,
       ...credentials,
@@ -37,9 +69,9 @@ describe("K3sWorker Component", () => {
 
   test("should handle multiple worker configurations", async () => {
     // Arrange
-    const worker1Node = mockNodeFactory.createWorkerNode("worker-1", 130);
-    const worker2Node = mockNodeFactory.createWorkerNode("worker-2", 131);
-    const credentials = mockNodeFactory.createCredentials();
+    const worker1Node = createWorkerNode("worker-1", 130);
+    const worker2Node = createWorkerNode("worker-2", 131);
+    const credentials = createCredentials();
 
     const worker1Config = {
       node: worker1Node,
@@ -66,8 +98,8 @@ describe("K3sWorker Component", () => {
 
   test("should handle different master endpoints", async () => {
     // Arrange
-    const workerNode = mockNodeFactory.createWorkerNode();
-    const credentials = mockNodeFactory.createCredentials();
+    const workerNode = createWorkerNode();
+    const credentials = createCredentials();
     const workerConfig = {
       node: workerNode,
       ...credentials,
