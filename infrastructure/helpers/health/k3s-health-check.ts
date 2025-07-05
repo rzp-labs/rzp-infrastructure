@@ -18,7 +18,7 @@ export function createK3sHealthCheck(
   config: IK3sHealthCheckConfig,
   opts?: pulumi.ComponentResourceOptions,
 ): command.remote.Command {
-  const { maxRetries = 20, retryIntervalSeconds = 5, timeoutSeconds = 300 } = config;
+  const { maxRetries = 20, retryIntervalSeconds = 5, timeoutSeconds = 600 } = config;
 
   return new command.remote.Command(
     `${name}-k3s-readiness-check`,

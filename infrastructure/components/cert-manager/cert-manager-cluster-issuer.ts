@@ -2,11 +2,7 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import { kubernetesResourceOptions } from "../../shared/resource-options";
-import type { ICertManagerBootstrapConfig } from "../../shared/types";
-
-interface ICertManagerClusterIssuerProps {
-  config: ICertManagerBootstrapConfig;
-}
+import type { ICertManagerBootstrapConfig, ICertManagerClusterIssuerProps } from "../../shared/types";
 
 /**
  * Cert-Manager Cluster Issuer Component

@@ -81,7 +81,7 @@ void pulumi.runtime.setMocks({
 describe("ArgoCdBootstrap Component", () => {
   test("should create ArgoCD bootstrap component with valid configuration", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
+    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd", {
@@ -99,7 +99,7 @@ describe("ArgoCdBootstrap Component", () => {
 
   test("should handle default domain when not provided", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
+    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd-default", {
@@ -113,7 +113,7 @@ describe("ArgoCdBootstrap Component", () => {
 
   test("should handle custom admin password", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
+    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
     const customPassword = pulumi.secret("custom-admin-password");
 
     // Act
@@ -130,7 +130,7 @@ describe("ArgoCdBootstrap Component", () => {
 
   test("should maintain SOLID principles", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
+    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd-solid", {
@@ -148,7 +148,7 @@ describe("ArgoCdBootstrap Component", () => {
 describe("ArgoCD Component Architecture", () => {
   test("should follow component resource pattern", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/stephen/rzp-infra.git";
+    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd-arch", {

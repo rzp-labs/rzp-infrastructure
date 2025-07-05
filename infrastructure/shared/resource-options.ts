@@ -1,5 +1,6 @@
 import type * as pulumi from "@pulumi/pulumi";
 
+import { RESOURCE_TIMEOUTS } from "./constants";
 import { applyStandardTransformations, applyVmTransformations } from "./transformations";
 
 /**
@@ -8,41 +9,13 @@ import { applyStandardTransformations, applyVmTransformations } from "./transfor
  */
 export const kubernetesResourceOptions: pulumi.ResourceOptions = {
   transformations: [applyStandardTransformations],
-  customTimeouts: {
-    create: "10m", // Increased from 5m for LoadBalancer services
-    update: "5m", // Increased from 2m
-    delete: "3m", // Increased from 1m
-  },
+  customTimeouts: RESOURCE_TIMEOUTS.KUBERNETES,
 };
 
 /**
- * Enhanced resource options for Helm charts with longer timeouts.
+ * Creates resource options for Kubernetes resources with parent dependency.
  */
-export const helmChartResourceOptions: pulumi.ResourceOptions = {
-  transformations: [applyStandardTransformations],
-  customTimeouts: {
-    create: "10m",
-    update: "5m",
-    delete: "3m",
-  },
-};
-
-/**
- * Resource options for namespace creation.
- */
-export const namespaceResourceOptions: pulumi.ResourceOptions = {
-  transformations: [applyStandardTransformations],
-  customTimeouts: {
-    create: "2m",
-    update: "1m",
-    delete: "3m", // Longer delete timeout for namespace cleanup
-  },
-};
-
-/**
- * Creates resource options with parent dependency.
- */
-export function createChildResourceOptions(
+export function createKubernetesResourceOptions(
   parent: pulumi.Resource,
   additionalOptions?: pulumi.ResourceOptions,
 ): pulumi.ResourceOptions {
@@ -52,6 +25,14 @@ export function createChildResourceOptions(
     ...additionalOptions,
   };
 }
+
+/**
+ * Enhanced resource options for Helm charts with longer timeouts.
+ */
+export const helmChartResourceOptions: pulumi.ResourceOptions = {
+  transformations: [applyStandardTransformations],
+  customTimeouts: RESOURCE_TIMEOUTS.HELM_CHART,
+};
 
 /**
  * Creates resource options for Helm charts with parent and dependencies.
@@ -74,11 +55,7 @@ export function createHelmChartOptions(
  */
 export const vmResourceOptions: pulumi.ResourceOptions = {
   transformations: [applyVmTransformations],
-  customTimeouts: {
-    create: "15m", // VMs can take longer to create
-    update: "10m",
-    delete: "5m",
-  },
+  customTimeouts: RESOURCE_TIMEOUTS.VM,
 };
 
 /**
@@ -94,3 +71,11 @@ export function createVmResourceOptions(
     ...additionalOptions,
   };
 }
+
+/**
+ * Resource options for namespace creation.
+ */
+export const namespaceResourceOptions: pulumi.ResourceOptions = {
+  transformations: [applyStandardTransformations],
+  customTimeouts: RESOURCE_TIMEOUTS.NAMESPACE,
+};

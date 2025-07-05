@@ -16,13 +16,13 @@ export function createVmHealthCheck(
   config: IVmHealthCheckConfig,
   opts?: pulumi.ComponentResourceOptions,
 ): command.remote.Command {
-  const { timeoutSeconds = 300 } = config;
+  const { timeoutSeconds = 600 } = config;
 
   return new command.remote.Command(
     `${name}-vm-readiness-check`,
     {
       connection: buildConnectionConfig(config),
-      create: buildVmHealthScript(),
+      create: buildVmHealthScript(timeoutSeconds),
     },
     buildCommandOptions(opts, timeoutSeconds),
   );
@@ -45,18 +45,19 @@ function buildCommandOptions(opts: pulumi.ComponentResourceOptions | undefined, 
   };
 }
 
-function buildVmHealthScript(): string {
+function buildVmHealthScript(timeoutSeconds: number): string {
   return `#!/bin/bash
     set -e
-    ${buildCloudInitWait()}
+    ${buildCloudInitWait(timeoutSeconds)}
     ${buildKernelModuleChecks()}
     ${buildNetworkChecks()}
   `;
 }
 
-function buildCloudInitWait(): string {
+function buildCloudInitWait(timeoutSeconds: number): string {
+  const timeoutMinutes = Math.ceil(timeoutSeconds / 60);
   return `echo "Waiting for cloud-init completion..."
-    timeout 300 cloud-init status --wait || { echo "Cloud-init timeout after 5 minutes"; exit 1; }
+    timeout ${timeoutSeconds} cloud-init status --wait || { echo "Cloud-init timeout after ${timeoutMinutes} minutes"; exit 1; }
     echo "Cloud-init completed successfully"`;
 }
 

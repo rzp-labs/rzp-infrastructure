@@ -26,8 +26,8 @@ jest.mock("../../../config/base", () => ({
 }));
 
 // NOW import infrastructure after mocks
-import { type IProxmoxNodeArgs, ProxmoxNode } from "../../../components/proxmox-node";
-import type { IK3sNodeConfig, IProxmoxConfig } from "../../../shared/types";
+import { ProxmoxNode } from "../../../components/proxmox-node";
+import type { IK3sNodeConfig, IProxmoxConfig, IProxmoxNodeArgs } from "../../../shared/types";
 
 describe("ProxmoxNode - Phase 3 Native Testing", () => {
   let mockProxmoxConfig: IProxmoxConfig;

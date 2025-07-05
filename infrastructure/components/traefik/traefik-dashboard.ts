@@ -41,22 +41,21 @@ export class TraefikDashboard extends pulumi.ComponentResource {
   }
 
   private createDashboardIngress(name: string, args: ITraefikDashboardArgs): k8s.networking.v1.Ingress {
-    return new k8s.networking.v1.Ingress(
-      `${name}-dashboard`,
-      {
-        metadata: this.createIngressMetadata(args.config, args.namespace),
-        spec: this.createIngressSpec(args),
+    const ingressConfig = {
+      metadata: this.createIngressMetadata(args.config, args.namespace),
+      spec: {
+        ingressClassName: "stg-traefik-chart",
+        ...this.createIngressSpec(args),
       },
-      {
-        parent: this,
-        dependsOn: [args.chart], // Wait for Traefik chart to be fully deployed
-        customTimeouts: {
-          create: "10m", // Give more time for LoadBalancer IP allocation
-          update: "5m",
-          delete: "5m",
-        },
-      },
-    );
+    };
+
+    const resourceOptions = {
+      parent: this,
+      dependsOn: [args.chart],
+      customTimeouts: { create: "10m", update: "5m", delete: "5m" },
+    };
+
+    return new k8s.networking.v1.Ingress(`${name}-dashboard`, ingressConfig, resourceOptions);
   }
 
   private createIngressMetadata(config: ITraefikBootstrapConfig, namespace: k8s.core.v1.Namespace) {
@@ -69,7 +68,6 @@ export class TraefikDashboard extends pulumi.ComponentResource {
 
   private createIngressAnnotations(config: ITraefikBootstrapConfig) {
     const baseAnnotations = {
-      "kubernetes.io/ingress.class": "traefik",
       "traefik.ingress.kubernetes.io/router.tls": "true",
       "traefik.ingress.kubernetes.io/router.entrypoints": "websecure",
     };

@@ -57,7 +57,7 @@ function getSysctlConfig(): string {
       vm.swappiness=0
       fs.inotify.max_user_watches=1048576
       fs.inotify.max_user_instances=512
-      
+
       # Kubernetes networking requirements
       net.ipv4.ip_forward=1
       net.ipv6.conf.all.forwarding=1
@@ -84,7 +84,7 @@ function getSystemFiles(): string {
   - path: /etc/sysctl.d/99-kubernetes.conf
     content: |
 ${getSysctlConfig()}
-      
+
   - path: /etc/modules-load.d/kubernetes.conf
     content: |
 ${getKernelModules()}`;
@@ -106,7 +106,7 @@ function getSystemServiceCommands(): string {
  * Generate kernel module loading commands
  */
 function getKernelModuleCommands(): string {
-  return `  
+  return `
   # Load Kubernetes kernel modules immediately
   - [ modprobe, br_netfilter ]
   - [ modprobe, overlay ]
@@ -121,7 +121,7 @@ function getKernelModuleCommands(): string {
  * Generate networking configuration commands
  */
 function getNetworkingCommands(): string {
-  return `  
+  return `
   # Apply Kubernetes networking sysctl settings
   - [ sysctl, -p, /etc/sysctl.d/99-kubernetes.conf ]`;
 }
@@ -130,7 +130,7 @@ function getNetworkingCommands(): string {
  * Generate swap disable commands
  */
 function getSwapDisableCommands(): string {
-  return `  
+  return `
   # Disable swap for Kubernetes
   - [ swapoff, -a ]
   - [ sed, -i, '/ swap / s/^/#/', /etc/fstab ]`;
@@ -140,7 +140,7 @@ function getSwapDisableCommands(): string {
  * Generate DNS configuration commands
  */
 function getDnsCommands(): string {
-  return `  
+  return `
   # Configure DNS resolution
   - [ rm, -f, /etc/resolv.conf ]
   - [ ln, -sf, /run/systemd/resolve/stub-resolv.conf, /etc/resolv.conf ]`;
@@ -150,7 +150,7 @@ function getDnsCommands(): string {
  * Generate firewall configuration commands
  */
 function getFirewallCommands(): string {
-  return `  
+  return `
   # Disable local firewall (router firewall handles perimeter security)
   - [ sh, -c, "systemctl disable --now ufw || true" ]`;
 }

@@ -1,7 +1,7 @@
 import { TRAEFIK_DEFAULTS } from "../shared/constants";
 import type { ITraefikChartValues } from "../shared/types";
 
-export function createTraefikValues(): ITraefikChartValues {
+export function createTraefikChartValues(): ITraefikChartValues {
   return {
     deployment: { replicas: TRAEFIK_DEFAULTS.REPLICAS },
     service: { type: TRAEFIK_DEFAULTS.SERVICE_TYPE },
@@ -10,6 +10,10 @@ export function createTraefikValues(): ITraefikChartValues {
     certificatesResolvers: createCertificateResolvers(),
     globalArguments: ["--global.checknewversion=false", "--global.sendanonymoususage=false"],
     additionalArguments: createAdditionalArguments(),
+    kubernetesIngress: {
+      enabled: true,
+      publishedService: { enabled: true },
+    },
   };
 }
 
@@ -49,10 +53,11 @@ function createAdditionalArguments(): string[] {
   return [
     "--log.level=INFO",
     "--accesslog=true",
-    "--metrics.prometheus=true",
-    "--metrics.prometheus.addEntryPointsLabels=true",
-    "--metrics.prometheus.addServicesLabels=true",
-    "--entrypoints.web.address=:8000",
+    "--entrypoints.web.address=:9000",
     "--entrypoints.websecure.address=:8443",
   ];
+}
+
+export function isDashboardEnabled(): boolean {
+  return true;
 }

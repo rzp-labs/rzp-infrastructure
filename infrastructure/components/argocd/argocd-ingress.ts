@@ -1,9 +1,10 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import { createArgoCdIngressAnnotations, createArgoCdIngressSpec } from "../../config/argocd-config";
+import { createArgoCdIngressSpec } from "../../config/argocd-config";
 import { ARGOCD_DEFAULTS } from "../../shared/constants";
 import type { IArgoCdBootstrapConfig } from "../../shared/types";
+import { createTraefikIngressConfig } from "../../shared/utils";
 import { withDefault } from "../../shared/utils";
 
 export interface IArgoCdIngressArgs {
@@ -43,7 +44,7 @@ export class ArgoCdIngress extends pulumi.ComponentResource {
     return {
       name: "argocd-server-ingress",
       namespace: namespace.metadata.name,
-      annotations: createArgoCdIngressAnnotations(),
+      annotations: createTraefikIngressConfig(true).annotations,
     };
   }
 }

@@ -8,10 +8,12 @@ export function getCloudflareConfig(): ICloudflareConfig {
   const apiToken = cfg.requireSecret("apiToken");
   const zoneId = cfg.require("zoneId");
   const domain = cfg.get("domain") ?? "rzp.one";
+  const email = cfg.get("email") ?? "admin@rzp.one";
 
   return {
     apiToken,
     zoneId,
     domain,
+    email,
   };
 }

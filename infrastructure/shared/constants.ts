@@ -105,3 +105,11 @@ export const DNS_DEFAULTS = {
   SERVERS: ["1.1.1.1", "1.0.0.1"], // Cloudflare DNS
   DOMAIN: "local",
 } as const;
+
+// Resource Timeout Constants
+export const RESOURCE_TIMEOUTS = {
+  KUBERNETES: { create: "10m", update: "5m", delete: "3m" },
+  NAMESPACE: { create: "2m", update: "1m", delete: "3m" },
+  HELM_CHART: { create: "10m", update: "5m", delete: "3m" },
+  VM: { create: "15m", update: "10m", delete: "5m" },
+} as const;

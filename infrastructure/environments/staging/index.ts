@@ -13,6 +13,7 @@ import { MetalLBBootstrap } from "../../components/metallb";
 import { TraefikBootstrap } from "../../components/traefik/traefik-bootstrap";
 import { getCloudflareConfig } from "../../config/cloudflare-config";
 import { getStagingConfig } from "../../config/staging";
+import { isDashboardEnabled } from "../../config/traefik-config";
 import { METALLB_DEFAULTS } from "../../shared/constants";
 import { getVmRole } from "../../shared/utils";
 
@@ -94,12 +95,12 @@ export const traefik = new TraefikBootstrap(
   "stg-traefik",
   {
     domain: cloudflareConfig.domain,
-    email: "admin@rzp.one",
+    email: cloudflareConfig.email,
     staging: true, // Use Let's Encrypt staging for testing
-    dashboard: true,
+    dashboard: isDashboardEnabled(),
   },
   {
-    dependsOn: [metallb.ipAddressPool], // Wait for MetalLB IP pool to be ready
+    dependsOn: [metallb.chart], // Wait for MetalLB chart to be ready
     providers: { kubernetes: defaultK8sProvider },
   },
 );
@@ -108,7 +109,7 @@ export const traefik = new TraefikBootstrap(
 export const argocd = new ArgoCdBootstrap(
   "stg-argocd",
   {
-    repositoryUrl: "https://github.com/stephen/rzp-infra.git", // Update with actual repo URL
+    repositoryUrl: "https://github.com/rzp-labs/rzp-infrastructure.git",
     // adminPassword will be read from Pulumi config: pulumi config set --secret argoCdAdminPassword
     domain: `stg.argocd.${cloudflareConfig.domain}`,
   },

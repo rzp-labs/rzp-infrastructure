@@ -1,6 +1,9 @@
-import * as k8s from "@pulumi/kubernetes";
+import type * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
+import { createMetalLBChartValues } from "../../config/metallb-config";
+import { ChartComponent } from "../../shared/base-chart-component";
+import { NamespaceComponent } from "../../shared/base-namespace-component";
 import { METALLB_DEFAULTS } from "../../shared/constants";
 import type { IMetalLBBootstrapConfig } from "../../shared/types";
 
@@ -9,127 +12,62 @@ import type { IMetalLBBootstrapConfig } from "../../shared/types";
  *
  * Deploys MetalLB load balancer controller with IP pool configuration.
  * Uses Helm chart with post-install hooks for proper timing and idempotency.
+ *
+ * REFACTORED: Now uses generic NamespaceComponent and ChartComponent
+ * instead of service-specific components, reducing duplication.
  */
 export class MetalLBBootstrap extends pulumi.ComponentResource {
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
-  public readonly ipAddressPool: k8s.apiextensions.CustomResource;
-  public readonly l2Advertisement: k8s.apiextensions.CustomResource;
+  public readonly namespaceComponent: NamespaceComponent;
+  public readonly chartComponent: ChartComponent;
 
   constructor(name: string, config: IMetalLBBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:metallb:MetalLBBootstrap", name, {}, opts);
 
-    // Create MetalLB namespace
-    this.namespace = this.createMetalLBNamespace(name);
+    this.namespaceComponent = this.createNamespace(name);
+    this.namespace = this.namespaceComponent.namespace;
 
-    // Deploy MetalLB Helm chart
-    this.chart = this.createMetalLBChart(name);
+    this.chartComponent = this.createChart(name, config);
+    this.chart = this.chartComponent.chart;
 
-    // Create IPAddressPool and L2Advertisement as separate resources
-    // Wait for chart.ready to ensure all MetalLB components (including webhooks) are ready
-    this.ipAddressPool = this.createIPAddressPool(name, config);
-    this.l2Advertisement = this.createL2Advertisement(name);
-
-    this.registerOutputs({
-      namespace: this.namespace,
-      chart: this.chart,
-      ipAddressPool: this.ipAddressPool,
-      l2Advertisement: this.l2Advertisement,
-    });
+    this.registerAllOutputs();
   }
 
-  private createMetalLBNamespace(name: string): k8s.core.v1.Namespace {
-    return new k8s.core.v1.Namespace(
-      `${name}-namespace`,
+  private createNamespace(name: string): NamespaceComponent {
+    return new NamespaceComponent(
+      name,
       {
-        metadata: {
-          name: METALLB_DEFAULTS.NAMESPACE,
-          labels: {
-            "app.kubernetes.io/name": "metallb",
-            "app.kubernetes.io/managed-by": "pulumi",
-            "pod-security.kubernetes.io/enforce": "privileged",
-            "pod-security.kubernetes.io/audit": "privileged",
-            "pod-security.kubernetes.io/warn": "privileged",
-          },
+        namespaceName: METALLB_DEFAULTS.NAMESPACE,
+        appName: "metallb",
+        extraLabels: {
+          "pod-security.kubernetes.io/enforce": "privileged",
+          "pod-security.kubernetes.io/audit": "privileged",
+          "pod-security.kubernetes.io/warn": "privileged",
         },
       },
       { parent: this },
     );
   }
 
-  private createMetalLBChart(name: string): k8s.helm.v3.Chart {
-    const chartConfig = this.createChartConfig();
-    const chartOptions = this.createChartOptions();
-
-    return new k8s.helm.v3.Chart(`${name}-chart`, chartConfig, chartOptions);
-  }
-
-  private createChartConfig() {
-    return {
-      chart: METALLB_DEFAULTS.CHART_NAME,
-      fetchOpts: { repo: METALLB_DEFAULTS.CHART_REPO },
-      version: METALLB_DEFAULTS.CHART_VERSION,
-      namespace: this.namespace.metadata.name,
-      // Remove extraResources - create as separate K8s resources instead
-      values: {
-        controller: { enabled: true },
-        speaker: { enabled: true },
-      },
-    };
-  }
-
-  private createChartOptions() {
-    return {
-      parent: this,
-      dependsOn: [this.namespace],
-    };
-  }
-
-  // Removed createWebhookHealthCheck - using chart.ready dependency instead
-  // This aligns with production best practices for MetalLB orchestration
-
-  private createIPAddressPool(name: string, config: IMetalLBBootstrapConfig): k8s.apiextensions.CustomResource {
-    const resourceConfig = this.buildIPAddressPoolConfig(config);
-    // Use chart.ready to wait for all chart resources including webhooks
-    const options = { parent: this, dependsOn: [this.chart] };
-
-    return new k8s.apiextensions.CustomResource(`${name}-ip-pool`, resourceConfig, options);
-  }
-
-  private buildIPAddressPoolConfig(config: IMetalLBBootstrapConfig) {
-    return {
-      apiVersion: "metallb.io/v1beta1",
-      kind: "IPAddressPool",
-      metadata: {
-        name: "default-pool",
-        namespace: this.namespace.metadata.name,
-        annotations: {
-          "pulumi.com/waitFor": "jsonpath={.metadata.name}",
-          "pulumi.com/timeoutSeconds": "120",
-        },
-      },
-      spec: { addresses: [config.ipRange] },
-    };
-  }
-
-  private createL2Advertisement(name: string): k8s.apiextensions.CustomResource {
-    return new k8s.apiextensions.CustomResource(
-      `${name}-l2-advertisement`,
+  private createChart(name: string, config: IMetalLBBootstrapConfig): ChartComponent {
+    return new ChartComponent(
+      name,
       {
-        apiVersion: "metallb.io/v1beta1",
-        kind: "L2Advertisement",
-        metadata: {
-          name: "default-l2-advertisement",
-          namespace: this.namespace.metadata.name,
-        },
-        spec: {
-          ipAddressPools: ["default-pool"],
-        },
+        chartName: METALLB_DEFAULTS.CHART_NAME,
+        chartRepo: METALLB_DEFAULTS.CHART_REPO,
+        chartVersion: METALLB_DEFAULTS.CHART_VERSION,
+        namespace: this.namespace,
+        values: createMetalLBChartValues(config.ipRange),
       },
-      {
-        parent: this,
-        dependsOn: [this.ipAddressPool],
-      },
+      { parent: this },
     );
+  }
+
+  private registerAllOutputs(): void {
+    this.registerOutputs({
+      namespace: this.namespace,
+      chart: this.chart,
+    });
   }
 }

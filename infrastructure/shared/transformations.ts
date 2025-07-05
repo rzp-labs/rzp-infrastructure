@@ -18,16 +18,6 @@ function addStandardLabelsAndAnnotations(args: pulumi.ResourceTransformationArgs
   };
 }
 
-function addHelmTimeouts(args: pulumi.ResourceTransformationArgs): pulumi.ResourceTransformationArgs {
-  return {
-    ...args,
-    opts: { ...args.opts, customTimeouts: { create: "10m", update: "5m", delete: "3m", ...args.opts?.customTimeouts } },
-  };
-}
-
-/**
- * Standard transformation that applies common labels, annotations, and timeouts.
- */
 /**
  * VM transformation that applies common VM tags and settings.
  */
@@ -53,11 +43,10 @@ export const applyVmTransformations: pulumi.ResourceTransformation = (args) => {
 };
 
 /**
- * Standard transformation that applies common labels, annotations, and timeouts.
+ * Standard transformation that applies common labels and annotations.
  */
 export const applyStandardTransformations: pulumi.ResourceTransformation = (args) => {
   if (!args.type.includes("kubernetes:")) return args;
 
-  const transformedArgs = addStandardLabelsAndAnnotations(args);
-  return args.type.includes("kubernetes:helm") ? addHelmTimeouts(transformedArgs) : transformedArgs;
+  return addStandardLabelsAndAnnotations(args);
 };

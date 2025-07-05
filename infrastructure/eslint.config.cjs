@@ -142,6 +142,14 @@ module.exports = [
         },
     },
 
+    /* Types files - exempt from line limits */
+    {
+        files: ["**/shared/types.ts"],
+        rules: {
+            "max-lines": "off",
+        },
+    },
+
     /* Test files - relaxed rules */
     {
         files: ["**/*.test.ts", "**/*.spec.ts", "**/tests/**"],

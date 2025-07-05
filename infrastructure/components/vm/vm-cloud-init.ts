@@ -2,17 +2,8 @@
  * VM cloud-init configuration utilities
  */
 
-import type * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
-
 import { DNS_DEFAULTS } from "../../shared/constants";
-import type { IK3sNodeConfig, IProxmoxConfig } from "../../shared/types";
-
-interface IVmCloudInitArgs {
-  readonly nodeConfig: IK3sNodeConfig;
-  readonly config: IProxmoxConfig;
-  readonly metadataFile: proxmoxve.storage.File;
-  readonly userDataFile: proxmoxve.storage.File;
-}
+import type { IK3sNodeConfig, IProxmoxConfig, IVmCloudInitArgs } from "../../shared/types";
 
 export function getVmCloudInitConfig(args: IVmCloudInitArgs) {
   return {

@@ -1,24 +1,14 @@
 import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 import * as pulumi from "@pulumi/pulumi";
 
-import type { DebianCloudImage } from "../../resources/storage/images";
 import { VM_DEFAULTS } from "../../shared/constants";
 import { applyVmTransformations } from "../../shared/transformations";
-import type { IK3sNodeConfig, IProxmoxConfig } from "../../shared/types";
+import type { IK3sNodeConfig, IProxmoxConfig, IVmConfigurationProps } from "../../shared/types";
 import { capitalize } from "../../shared/utils";
 
 import { getVmCloudInitConfig } from "./vm-cloud-init";
 import { getVmHardwareConfig } from "./vm-hardware";
 import { getVmDiskConfig } from "./vm-storage";
-
-interface IVmConfigurationProps {
-  nodeConfig: IK3sNodeConfig;
-  config: IProxmoxConfig;
-  cloudImage: DebianCloudImage;
-  metadataFile: proxmoxve.storage.File;
-  userDataFile: proxmoxve.storage.File;
-  provider: proxmoxve.Provider;
-}
 
 /**
  * VM Configuration Component

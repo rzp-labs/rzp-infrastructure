@@ -1,12 +1,14 @@
 import type * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
+import { createArgoCdChartValues } from "../../config/argocd-config";
+import { ChartComponent } from "../../shared/base-chart-component";
+import { NamespaceComponent } from "../../shared/base-namespace-component";
+import { ARGOCD_DEFAULTS } from "../../shared/constants";
 import type { IArgoCdBootstrapConfig } from "../../shared/types";
 
 import { ArgoCdAdminSecret } from "./argocd-admin-secret";
-import { ArgoCdChart } from "./argocd-chart";
 import { ArgoCdIngress } from "./argocd-ingress";
-import { ArgoCdNamespace } from "./argocd-namespace";
 import { ArgoCdSelfApp } from "./argocd-self-app";
 
 /**
@@ -15,11 +17,15 @@ import { ArgoCdSelfApp } from "./argocd-self-app";
  * Deploys ArgoCD to K3s cluster to enable GitOps workflow.
  * This is the foundation component that enables all other services
  * to be deployed via GitOps patterns.
+ *
+ * REFACTORED: Now uses generic NamespaceComponent and ChartComponent
+ * for the core Helm deployment, while keeping ArgoCD-specific components
+ * (admin secret, ingress, self-app) as separate ComponentResources.
  */
 export class ArgoCdBootstrap extends pulumi.ComponentResource {
-  public readonly namespaceComponent: ArgoCdNamespace;
+  public readonly namespaceComponent: NamespaceComponent;
   public readonly adminSecretComponent: ArgoCdAdminSecret;
-  public readonly chartComponent: ArgoCdChart;
+  public readonly chartComponent: ChartComponent;
   public readonly ingressComponent: ArgoCdIngress;
   public readonly selfAppComponent: ArgoCdSelfApp;
   public readonly namespace: k8s.core.v1.Namespace;
@@ -31,27 +37,59 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
   constructor(name: string, config: IArgoCdBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:argocd:Bootstrap", name, {}, opts);
 
-    // Create ArgoCD namespace using ComponentResource
-    this.namespaceComponent = new ArgoCdNamespace(name, { parent: this });
+    this.namespaceComponent = this.createNamespace(name);
     this.namespace = this.namespaceComponent.namespace;
 
-    // Create admin secret using ComponentResource
-    this.adminSecretComponent = new ArgoCdAdminSecret(name, { config, namespace: this.namespace }, { parent: this });
+    this.adminSecretComponent = this.createAdminSecret(name, config);
     this.adminSecret = this.adminSecretComponent.secret;
 
-    // Deploy ArgoCD using ComponentResource
-    this.chartComponent = new ArgoCdChart(name, { config, namespace: this.namespace }, { parent: this });
+    this.chartComponent = this.createChart(name, config);
     this.chart = this.chartComponent.chart;
 
-    // Create ingress using ComponentResource
-    this.ingressComponent = new ArgoCdIngress(name, { config, namespace: this.namespace }, { parent: this });
+    this.ingressComponent = this.createIngress(name, config);
     this.ingress = this.ingressComponent.ingress;
 
-    // Create self-management application using ComponentResource
-    this.selfAppComponent = new ArgoCdSelfApp(name, { config, namespace: this.namespace }, { parent: this });
+    this.selfAppComponent = this.createSelfApp(name, config);
     this.argoCdApp = this.selfAppComponent.application;
 
-    // Register outputs - Pulumi handles dependency ordering automatically
+    this.registerAllOutputs();
+  }
+
+  private createNamespace(name: string): NamespaceComponent {
+    return new NamespaceComponent(
+      name,
+      { namespaceName: ARGOCD_DEFAULTS.NAMESPACE, appName: "argocd" },
+      { parent: this },
+    );
+  }
+
+  private createAdminSecret(name: string, config: IArgoCdBootstrapConfig): ArgoCdAdminSecret {
+    return new ArgoCdAdminSecret(name, { config, namespace: this.namespace }, { parent: this });
+  }
+
+  private createChart(name: string, config: IArgoCdBootstrapConfig): ChartComponent {
+    return new ChartComponent(
+      name,
+      {
+        chartName: ARGOCD_DEFAULTS.CHART_NAME,
+        chartRepo: ARGOCD_DEFAULTS.CHART_REPO,
+        chartVersion: ARGOCD_DEFAULTS.CHART_VERSION,
+        namespace: this.namespace,
+        values: createArgoCdChartValues(config),
+      },
+      { parent: this },
+    );
+  }
+
+  private createIngress(name: string, config: IArgoCdBootstrapConfig): ArgoCdIngress {
+    return new ArgoCdIngress(name, { config, namespace: this.namespace }, { parent: this });
+  }
+
+  private createSelfApp(name: string, config: IArgoCdBootstrapConfig): ArgoCdSelfApp {
+    return new ArgoCdSelfApp(name, { config, namespace: this.namespace }, { parent: this });
+  }
+
+  private registerAllOutputs(): void {
     this.registerOutputs({
       namespace: this.namespace,
       chart: this.chart,

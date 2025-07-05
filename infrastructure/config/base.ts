@@ -8,7 +8,7 @@ import type { INetworkConfig, IProxmoxConfig, IVmResourceConfig } from "../share
 
 import { getIpv4Config, getIpv6Config, getNetworkBase } from "./network-config";
 import { getNodeConfig, getProviderAuth, getVmStorage } from "./provider-config";
-import { getVmDiskSizes, getVmHardware } from "./vm-hardware-config";
+import { getVmResourceConfig as getVmHardwareConfig } from "./vm-hardware-config";
 
 export function getProxmoxConfig(): IProxmoxConfig {
   const auth = getProviderAuth();
@@ -37,13 +37,7 @@ export function getNetworkConfig(): INetworkConfig {
 }
 
 export function getVmResourceConfig(): IVmResourceConfig {
-  const hardware = getVmHardware();
-  const diskSizes = getVmDiskSizes();
-
-  return {
-    ...hardware,
-    ...diskSizes,
-  };
+  return getVmHardwareConfig();
 }
 
 export function getSshPublicKey(): pulumi.Output<string> {

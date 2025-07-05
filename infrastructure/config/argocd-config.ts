@@ -2,7 +2,7 @@ import type * as pulumi from "@pulumi/pulumi";
 
 import { ARGOCD_DEFAULTS } from "../shared/constants";
 import type { IArgoCdBootstrapConfig, IArgoCdChartValues } from "../shared/types";
-import { withDefault } from "../shared/utils";
+import { createTraefikIngressConfig, withDefault } from "../shared/utils";
 
 export function createArgoCdChartValues(config: IArgoCdBootstrapConfig): IArgoCdChartValues {
   return {
@@ -12,9 +12,9 @@ export function createArgoCdChartValues(config: IArgoCdBootstrapConfig): IArgoCd
       ingress: { enabled: false },
       config: {
         repositories: {
-          "rzp-infra": {
-            url: config.repositoryUrl,
-            name: "rzp-infra",
+          "rzp-infrastructure": {
+            url: "https://github.com/rzp-labs/rzp-infrastructure.git",
+            name: "rzp-infrastructure",
             type: "git",
           },
         },
@@ -24,16 +24,9 @@ export function createArgoCdChartValues(config: IArgoCdBootstrapConfig): IArgoCd
   };
 }
 
-export function createArgoCdIngressAnnotations() {
-  return {
-    "kubernetes.io/ingress.class": "traefik",
-    "traefik.ingress.kubernetes.io/router.tls": "true",
-    "traefik.ingress.kubernetes.io/router.entrypoints": "websecure",
-  };
-}
-
 export function createArgoCdIngressSpec(domain: string) {
   return {
+    ...createTraefikIngressConfig(true),
     rules: [
       {
         host: domain,

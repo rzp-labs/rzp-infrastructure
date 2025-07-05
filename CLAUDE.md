@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Important Information
+
+- The year is 2025, not 2024. This is relevant when searching the web.
+
 ## Mandatory Initialization Requirements
 
 - You **MUST** complete the checklist below before responding to **ANY** user request:
@@ -31,8 +35,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### [NEVER]
 
+**- NEVER include changes outside of the scope of your task unless you request permission from the user first**
+
 - NEVER sacrifice accuracy
-- NEVER use #noqa to bypass linting or type checking requirements
+- NEVER bypass linting or type checking requirements
 - NEVER use _any_ - types should **always** be defined
 - NEVER begin editing a file when the user only asks a question
 - NEVER ask the user to perform an action that you are capable of

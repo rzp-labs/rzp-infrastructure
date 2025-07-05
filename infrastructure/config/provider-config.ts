@@ -4,26 +4,7 @@
 
 import * as pulumi from "@pulumi/pulumi";
 
-interface IProviderAuth {
-  readonly username: pulumi.Output<string>;
-  readonly password: pulumi.Output<string>;
-  readonly ssh: {
-    readonly agent: boolean;
-    readonly privateKey?: pulumi.Output<string>;
-    readonly username: string;
-  };
-}
-
-interface INodeConfig {
-  readonly endpoint: string;
-  readonly insecure: boolean;
-  readonly node: string;
-}
-
-interface IVmStorage {
-  readonly isoStore: string;
-  readonly vmStore: string;
-}
+import type { INodeConfig, IProviderAuth, IVmStorage } from "../shared/types";
 
 export function getProviderAuth(): IProviderAuth {
   const cfg = new pulumi.Config();

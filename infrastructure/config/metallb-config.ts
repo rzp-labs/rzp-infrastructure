@@ -5,12 +5,8 @@ export function createMetalLBChartValues(ipRange: string): IMetalLBChartValues {
   return {
     controller: { enabled: true },
     speaker: { enabled: true },
-    extraResources: createMetalLBExtraResources(ipRange),
+    extraResources: [createIPAddressPool(ipRange), createL2Advertisement()],
   };
-}
-
-function createMetalLBExtraResources(ipRange: string) {
-  return [createIPAddressPool(ipRange), createL2Advertisement()];
 }
 
 function createIPAddressPool(ipRange: string) {

@@ -1,13 +1,8 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import { createChildResourceOptions } from "../../shared/resource-options";
-import type { ICertManagerBootstrapConfig } from "../../shared/types";
-
-interface ICertManagerSecretProps {
-  config: ICertManagerBootstrapConfig;
-  namespace: k8s.core.v1.Namespace;
-}
+import { createKubernetesResourceOptions } from "../../shared/resource-options";
+import type { ICertManagerSecretProps } from "../../shared/types";
 
 /**
  * Cert-Manager Cloudflare Secret Component
@@ -42,7 +37,7 @@ export class CertManagerSecret extends pulumi.ComponentResource {
             .apply((token: string) => Buffer.from(token).toString("base64")),
         },
       },
-      createChildResourceOptions(this, { dependsOn: [props.namespace] }),
+      createKubernetesResourceOptions(this, { dependsOn: [props.namespace] }),
     );
   }
 }

@@ -149,3 +149,43 @@ export function createNamespaceMetadata(namespaceName: string, appName: string, 
     },
   };
 }
+
+/**
+ * Ingress utilities
+ */
+
+/**
+ * Standard Traefik ingress configuration for the staging environment
+ */
+export function createTraefikIngressConfig(enableTls = true) {
+  return {
+    ingressClassName: "stg-traefik-chart",
+    annotations: createTraefikIngressAnnotations(enableTls),
+  };
+}
+
+/**
+ * Standard Traefik ingress annotations
+ */
+export function createTraefikIngressAnnotations(enableTls = true) {
+  const baseAnnotations = {
+    "traefik.ingress.kubernetes.io/router.entrypoints": enableTls ? "websecure" : "web",
+  };
+
+  if (enableTls) {
+    return {
+      ...baseAnnotations,
+      "traefik.ingress.kubernetes.io/router.tls": "true",
+      "cert-manager.io/cluster-issuer": "letsencrypt-staging",
+    };
+  }
+
+  return baseAnnotations;
+}
+
+/**
+ * Create TLS configuration for ingress
+ */
+export function createIngressTlsConfig(host: string, secretName: string) {
+  return [{ hosts: [host], secretName }];
+}

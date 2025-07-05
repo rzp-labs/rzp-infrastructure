@@ -4,20 +4,7 @@
 
 import * as pulumi from "@pulumi/pulumi";
 
-interface INetworkBase {
-  readonly bridge: string;
-  readonly ipHostBase: number;
-}
-
-interface IIpv4Config {
-  readonly net4Prefix: string;
-  readonly gateway4: string;
-}
-
-interface IIpv6Config {
-  readonly net6Prefix: string;
-  readonly gateway6: string;
-}
+import type { IIpv4Config, IIpv6Config, INetworkBase } from "../shared/types";
 
 export function getNetworkBase(): INetworkBase {
   const cfg = new pulumi.Config();
