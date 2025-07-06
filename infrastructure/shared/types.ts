@@ -158,6 +158,7 @@ export interface IArgoCdBootstrapConfig {
 }
 
 export interface IArgoCdChartValues {
+  readonly installCRDs: boolean;
   readonly global: { domain: string };
   readonly server: {
     service: { type: string };

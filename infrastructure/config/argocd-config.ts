@@ -6,6 +6,7 @@ import { createTraefikIngressConfig, withDefault } from "../shared/utils";
 
 export function createArgoCdChartValues(config: IArgoCdBootstrapConfig): IArgoCdChartValues {
   return {
+    installCRDs: true,
     global: { domain: withDefault(config.domain, ARGOCD_DEFAULTS.DEFAULT_DOMAIN) },
     server: {
       service: { type: ARGOCD_DEFAULTS.SERVICE_TYPE },
