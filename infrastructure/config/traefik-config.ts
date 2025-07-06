@@ -34,10 +34,9 @@ function createPortsConfig() {
 }
 
 function createIngressRouteConfig() {
-  const isDashboardEnabled = true; // Always enable dashboard for bootstrap
   return {
     dashboard: {
-      enabled: isDashboardEnabled,
+      enabled: false,
       annotations: { "kubernetes.io/ingress.class": "traefik" },
     },
   };
@@ -53,8 +52,8 @@ function createAdditionalArguments(): string[] {
   return [
     "--log.level=INFO",
     "--accesslog=true",
-    "--entrypoints.web.address=:9000",
-    "--entrypoints.websecure.address=:8443",
+    `--entrypoints.web.address=:${TRAEFIK_DEFAULTS.WEB_PORT}`,
+    `--entrypoints.websecure.address=:${TRAEFIK_DEFAULTS.WEBSECURE_PORT}`,
   ];
 }
 

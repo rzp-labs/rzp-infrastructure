@@ -68,8 +68,8 @@ export const TRAEFIK_DEFAULTS = {
   CHART_REPO: "https://traefik.github.io/charts",
   CHART_VERSION: "28.3.0", // Keep current stable version
   NAMESPACE: "traefik-system",
-  REPLICAS: 1,
   SERVICE_TYPE: "LoadBalancer",
+  REPLICAS: 1,
   WEB_PORT: 8000,
   WEBSECURE_PORT: 8443,
   DASHBOARD_PORT: 9000,
@@ -79,11 +79,10 @@ export const TRAEFIK_DEFAULTS = {
 export const METALLB_DEFAULTS = {
   CHART_NAME: "metallb",
   CHART_REPO: "https://metallb.github.io/metallb",
-  CHART_VERSION: "0.15.2", // Updated from 0.14.8 to latest stable
+  CHART_VERSION: "0.15.2",
   NAMESPACE: "metallb-system",
-  // IP range allocation: 200-205 staging, 206-210 production
-  STAGING_IP_RANGE: "10.10.0.200-10.10.0.205",
-  PRODUCTION_IP_RANGE: "10.10.0.206-10.10.0.210",
+  STAGING_IP_RANGE: "10.10.0.200-10.10.0.201",
+  PRODUCTION_IP_RANGE: "10.10.0.202-10.10.0.205",
 } as const;
 
 // cert-manager Constants

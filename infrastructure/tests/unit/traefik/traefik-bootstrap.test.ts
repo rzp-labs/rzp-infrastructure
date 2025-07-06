@@ -71,7 +71,7 @@ describe("TraefikBootstrap", () => {
     const config = {
       domain: "example.local",
       email: "admin@example.local",
-      staging: true,
+      environment: "stg" as const,
       dashboard: true,
     };
 
@@ -89,6 +89,7 @@ describe("TraefikBootstrap", () => {
     // Arrange
     const config = {
       domain: "example.local",
+      environment: "dev" as const,
       dashboard: false,
     };
 
@@ -105,7 +106,7 @@ describe("TraefikBootstrap", () => {
     const config = {
       domain: "example.local",
       email: "admin@example.local",
-      staging: false,
+      environment: "prd" as const,
       dashboard: true,
     };
 
@@ -121,6 +122,7 @@ describe("TraefikBootstrap", () => {
     // Arrange
     const config = {
       domain: "example.local",
+      environment: "dev" as const,
       dashboard: true,
     };
 
@@ -136,6 +138,7 @@ describe("TraefikBootstrap", () => {
     // Arrange
     const config = {
       domain: "example.local",
+      environment: "dev" as const,
       dashboard: false,
     };
 
@@ -151,7 +154,7 @@ describe("TraefikBootstrap", () => {
     const config = {
       domain: "example.local",
       email: "admin@example.local",
-      staging: true,
+      environment: "stg" as const,
       dashboard: true,
     };
 
@@ -166,7 +169,7 @@ describe("TraefikBootstrap", () => {
 
   it("should handle minimal configuration", async () => {
     // Arrange
-    const config = {};
+    const config = { environment: "dev" as const };
 
     // Act
     const traefik = new TraefikBootstrap("test-traefik", config);

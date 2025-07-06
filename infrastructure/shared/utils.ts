@@ -4,7 +4,7 @@
 
 import type { IVmHealthCheckConfig } from "../helpers/health/vm-health-check";
 
-import type { VmRole } from "./types";
+import type { IK3sNodeConfig } from "./types";
 
 // Re-export health check utilities from dedicated modules
 export { createVmHealthCheck, type IVmHealthCheckConfig } from "../helpers/health/vm-health-check";
@@ -17,7 +17,11 @@ export type IHealthCheckConfig = IVmHealthCheckConfig;
  * Determines the role of a VM based on its VM ID
  * Returns null if the VM is not a managed K3s node
  */
-export function getVmRole(vmId: number, masterVmidStart: number, workerVmidStart: number): VmRole | null {
+export function getVmRole(
+  vmId: number,
+  masterVmidStart: number,
+  workerVmidStart: number,
+): IK3sNodeConfig["role"] | null {
   if (vmId >= masterVmidStart && vmId < masterVmidStart + 10) return "master";
   if (vmId >= workerVmidStart && vmId < workerVmidStart + 10) return "worker";
   return null; // Not a K3s VM we manage

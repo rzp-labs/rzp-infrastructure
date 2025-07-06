@@ -36,9 +36,10 @@ export class CertManagerClusterIssuer extends pulumi.ComponentResource {
   }
 
   private createIssuerSpec(issuerName: string, config: ICertManagerBootstrapConfig) {
-    const serverUrl = config.staging
-      ? "https://acme-staging-v02.api.letsencrypt.org/directory"
-      : "https://acme-v02.api.letsencrypt.org/directory";
+    const serverUrl =
+      config.environment === "prd"
+        ? "https://acme-v02.api.letsencrypt.org/directory"
+        : "https://acme-staging-v02.api.letsencrypt.org/directory";
 
     return {
       acme: {

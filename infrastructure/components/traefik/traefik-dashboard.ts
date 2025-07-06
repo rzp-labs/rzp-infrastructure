@@ -73,8 +73,7 @@ export class TraefikDashboard extends pulumi.ComponentResource {
     };
 
     if (isTruthy(config.email)) {
-      const isStaging = withDefault(config.staging, false);
-      const issuer = isStaging ? "letsencrypt-staging" : "letsencrypt-prod";
+      const issuer = config.environment === "prd" ? "letsencrypt-prod" : "letsencrypt-staging";
       return { ...baseAnnotations, "cert-manager.io/cluster-issuer": issuer };
     }
 

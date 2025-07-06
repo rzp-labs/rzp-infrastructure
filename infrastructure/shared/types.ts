@@ -134,8 +134,6 @@ export interface IEnvironmentConfig {
   readonly k3s: IK3sClusterConfig;
 }
 
-export type VmRole = "master" | "worker";
-
 export interface INodeInfo {
   readonly name: string;
   readonly vmId: number;
@@ -197,7 +195,7 @@ export interface ICloudflareDNSConfig {
 
 export interface ICertManagerBootstrapConfig {
   email: string;
-  staging: boolean;
+  environment: "dev" | "stg" | "prd";
   cloudflareApiToken: pulumi.Input<string>;
 }
 
@@ -224,16 +222,33 @@ export interface IMetalLBChartValues {
 export interface ITraefikBootstrapConfig {
   readonly domain?: string;
   readonly email?: string;
-  readonly staging?: boolean;
+  readonly environment: "dev" | "stg" | "prd";
   readonly dashboard?: boolean;
 }
 
 export interface ITraefikChartValues {
   readonly deployment: { replicas: number };
   readonly service: { type: string };
-  readonly ports: unknown;
-  readonly ingressRoute: unknown;
-  readonly certificatesResolvers: unknown;
+  readonly ports: {
+    readonly web: {
+      readonly port: number;
+      readonly expose: { readonly default: boolean };
+      readonly protocol: string;
+    };
+    readonly websecure: {
+      readonly port: number;
+      readonly expose: { readonly default: boolean };
+      readonly exposedPort: number;
+      readonly protocol: string;
+    };
+  };
+  readonly ingressRoute: {
+    readonly dashboard: {
+      readonly enabled: boolean;
+      readonly annotations: Record<string, string>;
+    };
+  };
+  readonly certificatesResolvers: Record<string, never>;
   readonly globalArguments: string[];
   readonly additionalArguments: string[];
   readonly kubernetesIngress: {

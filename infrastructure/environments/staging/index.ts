@@ -13,8 +13,8 @@ import { MetalLBBootstrap } from "../../components/metallb";
 import { TraefikBootstrap } from "../../components/traefik/traefik-bootstrap";
 import { getCloudflareConfig } from "../../config/cloudflare-config";
 import { getStagingConfig } from "../../config/staging";
-import { isDashboardEnabled } from "../../config/traefik-config";
 import { METALLB_DEFAULTS } from "../../shared/constants";
+import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
 // Get staging configuration
@@ -96,8 +96,8 @@ export const traefik = new TraefikBootstrap(
   {
     domain: cloudflareConfig.domain,
     email: cloudflareConfig.email,
-    staging: true, // Use Let's Encrypt staging for testing
-    dashboard: isDashboardEnabled(),
+    environment: "stg", // Use staging environment
+    dashboard: false,
   },
   {
     dependsOn: [metallb.chart], // Wait for MetalLB chart to be ready
@@ -130,5 +130,10 @@ export const traefikDashboardUrl = traefik.dashboard
   : undefined;
 
 // Export utility function for role determination
-export const getVmRoleFromId = (vmId: number) =>
-  getVmRole(vmId, config.k3s.masterVmidStart, config.k3s.workerVmidStart);
+export const getVmRoleFromId = (vmId: number): IK3sNodeConfig["role"] => {
+  const role = getVmRole(vmId, config.k3s.masterVmidStart, config.k3s.workerVmidStart);
+  if (role === null) {
+    throw new Error(`VM ${vmId} is not a managed K3s node`);
+  }
+  return role;
+};
