@@ -11,17 +11,20 @@ export function createArgoCdChartValues(config: IArgoCdBootstrapConfig): IArgoCd
     server: {
       service: { type: ARGOCD_DEFAULTS.SERVICE_TYPE },
       ingress: { enabled: false },
-      config: {
-        repositories: {
-          "rzp-infrastructure": {
-            url: "https://github.com/rzp-labs/rzp-infrastructure.git",
-            name: "rzp-infrastructure",
-            type: "git",
-          },
-        },
-      },
+      config: { repositories: createArgoCdRepositories() },
     },
-    configs: { secret: { createSecret: false } },
+    configs: { secret: { createSecret: true } },
+    dex: { enabled: false },
+  };
+}
+
+function createArgoCdRepositories() {
+  return {
+    "rzp-infrastructure": {
+      url: "https://github.com/rzp-labs/rzp-infrastructure.git",
+      name: "rzp-infrastructure",
+      type: "git",
+    },
   };
 }
 
@@ -36,7 +39,7 @@ export function createArgoCdIngressSpec(domain: string) {
             {
               path: "/",
               pathType: "Prefix",
-              backend: { service: { name: "argocd-server", port: { number: 80 } } },
+              backend: { service: { name: "stg-argocd-server", port: { number: 80 } } },
             },
           ],
         },

@@ -44,7 +44,9 @@ export class ArgoCdIngress extends pulumi.ComponentResource {
     return {
       name: "argocd-server-ingress",
       namespace: namespace.metadata.name,
-      annotations: createTraefikIngressConfig(true).annotations,
+      annotations: {
+        ...createTraefikIngressConfig(true).annotations,
+      },
     };
   }
 }

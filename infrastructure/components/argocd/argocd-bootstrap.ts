@@ -35,7 +35,7 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
   public readonly adminSecret: k8s.core.v1.Secret;
 
   constructor(name: string, config: IArgoCdBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:argocd:Bootstrap", name, {}, opts);
+    super("rzp:argocd:ArgoCdBootstrap", name, {}, opts);
 
     this.namespaceComponent = this.createNamespace(name);
     this.namespace = this.namespaceComponent.namespace;
@@ -86,7 +86,7 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
   }
 
   private createSelfApp(name: string, config: IArgoCdBootstrapConfig): ArgoCdSelfApp {
-    return new ArgoCdSelfApp(name, { config, namespace: this.namespace }, { parent: this });
+    return new ArgoCdSelfApp(name, { config, namespace: this.namespace }, { parent: this, dependsOn: [this.chart] });
   }
 
   private registerAllOutputs(): void {

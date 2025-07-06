@@ -175,6 +175,7 @@ export interface IArgoCdChartValues {
     };
   };
   readonly configs: { secret: { createSecret: boolean } };
+  readonly dex: { enabled: boolean };
 }
 
 export interface ICloudflareConfig {
