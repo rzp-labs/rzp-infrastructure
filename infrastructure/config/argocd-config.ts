@@ -39,7 +39,7 @@ export function createArgoCdIngressSpec(domain: string) {
             {
               path: "/",
               pathType: "Prefix",
-              backend: { service: { name: "stg-argocd-server", port: { number: 80 } } },
+              backend: { service: { name: "stg-argocd-chart-server", port: { number: 80 } } },
             },
           ],
         },

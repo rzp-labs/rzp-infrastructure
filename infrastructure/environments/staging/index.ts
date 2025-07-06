@@ -5,11 +5,12 @@
 import * as k8s from "@pulumi/kubernetes";
 
 import { ArgoCdBootstrap } from "../../components/argocd/argocd-bootstrap";
+import { CertManagerBootstrap } from "../../components/cert-manager";
 import { K3sCluster } from "../../components/k3s/k3s-cluster";
 import { K3sCredentials } from "../../components/k3s/k3s-credentials";
 import { K3sMaster } from "../../components/k3s/k3s-master";
 import { K3sWorker } from "../../components/k3s/k3s-worker";
-import { MetalLBBootstrap } from "../../components/metallb";
+import { MetalLBBootstrap, MetalLBPools } from "../../components/metallb";
 import { TraefikBootstrap } from "../../components/traefik/traefik-bootstrap";
 import { getCloudflareConfig } from "../../config/cloudflare-config";
 import { getStagingConfig } from "../../config/staging";
@@ -88,6 +89,32 @@ export const metallb = new MetalLBBootstrap(
     providers: { kubernetes: defaultK8sProvider },
   },
 );
+// Deploy MetalLB IP pools (required for load balancer functionality)
+// Cannot be created via Helm extraResources due to CRD timing limitations
+export const metallbPools = new MetalLBPools(
+  "stg-metallb-pools",
+  {
+    ipRange: METALLB_DEFAULTS.STAGING_IP_RANGE,
+  },
+  {
+    dependsOn: [metallb.chart], // Wait for MetalLB chart and CRDs to be ready
+    providers: { kubernetes: defaultK8sProvider },
+  },
+);
+// Deploy cert-manager for TLS certificate provisioning
+// Independent of MetalLB, can start in parallel after K8s cluster is ready
+export const certManager = new CertManagerBootstrap(
+  "stg-cert-manager",
+  {
+    email: cloudflareConfig.email,
+    environment: "stg", // Uses staging Let's Encrypt server
+    cloudflareApiToken: cloudflareConfig.apiToken,
+  },
+  {
+    dependsOn: workerInstalls, // Wait for K8s cluster to be ready
+    providers: { kubernetes: defaultK8sProvider },
+  },
+);
 
 // Deploy Traefik ingress controller (bootstrap)
 // Use simple chart dependency instead of custom readiness gate
@@ -100,7 +127,7 @@ export const traefik = new TraefikBootstrap(
     dashboard: false,
   },
   {
-    dependsOn: [metallb.chart], // Wait for MetalLB chart to be ready
+    dependsOn: [metallbPools], // Wait for MetalLB IP allocation to be ready
     providers: { kubernetes: defaultK8sProvider },
   },
 );
@@ -114,7 +141,7 @@ export const argocd = new ArgoCdBootstrap(
     domain: `stg.argocd.${cloudflareConfig.domain}`,
   },
   {
-    dependsOn: [traefik],
+    dependsOn: [traefik, certManager.clusterIssuer], // Wait for both ingress controller and TLS certificate capability
     providers: { kubernetes: defaultK8sProvider },
   },
 );
@@ -125,9 +152,8 @@ export const workerIps = cluster.workerIps;
 export const allNodes = cluster.allNodes;
 export const kubeconfig = credentials.result.kubeconfig;
 export const argoCdUrl = argocd.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
-export const traefikDashboardUrl = traefik.dashboard
-  ? traefik.dashboard.spec.rules[0].host.apply((host) => `https://${host}`)
-  : undefined;
+// Dashboard URL not available via Pulumi exports when managed by Helm chart
+export const traefikDashboardUrl = undefined;
 
 // Export utility function for role determination
 export const getVmRoleFromId = (vmId: number): IK3sNodeConfig["role"] => {

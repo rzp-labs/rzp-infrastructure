@@ -1,18 +1,23 @@
 import { TRAEFIK_DEFAULTS } from "../shared/constants";
-import type { ITraefikChartValues } from "../shared/types";
+import type { ITraefikBootstrapConfig, ITraefikChartValues } from "../shared/types";
 
-export function createTraefikChartValues(): ITraefikChartValues {
+export function createTraefikChartValues(config: ITraefikBootstrapConfig): ITraefikChartValues {
   return {
     deployment: { replicas: TRAEFIK_DEFAULTS.REPLICAS },
     service: { type: TRAEFIK_DEFAULTS.SERVICE_TYPE },
     ports: createPortsConfig(),
-    ingressRoute: createIngressRouteConfig(),
+    ingressRoute: createIngressRouteConfig(config),
     certificatesResolvers: createCertificateResolvers(),
     globalArguments: ["--global.checknewversion=false", "--global.sendanonymoususage=false"],
     additionalArguments: createAdditionalArguments(),
-    kubernetesIngress: {
-      enabled: true,
-      publishedService: { enabled: true },
+    providers: {
+      kubernetesIngress: {
+        enabled: true,
+        publishedService: {
+          enabled: true,
+          pathOverride: "traefik-system/stg-traefik-chart",
+        },
+      },
     },
   };
 }
@@ -33,10 +38,12 @@ function createPortsConfig() {
   };
 }
 
-function createIngressRouteConfig() {
+function createIngressRouteConfig(config: ITraefikBootstrapConfig) {
+  const dashboardEnabled = config.dashboard ?? false;
+
   return {
     dashboard: {
-      enabled: false,
+      enabled: dashboardEnabled,
       annotations: { "kubernetes.io/ingress.class": "traefik" },
     },
   };
@@ -55,8 +62,4 @@ function createAdditionalArguments(): string[] {
     `--entrypoints.web.address=:${TRAEFIK_DEFAULTS.WEB_PORT}`,
     `--entrypoints.websecure.address=:${TRAEFIK_DEFAULTS.WEBSECURE_PORT}`,
   ];
-}
-
-export function isDashboardEnabled(): boolean {
-  return true;
 }

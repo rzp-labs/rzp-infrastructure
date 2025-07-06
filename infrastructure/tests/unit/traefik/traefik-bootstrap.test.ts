@@ -82,7 +82,7 @@ describe("TraefikBootstrap", () => {
     expect(traefik).toBeInstanceOf(TraefikBootstrap);
     expect(traefik.namespace).toBeDefined();
     expect(traefik.chart).toBeDefined();
-    expect(traefik.dashboard).toBeDefined();
+    // Dashboard now managed by Helm chart, not Pulumi
   });
 
   it("should create namespace with correct metadata", async () => {
@@ -130,8 +130,10 @@ describe("TraefikBootstrap", () => {
     const traefik = new TraefikBootstrap("test-traefik", config);
 
     // Assert
-    expect(traefik.dashboard).toBeDefined();
-    expect(typeof traefik.dashboard).toBe("object");
+    expect(traefik).toBeInstanceOf(TraefikBootstrap);
+    expect(traefik.namespace).toBeDefined();
+    expect(traefik.chart).toBeDefined();
+    // Dashboard now managed by Helm chart, not Pulumi
   });
 
   it("should not create dashboard ingress when dashboard is disabled", async () => {
@@ -146,7 +148,10 @@ describe("TraefikBootstrap", () => {
     const traefik = new TraefikBootstrap("test-traefik", config);
 
     // Assert
-    expect(traefik.dashboard).toBeUndefined();
+    expect(traefik).toBeInstanceOf(TraefikBootstrap);
+    expect(traefik.namespace).toBeDefined();
+    expect(traefik.chart).toBeDefined();
+    // Dashboard now managed by Helm chart, not Pulumi
   });
 
   it("should follow SOLID principles with clear single responsibility", async () => {
@@ -164,7 +169,7 @@ describe("TraefikBootstrap", () => {
     // Assert - Component should have clear single responsibility
     expect(typeof traefik.namespace).toBe("object");
     expect(typeof traefik.chart).toBe("object");
-    expect(typeof traefik.dashboard).toBe("object");
+    // Dashboard now managed by Helm chart, not Pulumi
   });
 
   it("should handle minimal configuration", async () => {
@@ -177,6 +182,6 @@ describe("TraefikBootstrap", () => {
     // Assert
     expect(traefik.namespace).toBeDefined();
     expect(traefik.chart).toBeDefined();
-    expect(traefik.dashboard).toBeUndefined();
+    // Dashboard now managed by Helm chart, not Pulumi
   });
 });

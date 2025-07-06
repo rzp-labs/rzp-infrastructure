@@ -180,7 +180,7 @@ export function createTraefikIngressAnnotations(enableTls = true) {
     return {
       ...baseAnnotations,
       "traefik.ingress.kubernetes.io/router.tls": "true",
-      "cert-manager.io/cluster-issuer": "letsencrypt-staging",
+      "cert-manager.io/cluster-issuer": "stg-cert-manager-letsencrypt-issuer",
     };
   }
 

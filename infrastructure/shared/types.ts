@@ -253,10 +253,13 @@ export interface ITraefikChartValues {
   readonly certificatesResolvers: Record<string, never>;
   readonly globalArguments: string[];
   readonly additionalArguments: string[];
-  readonly kubernetesIngress: {
-    readonly enabled: boolean;
-    readonly publishedService: {
+  readonly providers: {
+    readonly kubernetesIngress: {
       readonly enabled: boolean;
+      readonly publishedService: {
+        readonly enabled: boolean;
+        readonly pathOverride: string;
+      };
     };
   };
 }

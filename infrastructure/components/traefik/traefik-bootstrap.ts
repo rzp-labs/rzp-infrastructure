@@ -7,8 +7,6 @@ import { NamespaceComponent } from "../../shared/base-namespace-component";
 import { TRAEFIK_DEFAULTS } from "../../shared/constants";
 import type { ITraefikBootstrapConfig } from "../../shared/types";
 
-import { TraefikDashboard } from "./traefik-dashboard";
-
 /**
  * Traefik Bootstrap Component
  *
@@ -22,10 +20,8 @@ import { TraefikDashboard } from "./traefik-dashboard";
 export class TraefikBootstrap extends pulumi.ComponentResource {
   public readonly namespaceComponent: NamespaceComponent;
   public readonly chartComponent: ChartComponent;
-  public readonly dashboardComponent: TraefikDashboard;
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
-  public readonly dashboard: k8s.networking.v1.Ingress | undefined;
 
   constructor(name: string, config: ITraefikBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
     super("rzp:traefik:TraefikBootstrap", name, {}, opts);
@@ -33,11 +29,8 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
     this.namespaceComponent = this.createNamespace(name);
     this.namespace = this.namespaceComponent.namespace;
 
-    this.chartComponent = this.createChart(name);
+    this.chartComponent = this.createChart(name, config);
     this.chart = this.chartComponent.chart;
-
-    this.dashboardComponent = this.createDashboard(name, config);
-    this.dashboard = this.dashboardComponent.ingress;
 
     this.registerAllOutputs();
   }
@@ -50,7 +43,7 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
     );
   }
 
-  private createChart(name: string): ChartComponent {
+  private createChart(name: string, config: ITraefikBootstrapConfig): ChartComponent {
     return new ChartComponent(
       name,
       {
@@ -58,17 +51,8 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
         chartRepo: TRAEFIK_DEFAULTS.CHART_REPO,
         chartVersion: TRAEFIK_DEFAULTS.CHART_VERSION,
         namespace: this.namespace,
-        values: createTraefikChartValues(),
+        values: createTraefikChartValues(config),
       },
-      { parent: this },
-    );
-  }
-
-  private createDashboard(name: string, config: ITraefikBootstrapConfig): TraefikDashboard {
-    const serviceName = `${name}-chart`;
-    return new TraefikDashboard(
-      name,
-      { config, namespace: this.namespace, serviceName, chart: this.chart },
       { parent: this },
     );
   }
@@ -77,7 +61,6 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
     this.registerOutputs({
       namespace: this.namespace,
       chart: this.chart,
-      dashboard: this.dashboard,
     });
   }
 }

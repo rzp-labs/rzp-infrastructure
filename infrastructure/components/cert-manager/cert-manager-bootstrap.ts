@@ -75,7 +75,7 @@ export class CertManagerBootstrap extends pulumi.ComponentResource {
   }
 
   private createClusterIssuer(name: string, config: ICertManagerBootstrapConfig): CertManagerClusterIssuer {
-    return new CertManagerClusterIssuer(name, { config }, { parent: this });
+    return new CertManagerClusterIssuer(name, { config }, { parent: this, dependsOn: [this.chart] });
   }
 
   private registerAllOutputs(): void {
