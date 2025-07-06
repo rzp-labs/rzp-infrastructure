@@ -1,2 +1,4 @@
 onlyBuiltDependencies:
+  - '@pulumi/command'
+  - protobufjs
   - sqlite3

@@ -1,3 +1,4 @@
 onlyBuiltDependencies:
   - '@pulumi/kubernetes'
   - protobufjs
+  - unrs-resolver

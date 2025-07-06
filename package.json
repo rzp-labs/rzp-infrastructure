@@ -1,5 +1,6 @@
 {
-	"dependencies": {
-		"mem0ai": "^2.1.33"
-	}
+  "packageManager": "pnpm@10.12.4",
+  "dependencies": {
+    "mem0ai": "^2.1.34"
+  }
 }
