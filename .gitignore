@@ -177,14 +177,6 @@ alembic.ini
 infrastructure/coverage
 
 # =========================
-# Pulumi
-# =========================
-.pulumi/
-Pulumi.*.yaml
-Pulumi.yaml
-Pulumi.lock.yaml
-
-# =========================
 # GitHub/AI
 # =========================
 .github/instructions/nx.instructions.md

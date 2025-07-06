@@ -1,0 +1,10 @@
+name: rzp-infra
+description: Infrastructure for rzp labs hosted on Proxmox VE.
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: typescript
