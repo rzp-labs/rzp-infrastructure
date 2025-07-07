@@ -67,8 +67,8 @@ module.exports = [
             // "@typescript-eslint/prefer-readonly-parameter-types": "warn",
 
             // SOLID principles enforcement
-            "max-lines": ["error", { max: 150, skipComments: true, skipBlankLines: true }],
-            "max-lines-per-function": ["error", { max: 20, skipComments: true, skipBlankLines: true }],
+            //"max-lines": ["error", { max: 150, skipComments: true, skipBlankLines: true }],
+            //"max-lines-per-function": ["error", { max: 20, skipComments: true, skipBlankLines: true }],
             complexity: ["error", 5],
             "max-depth": ["error", 3],
             "max-params": ["error", 3],

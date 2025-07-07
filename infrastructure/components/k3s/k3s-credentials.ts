@@ -25,7 +25,7 @@ export class K3sCredentials extends pulumi.ComponentResource {
   public readonly result: IK3sCredentialsResult;
 
   constructor(name: string, args: IK3sCredentialsArgs, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:k3s:K3sCredentials", name, {}, opts);
+    super("rzp-infra:k3s:K3sCredentials", name, {}, opts);
 
     const tokenCommand = this.createTokenCommand(args);
     const kubeconfigCommand = this.createKubeconfigCommand(args);

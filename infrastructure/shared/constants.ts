@@ -70,8 +70,8 @@ export const TRAEFIK_DEFAULTS = {
   NAMESPACE: "traefik-system",
   SERVICE_TYPE: "LoadBalancer",
   REPLICAS: 1,
-  WEB_PORT: 8000,
-  WEBSECURE_PORT: 8443,
+  WEB_PORT: 80,
+  WEBSECURE_PORT: 443,
   DASHBOARD_PORT: 9000,
 } as const;
 

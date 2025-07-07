@@ -7,7 +7,6 @@ import { NamespaceComponent } from "../../shared/base-namespace-component";
 import { ARGOCD_DEFAULTS } from "../../shared/constants";
 import type { IArgoCdBootstrapConfig } from "../../shared/types";
 
-import { ArgoCdAdminSecret } from "./argocd-admin-secret";
 import { ArgoCdIngress } from "./argocd-ingress";
 import { ArgoCdSelfApp } from "./argocd-self-app";
 
@@ -24,7 +23,6 @@ import { ArgoCdSelfApp } from "./argocd-self-app";
  */
 export class ArgoCdBootstrap extends pulumi.ComponentResource {
   public readonly namespaceComponent: NamespaceComponent;
-  public readonly adminSecretComponent: ArgoCdAdminSecret;
   public readonly chartComponent: ChartComponent;
   public readonly ingressComponent: ArgoCdIngress;
   public readonly selfAppComponent: ArgoCdSelfApp;
@@ -32,17 +30,12 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
   public readonly chart: k8s.helm.v3.Chart;
   public readonly argoCdApp: k8s.apiextensions.CustomResource;
   public readonly ingress: k8s.networking.v1.Ingress;
-  public readonly adminSecret: k8s.core.v1.Secret;
 
   constructor(name: string, config: IArgoCdBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:argocd:ArgoCdBootstrap", name, {}, opts);
+    super("rzp-infra:argocd:ArgoCdBootstrap", name, {}, opts);
 
     this.namespaceComponent = this.createNamespace(name);
     this.namespace = this.namespaceComponent.namespace;
-
-    this.adminSecretComponent = this.createAdminSecret(name, config);
-    this.adminSecret = this.adminSecretComponent.secret;
-
     this.chartComponent = this.createChart(name, config);
     this.chart = this.chartComponent.chart;
 
@@ -61,10 +54,6 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
       { namespaceName: ARGOCD_DEFAULTS.NAMESPACE, appName: "argocd" },
       { parent: this },
     );
-  }
-
-  private createAdminSecret(name: string, config: IArgoCdBootstrapConfig): ArgoCdAdminSecret {
-    return new ArgoCdAdminSecret(name, { config, namespace: this.namespace }, { parent: this });
   }
 
   private createChart(name: string, config: IArgoCdBootstrapConfig): ChartComponent {
@@ -93,7 +82,6 @@ export class ArgoCdBootstrap extends pulumi.ComponentResource {
     this.registerOutputs({
       namespace: this.namespace,
       chart: this.chart,
-      adminSecret: this.adminSecret,
       ingress: this.ingress,
       argoCdApp: this.argoCdApp,
     });

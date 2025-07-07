@@ -2,7 +2,7 @@ import type * as pulumi from "@pulumi/pulumi";
 
 import { ARGOCD_DEFAULTS } from "../shared/constants";
 import type { IArgoCdBootstrapConfig, IArgoCdChartValues } from "../shared/types";
-import { createTraefikIngressConfig, withDefault } from "../shared/utils";
+import { createInternalTraefikIngressConfig, withDefault } from "../shared/utils";
 
 export function createArgoCdChartValues(config: IArgoCdBootstrapConfig): IArgoCdChartValues {
   return {
@@ -12,8 +12,14 @@ export function createArgoCdChartValues(config: IArgoCdBootstrapConfig): IArgoCd
       service: { type: ARGOCD_DEFAULTS.SERVICE_TYPE },
       ingress: { enabled: false },
       config: { repositories: createArgoCdRepositories() },
+      extraArgs: ["--insecure"], // Enable insecure mode for staging
     },
-    configs: { secret: { createSecret: true } },
+    configs: {
+      secret: { createSecret: true },
+      params: {
+        "server.insecure": "true", // Additional way to set insecure mode
+      },
+    },
     dex: { enabled: false },
   };
 }

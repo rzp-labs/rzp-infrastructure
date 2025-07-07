@@ -19,7 +19,7 @@ export class ArgoCdSelfApp extends pulumi.ComponentResource {
   public readonly application: k8s.apiextensions.CustomResource;
 
   constructor(name: string, args: IArgoCdSelfAppArgs, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:argocd:SelfApp", name, {}, opts);
+    super("rzp-infra:argocd:SelfApp", name, {}, opts);
 
     this.application = new k8s.apiextensions.CustomResource(
       `${name}-self-app`,

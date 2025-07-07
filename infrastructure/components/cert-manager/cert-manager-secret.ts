@@ -15,7 +15,7 @@ export class CertManagerSecret extends pulumi.ComponentResource {
   public readonly namespace: k8s.core.v1.Namespace;
 
   constructor(name: string, props: ICertManagerSecretProps, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:cert-manager:Secret", name, {}, opts);
+    super("rzp-infra:cert-manager:Secret", name, {}, opts);
 
     this.namespace = props.namespace;
     this.secret = this.createSecret(name, props);

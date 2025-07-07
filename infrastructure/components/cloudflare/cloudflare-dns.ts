@@ -13,7 +13,7 @@ export class CloudflareDNS extends pulumi.ComponentResource {
   public readonly records: cloudflare.Record[] = [];
 
   constructor(name: string, config: ICloudflareDNSConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:cloudflare:CloudflareDNS", name, {}, opts);
+    super("rzp-infra:cloudflare:CloudflareDNS", name, {}, opts);
 
     // Create DNS records for staging services
     this.records = this.createDNSRecords(config);

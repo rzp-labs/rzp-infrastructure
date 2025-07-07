@@ -30,7 +30,7 @@ export class NamespaceComponent extends pulumi.ComponentResource {
   public readonly namespace: k8s.core.v1.Namespace;
 
   constructor(name: string, config: INamespaceConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:shared:Namespace", name, {}, opts);
+    super("rzp-infra:shared:Namespace", name, {}, opts);
 
     this.namespace = this.createNamespace(name, config);
     this.registerOutputs({ namespace: this.namespace });

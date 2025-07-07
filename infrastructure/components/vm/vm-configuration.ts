@@ -21,7 +21,7 @@ export class VmConfiguration extends pulumi.ComponentResource {
   public readonly nodeConfig: IK3sNodeConfig;
 
   constructor(name: string, props: IVmConfigurationProps, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:vm:Configuration", name, {}, opts);
+    super("rzp-infra:vm:Configuration", name, {}, opts);
 
     this.nodeConfig = props.nodeConfig;
     this.vm = this.createVirtualMachine(name, props);

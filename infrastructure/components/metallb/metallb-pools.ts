@@ -18,7 +18,7 @@ export class MetalLBPools extends pulumi.ComponentResource {
   public readonly l2Advertisement: k8s.apiextensions.CustomResource;
 
   constructor(name: string, args: { ipRange: string }, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:metallb:MetalLBPools", name, {}, opts);
+    super("rzp-infra:metallb:MetalLBPools", name, {}, opts);
 
     this.ipAddressPool = this.createIPAddressPool(name, args.ipRange);
     this.l2Advertisement = this.createL2Advertisement(name);

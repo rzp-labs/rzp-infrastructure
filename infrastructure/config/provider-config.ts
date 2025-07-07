@@ -13,9 +13,9 @@ export function getProviderAuth(): IProviderAuth {
     username: cfg.requireSecret("proxmoxUsername"),
     password: cfg.requireSecret("proxmoxPassword"),
     ssh: {
-      agent: cfg.getBoolean("sshAgent") ?? false,
+      agent: cfg.getBoolean("sshAgent"),
       privateKey: cfg.getSecret("sshPrivateKey"),
-      username: cfg.get("sshUsername") ?? "root",
+      username: cfg.get("sshUsername"),
     },
   };
 }
@@ -25,8 +25,8 @@ export function getNodeConfig(): INodeConfig {
 
   return {
     endpoint: cfg.require("proxmoxEndpoint"),
-    insecure: cfg.getBoolean("proxmoxInsecure") ?? false,
-    node: cfg.get("proxmoxNode") ?? "rzp-net",
+    insecure: cfg.getBoolean("proxmoxInsecure"),
+    node: cfg.get("proxmoxNode"),
   };
 }
 
@@ -34,7 +34,7 @@ export function getVmStorage(): IVmStorage {
   const cfg = new pulumi.Config();
 
   return {
-    isoStore: cfg.get("isoStore") ?? "local",
-    vmStore: cfg.get("vmStore") ?? "local-zfs",
+    isoStore: cfg.get("isoStore"),
+    vmStore: cfg.get("vmStore"),
   };
 }

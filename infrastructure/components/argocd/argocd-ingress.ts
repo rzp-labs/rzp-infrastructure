@@ -22,7 +22,7 @@ export class ArgoCdIngress extends pulumi.ComponentResource {
   public readonly ingress: k8s.networking.v1.Ingress;
 
   constructor(name: string, args: IArgoCdIngressArgs, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:argocd:Ingress", name, {}, opts);
+    super("rzp-infra:argocd:Ingress", name, {}, opts);
 
     const domain = withDefault(args.config.domain, ARGOCD_DEFAULTS.DEFAULT_DOMAIN);
 

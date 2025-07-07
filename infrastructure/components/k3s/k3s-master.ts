@@ -30,7 +30,7 @@ export class K3sMaster extends pulumi.ComponentResource {
   public readonly k3sHealthCheck: command.remote.Command;
 
   constructor(name: string, args: IK3sMasterArgs, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:k3s:K3sMaster", name, {}, opts);
+    super("rzp-infra:k3s:K3sMaster", name, {}, opts);
 
     // Create health check configuration
     const healthConfig: IHealthCheckConfig = {

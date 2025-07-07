@@ -14,7 +14,7 @@ export class CertManagerClusterIssuer extends pulumi.ComponentResource {
   public readonly clusterIssuer: k8s.apiextensions.CustomResource;
 
   constructor(name: string, props: ICertManagerClusterIssuerProps, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:cert-manager:ClusterIssuer", name, {}, opts);
+    super("rzp-infra:cert-manager:ClusterIssuer", name, {}, opts);
 
     this.clusterIssuer = this.createClusterIssuer(name, props);
     this.registerOutputs({ clusterIssuer: this.clusterIssuer });

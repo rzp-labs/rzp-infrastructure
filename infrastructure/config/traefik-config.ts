@@ -32,7 +32,7 @@ function createPortsConfig() {
     websecure: {
       port: TRAEFIK_DEFAULTS.WEBSECURE_PORT,
       expose: { default: true },
-      exposedPort: 443,
+      exposedPort: 8443,
       protocol: "TCP",
     },
   };

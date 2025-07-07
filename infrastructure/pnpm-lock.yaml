@@ -26,6 +26,9 @@ importers:
       '@pulumi/pulumi':
         specifier: ^3.181.0
         version: 3.181.0(typescript@5.8.3)
+      '@three14/pulumi-argocd':
+        specifier: ^1.0.1
+        version: 1.0.1(typescript@5.8.3)
     devDependencies:
       '@eslint/js':
         specifier: ^9.30.1
@@ -722,6 +725,9 @@ packages:
   '@szmarczak/http-timer@4.0.6':
     resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
     engines: {node: '>=10'}
+
+  '@three14/pulumi-argocd@1.0.1':
+    resolution: {integrity: sha512-qH82bbgkIL6S/QFNmF6CkGGKIx6U7Z+B5mTrLZ8iPqFHnoY/c5jU0qgjCHFxracPlC7iHq31bQOQH8C6HnNKpA==}
 
   '@tufjs/canonical-json@2.0.0':
     resolution: {integrity: sha512-yVtV8zsdo8qFHe+/3kw81dSLyF7D576A5cCFCi4X7B39tWT7SekaEFUnvnWJHz+9qO7qJTah1JbrDjWKqFtdWA==}
@@ -4133,6 +4139,15 @@ snapshots:
   '@szmarczak/http-timer@4.0.6':
     dependencies:
       defer-to-connect: 2.0.1
+
+  '@three14/pulumi-argocd@1.0.1(typescript@5.8.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.181.0(typescript@5.8.3)
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+      - ts-node
+      - typescript
 
   '@tufjs/canonical-json@2.0.0': {}
 

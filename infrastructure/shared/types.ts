@@ -153,7 +153,6 @@ export interface IClusterOutput {
 // ArgoCD Configuration Types
 export interface IArgoCdBootstrapConfig {
   readonly repositoryUrl: string;
-  readonly adminPassword?: pulumi.Output<string>;
   readonly domain?: string;
 }
 
@@ -173,9 +172,49 @@ export interface IArgoCdChartValues {
         }
       >;
     };
+    extraArgs?: string[]; // Add support for extra server arguments
   };
-  readonly configs: { secret: { createSecret: boolean } };
+  readonly configs: {
+    secret: { createSecret: boolean };
+    params?: Record<string, string>; // Add support for server params
+  };
   readonly dex: { enabled: boolean };
+}
+
+// ArgoCD Application Source Configuration
+export interface IArgoCdApplicationSource {
+  readonly repoUrl: string;
+  readonly chart?: string;
+  readonly targetRevision: string;
+  readonly path?: string;
+  readonly helm?: {
+    readonly values?: string; // YAML string
+    readonly valuesObject?: Record<string, unknown>; // Typed object
+    readonly valueFiles?: string[];
+  };
+}
+
+// ArgoCD Application Sync Policy
+export interface IArgoCdSyncPolicy {
+  readonly automated?: {
+    readonly prune?: boolean;
+    readonly selfHeal?: boolean;
+  };
+  readonly syncOptions?: string[];
+}
+
+// ArgoCD Application Destination
+export interface IArgoCdApplicationDestination {
+  readonly server: string;
+  readonly namespace: string;
+}
+
+// ArgoCD Application Spec
+export interface IArgoCdApplicationSpec {
+  readonly project: string;
+  readonly sources: IArgoCdApplicationSource[];
+  readonly destination: IArgoCdApplicationDestination;
+  readonly syncPolicy?: IArgoCdSyncPolicy;
 }
 
 export interface ICloudflareConfig {
@@ -217,6 +256,7 @@ export interface IMetalLBBootstrapConfig {
 export interface IMetalLBChartValues {
   readonly controller: { enabled: boolean };
   readonly speaker: { enabled: boolean };
+  readonly webhook: { enabled: boolean };
   readonly extraResources: unknown[];
 }
 

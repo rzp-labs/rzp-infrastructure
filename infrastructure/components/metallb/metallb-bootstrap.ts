@@ -23,7 +23,7 @@ export class MetalLBBootstrap extends pulumi.ComponentResource {
   public readonly chartComponent: ChartComponent;
 
   constructor(name: string, config: IMetalLBBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:metallb:MetalLBBootstrap", name, {}, opts);
+    super("rzp-infra:metallb:MetalLBBootstrap", name, {}, opts);
 
     this.namespaceComponent = this.createNamespace(name);
     this.namespace = this.namespaceComponent.namespace;

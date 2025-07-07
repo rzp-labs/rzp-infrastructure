@@ -35,7 +35,7 @@ export class ChartComponent extends pulumi.ComponentResource {
   public readonly chart: k8s.helm.v3.Chart;
 
   constructor(name: string, config: IChartConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:shared:Chart", name, {}, opts);
+    super("rzp-infra:shared:Chart", name, {}, opts);
 
     this.chart = this.createChart(name, config);
     this.registerOutputs({ chart: this.chart });

@@ -3,6 +3,7 @@
  */
 
 import * as k8s from "@pulumi/kubernetes";
+// import * as argoCdProvider from "@three14/pulumi-argocd";
 
 import { ArgoCdBootstrap } from "../../components/argocd/argocd-bootstrap";
 import { CertManagerBootstrap } from "../../components/cert-manager";
@@ -137,7 +138,6 @@ export const argocd = new ArgoCdBootstrap(
   "stg-argocd",
   {
     repositoryUrl: "https://github.com/rzp-labs/rzp-infrastructure.git",
-    // adminPassword will be read from Pulumi config: pulumi config set --secret argoCdAdminPassword
     domain: `stg.argocd.${cloudflareConfig.domain}`,
   },
   {
@@ -152,6 +152,9 @@ export const workerIps = cluster.workerIps;
 export const allNodes = cluster.allNodes;
 export const kubeconfig = credentials.result.kubeconfig;
 export const argoCdUrl = argocd.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
+// Note: Password capture removed - use kubectl to get admin password when needed
+
+// Note: ArgoCD admin password can be retrieved with kubectl when needed
 // Dashboard URL not available via Pulumi exports when managed by Helm chart
 export const traefikDashboardUrl = undefined;
 

@@ -11,6 +11,7 @@ export function createMetalLBChartValues(ipRange: string): IMetalLBChartValues {
   return {
     controller: { enabled: true },
     speaker: { enabled: true },
+    webhook: { enabled: true },
     extraResources: [], // IP pools created by MetalLBPools component using range: ${ipRange}
   };
 }

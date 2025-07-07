@@ -24,7 +24,7 @@ export class TraefikBootstrap extends pulumi.ComponentResource {
   public readonly chart: k8s.helm.v3.Chart;
 
   constructor(name: string, config: ITraefikBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:traefik:TraefikBootstrap", name, {}, opts);
+    super("rzp-infra:traefik:TraefikBootstrap", name, {}, opts);
 
     this.namespaceComponent = this.createNamespace(name);
     this.namespace = this.namespaceComponent.namespace;

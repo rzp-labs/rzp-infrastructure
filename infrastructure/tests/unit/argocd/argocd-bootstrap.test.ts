@@ -92,7 +92,7 @@ describe("ArgoCdBootstrap Component", () => {
     // Assert
     expect(argocd).toBeInstanceOf(ArgoCdBootstrap);
     expect(argocd.namespace).toBeDefined();
-    expect(argocd.adminSecret).toBeDefined();
+    expect(argocd.chart).toBeDefined();
     expect(argocd.ingress).toBeDefined();
     expect(argocd.argoCdApp).toBeDefined();
   });
@@ -111,21 +111,19 @@ describe("ArgoCdBootstrap Component", () => {
     expect(argocd.namespace).toBeDefined();
   });
 
-  test("should handle custom admin password", async () => {
+  test("should handle custom domain configuration", async () => {
     // Arrange
     const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
-    const customPassword = pulumi.secret("custom-admin-password");
 
     // Act
     const argocd = new ArgoCdBootstrap("test-argocd-custom", {
       repositoryUrl,
-      adminPassword: customPassword,
       domain: "argocd.custom.local",
     });
 
     // Assert
     expect(argocd).toBeInstanceOf(ArgoCdBootstrap);
-    expect(argocd.adminSecret).toBeDefined();
+    expect(argocd.chart).toBeDefined();
   });
 
   test("should maintain SOLID principles", async () => {
@@ -139,7 +137,7 @@ describe("ArgoCdBootstrap Component", () => {
 
     // Assert - Component should have clear single responsibility
     expect(typeof argocd.namespace).toBe("object");
-    expect(typeof argocd.adminSecret).toBe("object");
+    expect(typeof argocd.chart).toBe("object");
     expect(typeof argocd.ingress).toBe("object");
     expect(typeof argocd.argoCdApp).toBe("object");
   });

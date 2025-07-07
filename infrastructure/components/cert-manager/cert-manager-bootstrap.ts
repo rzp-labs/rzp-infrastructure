@@ -31,7 +31,7 @@ export class CertManagerBootstrap extends pulumi.ComponentResource {
   public readonly clusterIssuer: k8s.apiextensions.CustomResource;
 
   constructor(name: string, config: ICertManagerBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp:cert-manager:CertManagerBootstrap", name, {}, opts);
+    super("rzp-infra:cert-manager:CertManagerBootstrap", name, {}, opts);
 
     this.namespaceComponent = this.createNamespace(name);
     this.namespace = this.namespaceComponent.namespace;
