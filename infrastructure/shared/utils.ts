@@ -161,26 +161,34 @@ export function createNamespaceMetadata(namespaceName: string, appName: string, 
 /**
  * Standard Traefik ingress configuration for the staging environment
  */
-export function createTraefikIngressConfig(enableTls = true) {
+export function createTraefikIngressConfig(environment: "dev" | "stg" | "prd", enableTls = true, isInternal = false) {
   return {
-    ingressClassName: "stg-traefik-chart",
-    annotations: createTraefikIngressAnnotations(enableTls),
+    ingressClassName: `${environment}-traefik-chart`, // Fixed: dynamic environment
+    annotations: createTraefikIngressAnnotations(environment, enableTls, isInternal),
   };
 }
 
 /**
  * Standard Traefik ingress annotations
  */
-export function createTraefikIngressAnnotations(enableTls = true) {
-  const baseAnnotations = {
+export function createTraefikIngressAnnotations(
+  environment: "dev" | "stg" | "prd",
+  enableTls = true,
+  isInternal = false,
+) {
+  const baseAnnotations: Record<string, string> = {
     "traefik.ingress.kubernetes.io/router.entrypoints": enableTls ? "websecure" : "web",
   };
+
+  if (isInternal) {
+    baseAnnotations["traefik.ingress.kubernetes.io/router.middlewares"] = "internal-only@file";
+  }
 
   if (enableTls) {
     return {
       ...baseAnnotations,
       "traefik.ingress.kubernetes.io/router.tls": "true",
-      "cert-manager.io/cluster-issuer": "stg-cert-manager-letsencrypt-issuer",
+      "cert-manager.io/cluster-issuer": `${environment}-cert-manager-letsencrypt-issuer`, // Fixed: dynamic environment
     };
   }
 

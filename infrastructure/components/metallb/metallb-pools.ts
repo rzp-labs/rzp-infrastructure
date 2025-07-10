@@ -1,9 +1,6 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import { METALLB_DEFAULTS } from "../../shared/constants";
-import { kubernetesResourceOptions } from "../../shared/resource-options";
-
 /**
  * MetalLB IP Pool Configuration Component
  *
@@ -17,11 +14,11 @@ export class MetalLBPools extends pulumi.ComponentResource {
   public readonly ipAddressPool: k8s.apiextensions.CustomResource;
   public readonly l2Advertisement: k8s.apiextensions.CustomResource;
 
-  constructor(name: string, args: { ipRange: string }, opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args: { ipRange: string; namespace: string }, opts?: pulumi.ComponentResourceOptions) {
     super("rzp-infra:metallb:MetalLBPools", name, {}, opts);
 
-    this.ipAddressPool = this.createIPAddressPool(name, args.ipRange);
-    this.l2Advertisement = this.createL2Advertisement(name);
+    this.ipAddressPool = this.createIPAddressPool(name, args.ipRange, args.namespace);
+    this.l2Advertisement = this.createL2Advertisement(name, args.namespace);
 
     this.registerOutputs({
       ipAddressPool: this.ipAddressPool,
@@ -29,7 +26,7 @@ export class MetalLBPools extends pulumi.ComponentResource {
     });
   }
 
-  private createIPAddressPool(name: string, ipRange: string): k8s.apiextensions.CustomResource {
+  private createIPAddressPool(name: string, ipRange: string, namespace: string): k8s.apiextensions.CustomResource {
     return new k8s.apiextensions.CustomResource(
       `${name}-pool`,
       {
@@ -37,17 +34,17 @@ export class MetalLBPools extends pulumi.ComponentResource {
         kind: "IPAddressPool",
         metadata: {
           name: "default-pool",
-          namespace: METALLB_DEFAULTS.NAMESPACE,
+          namespace: namespace,
         },
         spec: {
           addresses: [ipRange],
         },
       },
-      { ...kubernetesResourceOptions, parent: this },
+      { parent: this },
     );
   }
 
-  private createL2Advertisement(name: string): k8s.apiextensions.CustomResource {
+  private createL2Advertisement(name: string, namespace: string): k8s.apiextensions.CustomResource {
     return new k8s.apiextensions.CustomResource(
       `${name}-l2adv`,
       {
@@ -55,13 +52,13 @@ export class MetalLBPools extends pulumi.ComponentResource {
         kind: "L2Advertisement",
         metadata: {
           name: "default-l2-advertisement",
-          namespace: METALLB_DEFAULTS.NAMESPACE,
+          namespace: namespace,
         },
         spec: {
           ipAddressPools: ["default-pool"],
         },
       },
-      { ...kubernetesResourceOptions, parent: this, dependsOn: [this.ipAddressPool] },
+      { parent: this, dependsOn: [this.ipAddressPool] },
     );
   }
 }

@@ -1,49 +1,61 @@
 /**
- * Staging environment deployment
+ * Staging environment deployment with proper provider architecture
  */
 
-import * as k8s from "@pulumi/kubernetes";
-// import * as argoCdProvider from "@three14/pulumi-argocd";
+// import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 
-import { ArgoCdBootstrap } from "../../components/argocd/argocd-bootstrap";
-import { CertManagerBootstrap } from "../../components/cert-manager";
-import { K3sCluster } from "../../components/k3s/k3s-cluster";
-import { K3sCredentials } from "../../components/k3s/k3s-credentials";
-import { K3sMaster } from "../../components/k3s/k3s-master";
-import { K3sWorker } from "../../components/k3s/k3s-worker";
-import { MetalLBBootstrap, MetalLBPools } from "../../components/metallb";
-import { TraefikBootstrap } from "../../components/traefik/traefik-bootstrap";
-import { getCloudflareConfig } from "../../config/cloudflare-config";
+import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
+//import * as argocd from "@three14/pulumi-argocd";
+
+import * as Components from "../../components";
 import { getStagingConfig } from "../../config/staging";
-import { METALLB_DEFAULTS } from "../../shared/constants";
+//import { getArgoCdAdminPassword } from "../../helpers";
 import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
 // Get staging configuration
 const config = getStagingConfig();
-const cloudflareConfig = getCloudflareConfig();
+
+// Get Cloudflare configuration directly
+const cloudflareConfig = new pulumi.Config("cloudflare");
+
+const domain = cloudflareConfig.require("domain");
+const email = cloudflareConfig.require("email");
+const apiToken = cloudflareConfig.requireSecret("apiToken");
+
+// =============================================================================
+// PROVIDER CONFIGURATION
+// =============================================================================
+
+// Proxmox provider for VM infrastructure
+// Note: Currently using provider from config, but this shows how to create environment-specific providers
+// const stagingProxmoxProvider = new proxmoxve.Provider("stg-proxmox", {
+//   endpoint: config.proxmox.endpoint,
+//   username: config.proxmox.username,
+//   password: config.proxmox.password,
+//   insecure: config.proxmox.insecure,
+// });
+
+// =============================================================================
+// INFRASTRUCTURE DEPLOYMENT
+// =============================================================================
 
 // Deploy K3s cluster infrastructure (VMs only)
-export const cluster = new K3sCluster("stg-k3s", {
+export const cluster = new Components.K3sCluster("stg-k3s", {
   config,
 });
 
 // Install K3s master
-export const masterInstall = new K3sMaster(
-  "k3s-master",
-  {
-    node: cluster.masters.map((m) => m.config)[0],
-    sshUsername: config.proxmox.ssh!.username!,
-    sshPrivateKey: config.proxmox.ssh!.privateKey!,
-    isFirstMaster: true,
-  },
-  {
-    dependsOn: [...cluster.masters],
-  },
-);
+export const masterInstall = new Components.K3sMaster("k3s-master", {
+  node: cluster.masters.map((m) => m.config)[0],
+  sshUsername: config.proxmox.ssh!.username!,
+  sshPrivateKey: config.proxmox.ssh!.privateKey!,
+  isFirstMaster: true,
+});
 
 // Retrieve K3s credentials
-export const credentials = new K3sCredentials(
+export const credentials = new Components.K3sCredentials(
   "k3s-credentials",
   {
     masterNode: cluster.masters.map((m) => m.config)[0],
@@ -55,15 +67,10 @@ export const credentials = new K3sCredentials(
   },
 );
 
-// Configure default Kubernetes provider for all resources
-const defaultK8sProvider = new k8s.Provider("default-k8s", {
-  kubeconfig: credentials.result.kubeconfig,
-});
-
-// Install K3s workers - use individual worker dependencies instead of array spreading
+// Install K3s workers
 export const workerInstalls = cluster.workers.map(
   (worker, index) =>
-    new K3sWorker(
+    new Components.K3sWorker(
       `k3s-worker-${index}`,
       {
         node: worker.config,
@@ -78,87 +85,232 @@ export const workerInstalls = cluster.workers.map(
     ),
 );
 
-// Deploy MetalLB load balancer (idempotent)
-export const metallb = new MetalLBBootstrap(
-  "stg-metallb",
+// Kubernetes provider for all K8s resources (created after components are ready)
+const stagingK8sProvider = new k8s.Provider(
+  "stg-k8s",
+  { kubeconfig: credentials.result.kubeconfig },
   {
-    ipRange: METALLB_DEFAULTS.STAGING_IP_RANGE,
+    dependsOn: [masterInstall, ...workerInstalls],
+  },
+);
+// =============================================================================
+// NAMESPACE CREATION (No longer needed - components create their own namespaces)
+// =============================================================================
+
+// =============================================================================
+// BOOTSTRAP PHASE: Direct Pulumi Deployment
+// =============================================================================
+
+// 1. Deploy MetalLB for LoadBalancer support
+export const metallbBootstrap = new Components.MetalLBComponent(
+  "stg-metallb-bootstrap",
+  {
+    namespace: "metallb-system",
+    chartVersion: "0.15.2",
+    environment: "stg",
+    ipRange: "10.10.0.200-10.10.0.201",
   },
   {
-    // Fix: Avoid array spreading which can cause promise leaks on failure
     dependsOn: workerInstalls,
-    providers: { kubernetes: defaultK8sProvider },
-  },
-);
-// Deploy MetalLB IP pools (required for load balancer functionality)
-// Cannot be created via Helm extraResources due to CRD timing limitations
-export const metallbPools = new MetalLBPools(
-  "stg-metallb-pools",
-  {
-    ipRange: METALLB_DEFAULTS.STAGING_IP_RANGE,
-  },
-  {
-    dependsOn: [metallb.chart], // Wait for MetalLB chart and CRDs to be ready
-    providers: { kubernetes: defaultK8sProvider },
-  },
-);
-// Deploy cert-manager for TLS certificate provisioning
-// Independent of MetalLB, can start in parallel after K8s cluster is ready
-export const certManager = new CertManagerBootstrap(
-  "stg-cert-manager",
-  {
-    email: cloudflareConfig.email,
-    environment: "stg", // Uses staging Let's Encrypt server
-    cloudflareApiToken: cloudflareConfig.apiToken,
-  },
-  {
-    dependsOn: workerInstalls, // Wait for K8s cluster to be ready
-    providers: { kubernetes: defaultK8sProvider },
+    provider: stagingK8sProvider,
   },
 );
 
-// Deploy Traefik ingress controller (bootstrap)
-// Use simple chart dependency instead of custom readiness gate
-export const traefik = new TraefikBootstrap(
-  "stg-traefik",
+// 2. Deploy Traefik for ingress controller
+export const traefikBootstrap = new Components.TraefikComponent(
+  "stg-traefik-bootstrap",
   {
-    domain: cloudflareConfig.domain,
-    email: cloudflareConfig.email,
-    environment: "stg", // Use staging environment
-    dashboard: false,
+    namespace: "traefik",
+    chartVersion: "36.3.0",
+    environment: "stg",
   },
   {
-    dependsOn: [metallbPools], // Wait for MetalLB IP allocation to be ready
-    providers: { kubernetes: defaultK8sProvider },
+    dependsOn: [metallbBootstrap],
+    provider: stagingK8sProvider,
   },
 );
 
-// Deploy ArgoCD for GitOps
-export const argocd = new ArgoCdBootstrap(
+// 3. Deploy cert-manager for TLS certificates
+export const certManagerBootstrap = new Components.CertManagerComponent(
+  "stg-cert-manager-bootstrap",
+  {
+    namespace: "cert-manager",
+    chartVersion: "v1.16.1",
+    environment: "stg",
+    cloudflareApiToken: apiToken,
+    email: email,
+  },
+  {
+    dependsOn: [traefikBootstrap],
+    provider: stagingK8sProvider,
+  },
+);
+
+// 4. Deploy ArgoCD for GitOps
+export const argoCd = new Components.ArgoCdComponent(
   "stg-argocd",
   {
-    repositoryUrl: "https://github.com/rzp-labs/rzp-infrastructure.git",
-    domain: `stg.argocd.${cloudflareConfig.domain}`,
+    namespace: "argocd",
+    chartVersion: "5.51.6",
+    environment: "stg",
+    domain: `stg.argocd.${domain}`,
   },
   {
-    dependsOn: [traefik, certManager.clusterIssuer], // Wait for both ingress controller and TLS certificate capability
-    providers: { kubernetes: defaultK8sProvider },
+    dependsOn: [certManagerBootstrap.clusterIssuer],
+    provider: stagingK8sProvider,
+  },
+);
+// Get ArgoCD admin password using helper (TEMPORARILY COMMENTED OUT)
+// const argoCdAdminPassword = getArgoCdAdminPassword(
+//   "argocd-get-admin-password",
+//   {
+//     masterNode: cluster.masters.map((m) => m.config)[0],
+//     ssh: {
+//       username: config.proxmox.ssh!.username!,
+//       privateKey: config.proxmox.ssh!.privateKey!,
+//     },
+//     deploymentName: "stg-argocd-chart-server",
+//     namespace: "argocd",
+//   },
+//   { dependsOn: [argoCd.chart] },
+// );
+// =============================================================================
+// ARGOCD PROVIDER CONFIGURATION
+// =============================================================================
+
+// ArgoCD provider for GitOps application management (TEMPORARILY COMMENTED OUT)
+/*const stagingArgoCdProvider = new argocd.Provider(
+  "stg-argocd-provider",
+  {
+    serverAddr: `https://stg.argocd.${domain}`, // External ingress URL
+    username: "admin",
+    password: argoCdAdminPassword, // Retrieved via helper after deployment
+    insecure: false, // Use proper TLS validation with Let's Encrypt certificates
+    // Note: Client certificates not needed for external HTTPS access
+  },
+  {
+    dependsOn: [argoCd.ingress], // Wait for ingress to be ready and accessible
   },
 );
 
-// Export cluster information
+// =============================================================================
+// GITOPS PHASE: ArgoCD Applications Using Same Components
+// =============================================================================
+
+// Now deploy ArgoCD applications that use the same components with identical configs
+// This completes the bootstrap-to-GitOps transition pattern
+
+// MetalLB ArgoCD Application
+export const metallbApp = new argocd.Application(
+  "stg-metallb-app",
+  {
+    metadata: {
+      name: "metallb",
+      namespace: "argocd",
+    },
+    spec: {
+      project: "default",
+      sources: [
+        {
+          repoUrl: "https://metallb.github.io/metallb",
+          chart: "metallb",
+          targetRevision: "0.15.2",
+          helm: {
+            values: metallbBootstrap.helmValuesOutput, // Reference bootstrap component values
+          },
+        },
+      ],
+      destination: {
+        server: "https://kubernetes.default.svc",
+        namespace: "metallb-system",
+      },
+      syncPolicy: {
+        automated: { prune: true, selfHeal: true },
+        syncOptions: ["CreateNamespace=true"],
+      },
+    },
+  },
+  { provider: stagingArgoCdProvider },
+);
+
+// Traefik ArgoCD Application
+export const traefikApp = new argocd.Application(
+  "stg-traefik-app",
+  {
+    metadata: {
+      name: "traefik",
+      namespace: "argocd",
+    },
+    spec: {
+      project: "default",
+      sources: [
+        {
+          repoUrl: "https://traefik.github.io/charts",
+          chart: "traefik",
+          targetRevision: "36.3.0",
+          helm: {
+            values: traefikBootstrap.helmValuesOutput, // Reference bootstrap component values
+          },
+        },
+      ],
+      destination: {
+        server: "https://kubernetes.default.svc",
+        namespace: "traefik",
+      },
+      syncPolicy: {
+        automated: { prune: true, selfHeal: true },
+        syncOptions: ["CreateNamespace=true"],
+      },
+    },
+  },
+  { provider: stagingArgoCdProvider },
+);
+
+// cert-manager ArgoCD Application
+export const certManagerApp = new argocd.Application(
+  "stg-cert-manager-app",
+  {
+    metadata: {
+      name: "cert-manager",
+      namespace: "argocd",
+    },
+    spec: {
+      project: "default",
+      sources: [
+        {
+          repoUrl: "https://charts.jetstack.io",
+          chart: "cert-manager",
+          targetRevision: "v1.16.1",
+          helm: {
+            values: certManagerBootstrap.helmValuesOutput, // Reference bootstrap component values
+          },
+        },
+      ],
+      destination: {
+        server: "https://kubernetes.default.svc",
+        namespace: "cert-manager",
+      },
+      syncPolicy: {
+        automated: { prune: true, selfHeal: true },
+        syncOptions: ["CreateNamespace=true"],
+      },
+    },
+  },
+  { provider: stagingArgoCdProvider },
+);
+*/
+// =============================================================================
+// EXPORTS
+// =============================================================================
+
 export const masterIps = cluster.masterIps;
 export const workerIps = cluster.workerIps;
 export const allNodes = cluster.allNodes;
 export const kubeconfig = credentials.result.kubeconfig;
-export const argoCdUrl = argocd.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
-// Note: Password capture removed - use kubectl to get admin password when needed
+export const argoCdUrl = argoCd.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
+// export const argoCdPassword = argoCdAdminPassword; // Commented out with password retrieval
 
-// Note: ArgoCD admin password can be retrieved with kubectl when needed
-// Dashboard URL not available via Pulumi exports when managed by Helm chart
-export const traefikDashboardUrl = undefined;
-
-// Export utility function for role determination
+// Utility function for role determination
 export const getVmRoleFromId = (vmId: number): IK3sNodeConfig["role"] => {
   const role = getVmRole(vmId, config.k3s.masterVmidStart, config.k3s.workerVmidStart);
   if (role === null) {

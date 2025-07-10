@@ -1,70 +1,163 @@
-import type * as k8s from "@pulumi/kubernetes";
+import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
-
-import { createMetalLBChartValues } from "../../config/metallb-config";
-import { ChartComponent } from "../../shared/base-chart-component";
-import { NamespaceComponent } from "../../shared/base-namespace-component";
-import { METALLB_DEFAULTS } from "../../shared/constants";
-import type { IMetalLBBootstrapConfig } from "../../shared/types";
 
 /**
  * MetalLB Bootstrap Component
  *
  * Deploys MetalLB load balancer controller with IP pool configuration.
- * Uses Helm chart with post-install hooks for proper timing and idempotency.
+ * Provides load balancer capability for services in the cluster.
  *
- * REFACTORED: Now uses generic NamespaceComponent and ChartComponent
- * instead of service-specific components, reducing duplication.
+ * Clean implementation without config sprawl - follows current component patterns.
  */
+
+export interface IMetalLBBootstrapConfig {
+  readonly ipRange: string;
+}
+
 export class MetalLBBootstrap extends pulumi.ComponentResource {
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
-  public readonly namespaceComponent: NamespaceComponent;
-  public readonly chartComponent: ChartComponent;
 
   constructor(name: string, config: IMetalLBBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp-infra:metallb:MetalLBBootstrap", name, {}, opts);
+    super("rzp-infra:metallb:Bootstrap", name, {}, opts);
 
-    this.namespaceComponent = this.createNamespace(name);
-    this.namespace = this.namespaceComponent.namespace;
-
-    this.chartComponent = this.createChart(name, config);
-    this.chart = this.chartComponent.chart;
-
-    this.registerAllOutputs();
-  }
-
-  private createNamespace(name: string): NamespaceComponent {
-    return new NamespaceComponent(
-      name,
+    // Create namespace directly with required security labels
+    this.namespace = new k8s.core.v1.Namespace(
+      `${name}-namespace`,
       {
-        namespaceName: METALLB_DEFAULTS.NAMESPACE,
-        appName: "metallb",
-        extraLabels: {
-          "pod-security.kubernetes.io/enforce": "privileged",
-          "pod-security.kubernetes.io/audit": "privileged",
-          "pod-security.kubernetes.io/warn": "privileged",
+        metadata: {
+          name: "metallb-system",
+          labels: {
+            "app.kubernetes.io/name": "metallb",
+            "app.kubernetes.io/managed-by": "pulumi",
+            "app.kubernetes.io/component": "load-balancer",
+            // Required for MetalLB security context
+            "pod-security.kubernetes.io/enforce": "privileged",
+            "pod-security.kubernetes.io/audit": "privileged",
+            "pod-security.kubernetes.io/warn": "privileged",
+          },
         },
       },
       { parent: this },
     );
-  }
 
-  private createChart(name: string, config: IMetalLBBootstrapConfig): ChartComponent {
-    return new ChartComponent(
-      name,
+    // Deploy MetalLB chart directly with inline values
+    this.chart = new k8s.helm.v3.Chart(
+      `${name}-chart`,
       {
-        chartName: METALLB_DEFAULTS.CHART_NAME,
-        chartRepo: METALLB_DEFAULTS.CHART_REPO,
-        chartVersion: METALLB_DEFAULTS.CHART_VERSION,
-        namespace: this.namespace,
-        values: createMetalLBChartValues(config.ipRange),
+        chart: "metallb",
+        fetchOpts: { repo: "https://metallb.github.io/metallb" },
+        version: "0.15.2",
+        namespace: this.namespace.metadata.name,
+        values: {
+          // Controller configuration
+          controller: {
+            enabled: true,
+            image: {
+              repository: "quay.io/metallb/controller",
+              tag: "v0.15.2",
+            },
+            resources: {
+              requests: {
+                cpu: "100m",
+                memory: "128Mi",
+              },
+              limits: {
+                cpu: "200m",
+                memory: "256Mi",
+              },
+            },
+            securityContext: {
+              capabilities: {
+                drop: ["ALL"],
+                add: ["NET_RAW"],
+              },
+              readOnlyRootFilesystem: true,
+              runAsNonRoot: true,
+              runAsUser: 65534,
+            },
+          },
+          // Speaker configuration
+          speaker: {
+            enabled: true,
+            image: {
+              repository: "quay.io/metallb/speaker",
+              tag: "v0.15.2",
+            },
+            resources: {
+              requests: {
+                cpu: "100m",
+                memory: "128Mi",
+              },
+              limits: {
+                cpu: "200m",
+                memory: "256Mi",
+              },
+            },
+            securityContext: {
+              allowPrivilegeEscalation: false,
+              capabilities: {
+                drop: ["ALL"],
+                add: ["NET_RAW", "NET_ADMIN"],
+              },
+              readOnlyRootFilesystem: true,
+            },
+            // Tolerate master nodes for single-node clusters
+            tolerations: [
+              {
+                key: "node-role.kubernetes.io/control-plane",
+                operator: "Exists",
+                effect: "NoSchedule",
+              },
+              {
+                key: "node-role.kubernetes.io/master",
+                operator: "Exists",
+                effect: "NoSchedule",
+              },
+            ],
+          },
+          // Webhook configuration
+          webhook: {
+            enabled: true,
+            image: {
+              repository: "quay.io/metallb/controller",
+              tag: "v0.15.2",
+            },
+            resources: {
+              requests: {
+                cpu: "50m",
+                memory: "64Mi",
+              },
+              limits: {
+                cpu: "100m",
+                memory: "128Mi",
+              },
+            },
+          },
+          // CRDs
+          crds: {
+            enabled: true,
+          },
+          // RBAC
+          rbac: {
+            create: true,
+          },
+          // Service account
+          serviceAccount: {
+            controller: {
+              create: true,
+              name: "metallb-controller",
+            },
+            speaker: {
+              create: true,
+              name: "metallb-speaker",
+            },
+          },
+        },
       },
-      { parent: this },
+      { parent: this, dependsOn: [this.namespace] },
     );
-  }
 
-  private registerAllOutputs(): void {
     this.registerOutputs({
       namespace: this.namespace,
       chart: this.chart,

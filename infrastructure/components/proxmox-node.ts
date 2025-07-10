@@ -8,7 +8,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 import { getSshPublicKey } from "../config/base";
 import { getInlineCloudInitConfig } from "../resources/storage/cloud-init";
-import { DebianCloudImage } from "../resources/storage/images";
+import type { DebianCloudImage } from "../resources/storage/images";
 import type { IK3sNodeConfig, IProxmoxNodeArgs } from "../shared/types";
 
 import { VmConfiguration } from "./vm/vm-configuration";
@@ -25,7 +25,7 @@ export class ProxmoxNode extends pulumi.ComponentResource {
     super("rzp-infra:proxmox:ProxmoxNode", name, {}, opts);
 
     this.config = args.nodeConfig;
-    this.cloudImage = new DebianCloudImage(`${args.nodeConfig.name}-cloud-image`, args.config, args.provider);
+    this.cloudImage = args.cloudImage;
 
     // Create cloud-init files and VM configuration
     this.createCloudInitFiles(args);

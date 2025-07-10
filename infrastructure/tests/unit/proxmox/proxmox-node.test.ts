@@ -27,12 +27,14 @@ jest.mock("../../../config/base", () => ({
 
 // NOW import infrastructure after mocks
 import { ProxmoxNode } from "../../../components/proxmox-node";
+import { DebianCloudImage } from "../../../resources/storage/images";
 import type { IK3sNodeConfig, IProxmoxConfig, IProxmoxNodeArgs } from "../../../shared/types";
 
 describe("ProxmoxNode - Phase 3 Native Testing", () => {
   let mockProxmoxConfig: IProxmoxConfig;
   let mockNodeConfig: IK3sNodeConfig;
   let mockProvider: proxmoxve.Provider;
+  let mockCloudImage: DebianCloudImage;
 
   beforeEach(() => {
     // Create proper Provider mock
@@ -75,6 +77,8 @@ describe("ProxmoxNode - Phase 3 Native Testing", () => {
         dataDiskSize: 60,
       },
     };
+
+    mockCloudImage = new DebianCloudImage("test-cloud-image", mockProxmoxConfig, mockProvider);
   });
 
   describe("ComponentResource Pattern Validation", () => {
@@ -84,6 +88,7 @@ describe("ProxmoxNode - Phase 3 Native Testing", () => {
         config: mockProxmoxConfig,
         nodeConfig: mockNodeConfig,
         provider: mockProvider,
+        cloudImage: mockCloudImage,
       };
 
       // Act
@@ -112,6 +117,7 @@ describe("ProxmoxNode - Phase 3 Native Testing", () => {
         config: mockProxmoxConfig,
         nodeConfig: workerConfig,
         provider: mockProvider,
+        cloudImage: mockCloudImage,
       };
 
       // Act
@@ -131,6 +137,7 @@ describe("ProxmoxNode - Phase 3 Native Testing", () => {
         config: mockProxmoxConfig,
         nodeConfig: mockNodeConfig,
         provider: mockProvider,
+        cloudImage: mockCloudImage,
       };
 
       // Act
@@ -164,6 +171,7 @@ describe("ProxmoxNode - Phase 3 Native Testing", () => {
         config: mockProxmoxConfig,
         nodeConfig: customConfig,
         provider: mockProvider,
+        cloudImage: mockCloudImage,
       };
 
       // Act
@@ -197,6 +205,7 @@ describe("ProxmoxNode - Phase 3 Native Testing", () => {
         config: mockProxmoxConfig,
         nodeConfig: highResourceConfig,
         provider: mockProvider,
+        cloudImage: mockCloudImage,
       };
 
       // Act

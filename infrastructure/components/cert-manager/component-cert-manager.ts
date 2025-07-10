@@ -2,35 +2,36 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 /**
- * cert-manager Bootstrap Component
+ * cert-manager Component
  *
- * Deploys cert-manager for automatic TLS certificate provisioning
- * using Let's Encrypt with DNS challenges via Cloudflare.
- *
- * Clean implementation without config sprawl - follows current component patterns.
+ * Opinionated cert-manager component for homelab TLS certificate management.
+ * Provides automatic Let's Encrypt certificates via Cloudflare DNS challenges.
  */
 
-export interface ICertManagerBootstrapConfig {
+export interface ICertManagerArgs {
+  readonly namespace: string;
+  readonly chartVersion: string;
+  readonly environment: "dev" | "stg" | "prd";
   readonly cloudflareApiToken: pulumi.Input<string>;
   readonly email: string;
-  readonly environment: "dev" | "stg" | "prd";
 }
 
-export class CertManagerBootstrap extends pulumi.ComponentResource {
+export class CertManagerComponent extends pulumi.ComponentResource {
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
   public readonly cloudflareSecret: k8s.core.v1.Secret;
   public readonly clusterIssuer: k8s.apiextensions.CustomResource;
+  public readonly helmValuesOutput: pulumi.Output<string>;
 
-  constructor(name: string, config: ICertManagerBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp-infra:cert-manager:Bootstrap", name, {}, opts);
+  constructor(name: string, args: ICertManagerArgs, opts?: pulumi.ComponentResourceOptions) {
+    super("rzp-infra:cert-manager:Component", name, {}, opts);
 
-    // Create namespace directly
+    // Create namespace with cert-manager labels
     this.namespace = new k8s.core.v1.Namespace(
       `${name}-namespace`,
       {
         metadata: {
-          name: "cert-manager",
+          name: args.namespace,
           labels: {
             "app.kubernetes.io/name": "cert-manager",
             "app.kubernetes.io/managed-by": "pulumi",
@@ -42,62 +43,55 @@ export class CertManagerBootstrap extends pulumi.ComponentResource {
       { parent: this },
     );
 
-    // Deploy cert-manager chart directly with inline values
+    // Build opinionated Helm values
+    const helmValues = {
+      // Always install CRDs
+      installCRDs: true,
+      // Global configuration
+      global: {
+        logLevel: 2,
+        leaderElection: {
+          namespace: args.namespace,
+        },
+      },
+      // Startup API check configuration
+      startupapicheck: {
+        enabled: false, // Disable for faster deployment, or increase timeout
+        timeout: "5m", // Increase timeout if enabled
+      },
+      // Controller resources - production ready
+      resources: {
+        requests: { cpu: "100m", memory: "128Mi" },
+        limits: { cpu: "200m", memory: "256Mi" },
+      },
+      // Webhook resources
+      webhook: {
+        resources: {
+          requests: { cpu: "50m", memory: "64Mi" },
+          limits: { cpu: "100m", memory: "128Mi" },
+        },
+      },
+      // CA Injector resources
+      cainjector: {
+        resources: {
+          requests: { cpu: "50m", memory: "64Mi" },
+          limits: { cpu: "100m", memory: "128Mi" },
+        },
+      },
+    };
+
+    // Expose helm values as output for ArgoCD applications
+    this.helmValuesOutput = pulumi.output(JSON.stringify(helmValues));
+
+    // Deploy cert-manager with opinionated homelab configuration
     this.chart = new k8s.helm.v3.Chart(
       `${name}-chart`,
       {
         chart: "cert-manager",
         fetchOpts: { repo: "https://charts.jetstack.io" },
-        version: "v1.16.1",
+        version: args.chartVersion,
         namespace: this.namespace.metadata.name,
-        values: {
-          // Install CRDs
-          installCRDs: true,
-          // Global configuration
-          global: {
-            logLevel: 2,
-            leaderElection: {
-              namespace: "cert-manager",
-            },
-          },
-          // Resource limits for main controller
-          resources: {
-            requests: {
-              cpu: "100m",
-              memory: "128Mi",
-            },
-            limits: {
-              cpu: "200m",
-              memory: "256Mi",
-            },
-          },
-          // Webhook resource limits
-          webhook: {
-            resources: {
-              requests: {
-                cpu: "50m",
-                memory: "64Mi",
-              },
-              limits: {
-                cpu: "100m",
-                memory: "128Mi",
-              },
-            },
-          },
-          // CA Injector resource limits
-          cainjector: {
-            resources: {
-              requests: {
-                cpu: "50m",
-                memory: "64Mi",
-              },
-              limits: {
-                cpu: "100m",
-                memory: "128Mi",
-              },
-            },
-          },
-        },
+        values: helmValues,
       },
       { parent: this, dependsOn: [this.namespace] },
     );
@@ -117,20 +111,20 @@ export class CertManagerBootstrap extends pulumi.ComponentResource {
         },
         type: "Opaque",
         stringData: {
-          "api-token": config.cloudflareApiToken,
+          "api-token": args.cloudflareApiToken,
         },
       },
       { parent: this, dependsOn: [this.chart] },
     );
 
-    // Create Let's Encrypt cluster issuer
+    // Create Let's Encrypt cluster issuer with environment-specific server
     this.clusterIssuer = new k8s.apiextensions.CustomResource(
       `${name}-letsencrypt-issuer`,
       {
         apiVersion: "cert-manager.io/v1",
         kind: "ClusterIssuer",
         metadata: {
-          name: `letsencrypt-${config.environment}`,
+          name: `letsencrypt-${args.environment}`,
           labels: {
             "app.kubernetes.io/name": "cert-manager",
             "app.kubernetes.io/managed-by": "pulumi",
@@ -140,12 +134,12 @@ export class CertManagerBootstrap extends pulumi.ComponentResource {
         spec: {
           acme: {
             server:
-              config.environment === "prd"
+              args.environment === "prd"
                 ? "https://acme-v02.api.letsencrypt.org/directory"
                 : "https://acme-staging-v02.api.letsencrypt.org/directory",
-            email: config.email,
+            email: args.email,
             privateKeySecretRef: {
-              name: `letsencrypt-${config.environment}-private-key`,
+              name: `letsencrypt-${args.environment}-private-key`,
             },
             solvers: [
               {
@@ -165,11 +159,13 @@ export class CertManagerBootstrap extends pulumi.ComponentResource {
       { parent: this, dependsOn: [this.cloudflareSecret] },
     );
 
+    // Register outputs
     this.registerOutputs({
       namespace: this.namespace,
       chart: this.chart,
       cloudflareSecret: this.cloudflareSecret,
       clusterIssuer: this.clusterIssuer,
+      helmValuesOutput: this.helmValuesOutput,
     });
   }
 }

@@ -29,6 +29,12 @@ importers:
       '@three14/pulumi-argocd':
         specifier: ^1.0.1
         version: 1.0.1(typescript@5.8.3)
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.0
     devDependencies:
       '@eslint/js':
         specifier: ^9.30.1

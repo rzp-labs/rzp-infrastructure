@@ -6,30 +6,21 @@ config:
   project:networkCidr: "10.10.0.0/24"
   rzp-infra:proxmoxEndpoint: https://10.10.0.10:8006
   rzp-infra:proxmoxUsername:
-    secure: v1:H/gWSBPXoAxwFPxd:dQ1Z6qYRBryq+88NnTKqWoolbbAuE9DqB7pFhDx8NQ==
+    secure: v1:uO8KGvDZ17OX1Yfg:RocpugqqfVDmnHZTFTG/fsXiiwWlJJN8
   rzp-infra:proxmoxPassword:
-    secure: v1:kJGq+ejoD5uqtjkZ:rRcVdmy4w78GLFM8aA/i6FisnwAnb0oBksScgStFJqKXUv0=
+    secure: v1:tL+pWLpbt/qkc5ku:JfWITGaOFAy3Keic0SujOCOkjKtwXxj24WomS2EYRw+sH9Q=
   rzp-infra:proxmoxInsecure: "true"
-  rzp-infra:sshPublicKey:
-    secure: v1:A4/seS5pMDPuLMwh:B5OEDQJOwt02aLXRz8jp55IxPGCtGpQLpfuak7frCiOwVViLgtHlVKYRP73SpvjEdHm2mzLCeCgE/d7vUZhJenxHTq90GmS3kALYW/ySu/O72h0aLMdibB440wwjspL9
   rzp-infra:sshAgent: "false"
   rzp-infra:sshUsername: admin_ops
+  rzp-infra:sshPublicKey:
+    secure: v1:A4/seS5pMDPuLMwh:B5OEDQJOwt02aLXRz8jp55IxPGCtGpQLpfuak7frCiOwVViLgtHlVKYRP73SpvjEdHm2mzLCeCgE/d7vUZhJenxHTq90GmS3kALYW/ySu/O72h0aLMdibB440wwjspL9
   rzp-infra:sshPrivateKey:
     secure: v1:LyWSxfYaG4o2akcH:FYSTEWGJiJjkBdB2lo+cdRQTdQqkQHbgabvDjjE0XD0X681488rSZE9m99+K4YdHOj6w0/lhsT0cBrXgKb5ClwXXgvZku3zflnt6eVYXr0PxLwIvALxHz19U1tNm3WZboSkoVxAqRmZizt9FyPOCrFYMaGXybQ0Xzjd4NtyUlTO+2mqDGLALuKAwSoQ/HA36+4VX4tOcV7TlwVYjqkh6/748iLCBJ4rEUsmmhSK/Thtezcvg6Icm3cDLmNlX09ZzR+2/O+/nh2SPgNNaDxchzd0WdN3Y9KMbR0vtL7pv/vyFqM4K6p2pxpuzvXcggAS4ZuDlEdCQfPmVrkNmZvuwrNSYt1m5FH/gu3o8HI/xmLopSJ6ZZchCZaABzl8QKPARDhBsm/B1dHGaKyRPj/z3GnX37Cqmr4Ml4htunu7FBMUd967emJPOWzD6BOMGOoAw3E+KMvl8itnCIyee0Wp/+rRoCNfgsAhiYyLrzmVMfIvZOo6r9Gam/wB/yK003g+XINSTYWOkb6v93hE6TDzXGISwyLmYhmNNjmgcsYJDjU7muIrgVBAuGQv1UhdELkTqELBEGxcW79cEqEiIxCJMUeQEGhQ0IDqOJw3CVPn4qiK4ICokjIGIYenLsyCUIgLRAKbrQn1Flwy0OijGh1vFTYiOA5R5Dt7YBqtOaGITpOgYVR7yPvNE/nLHY1TKG9ce2nhhPRahxkB3taoszM2xg0xHnYwcGw3+bam0+m1KZcDJ022fvEdBY3dbKRXhaC/jRQqoucGd8l8c/IRh08Y4ZYk7dydz2MKs1yj4YMrO58+m4k/BUNOs8jk57XbsT8PvVI4ICqHU6QkYMDv6LzN78m84xoMGDxsAZtrjsQZv6jCOJdq/O47FI16T9oNXeJ5yelkN2ni1MYfv/OZSoK1SCCMMpPkuDZlRMhY014+t4h2yDfBh1eVFlk21EItOKFG4m6PSBYqBQ9pBBK0gXgPee9xXPR5QjMMDGLX50NIVoVt8Qhbc6RNEaXRrS7O+sfHlAcMWkZJTFRaO8Yd9dwoMbpNYkzWjeEziS7ZFmssABUAmyZYYBTNE25LzzEnFL32bZnmSt03YaTADNjAwZu3jnv5VGjlF5uL86pHBHL4cNl3NApSX71HtNNuKUOwfzIaA5drjzw==
-  cloudflare:apiToken:
-    secure: v1:QntgVodqMzNIK3L6:Qp/i7XHSdSUc62015GzT0RNJLyct9GbO9ugfzdglOSbj/E2KzKc7aUz50dss9VQksdGQd/aqoak=
+  rzp-infra:proxmoxNode: rzp-net
+  rzp-infra:isoStore: local
+  rzp-infra:vmStore: local-zfs
+  cloudflare:email: admin@rzp.one
   cloudflare:domain: rzp.one
   cloudflare:zoneId: fac3b4a6d26396c32a87dfdc7c15acdc
-  project:proxmoxUsername:
-    secure: v1:CLnfYniDGWuiCQhd:VLuHVhyJ0UzQUFGiXPXpAgLNTtr+rX5s4FbXTBHZDw==
-  project:proxmoxPassword:
-    secure: v1:XIyGoSDh0aLjNJZt:v5T/WbBQfG7FyIgOVTXzZPfXHQMqn66R//57zeSpVYRrmAg=
-  project:proxmoxEndpoint: https://10.10.0.10:8006
-  tunnel-test:proxmoxUsername:
-    secure: v1:ZiB9HshM9gUIuk+u:RYP3my2RmptVtDiXuBEECIJf/rDU0ZGajYoziw0=
-  tunnel-test:proxmoxPassword:
-    secure: v1:FcPlsjIv7AK4z/i2:jCq5vUgJZn6LNBieZPaxkClqbgZaB6ilfZEtkNCsVslxsI4=
-  tunnel-test:proxmoxEndpoint: https://10.10.0.10:8006
-  tunnel-test:sshPrivateKey:
-    secure: v1:4bFSPajJ6w7g9E+k:kBzsZ5iQQiA1uI917HXFeKH5FbMiHh9IkhD/uVbKbwlr/I76uYIYBjSF6FG0GhuaYVPzto7DIQxamzbNItuDJMq+M5LV+qzxlPzcc9Rmbv2NZHF9Hiud1+DEJOwxpBtrZjqOgPlkfPcgUnfm9ixkIG5qKTfjCdevwp3r7zq/6gHNNFsJe8XyJPcjsohxHcmND4O6r72RUIHJB2begEfT7uRbEbK8Zw/fJtvIWv9jacuw3d0By1GQkReFlw5H4GHMGJBh8jEt84TjL9HkpP2C/vLkKB3xZO8QflmPEqpKd4lYIsjy1fNJlCpqSCOtP5cBrFdnVk1pbiotML0r04DQWCDicJI6se95fq/P0CjYgU6K+X8HrJCicVBHmu+BGjTwWH4ZRjnDmv76W8/OLy2lalNVmSfh36SANb8x/fXsKxFwx+iwQXugtwrZ0buQVPPhPuIZGaRODBeHRpa1gYv1K9r0daArMOo4xq5y3fQ+6FWMILdUdhgP2x6+XLj/1+PSGx7QuVZtrqIsn3/+xG97OkK3iOvGnW5BzsSUFHk730jWrz3jSrPihIGqEV4sV2KB/BzN2KAI5xig7zfpzfKqie0Ij1SOVxIm2tzDkTp3qcR3TL8XpU8VbQjfaxoLuLfnqj2DH3hetfjKJmyaM00TS1kyK6s56bsEF66W5w2ARb7UJdMjtVT/v1LM2inT5LcWYnqpZRMrpitqRH9Oevx7upa7Bp5h4Y4cfWYCoDmGpfk5uEutd9FQJEONd80dhGoOOEKJo5Hs7R1Fnu5ktlS/RFiKT82MGu1j0CZnBMiAuf32CGrZghjBi+7KOAiayoDCNT7kfyTsua7M1i3BAvqwABRmje52wBDJDnP0qaOPb9c38MzmTUmqXIA1G9nyp2IrELup55efRV42YOhAv2nvEsnEaq9KUom6WUlI7tCLggnL+qIk9yl1bHP5D/MdvhZJecqmLS3LFW2Oz5pzsepwMsDNl1BbJ31/dO1Cm+vFWdPMBUiF3hs90U9wVcofzCBbspCNcNOrRaAJI9D5UrwKAvWFrOoaV6YtcxVDNrbBiDA7C51WzKu8FWsCxO8SW3aTSjWwsav2A0sn9uK4QWyr7mTv8lyzNodjyIi82uekvWxLrSmCY6nhkwp6ecDSSwXy2osIMw==
-  tunnel-test:sshUsername: admin_ops
+  cloudflare:apiToken:
+    secure: v1:QntgVodqMzNIK3L6:Qp/i7XHSdSUc62015GzT0RNJLyct9GbO9ugfzdglOSbj/E2KzKc7aUz50dss9VQksdGQd/aqoak=

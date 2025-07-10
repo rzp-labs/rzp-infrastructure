@@ -1,6 +1,8 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as argocd from "@three14/pulumi-argocd";
 
+import type { IngressType } from "../../shared/types";
+
 /**
  * MetalLB Application using ArgoCD Provider
  *
@@ -13,6 +15,7 @@ export interface IMetalLBArgoCdConfig {
   readonly targetRevision: string;
   readonly namespace: string;
   readonly argoCdProvider: argocd.Provider;
+  readonly ingress: IngressType; // NEW: Required ingress declaration
 }
 
 export class MetalLBArgoCdApp extends pulumi.ComponentResource {

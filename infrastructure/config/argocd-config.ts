@@ -2,7 +2,7 @@ import type * as pulumi from "@pulumi/pulumi";
 
 import { ARGOCD_DEFAULTS } from "../shared/constants";
 import type { IArgoCdBootstrapConfig, IArgoCdChartValues } from "../shared/types";
-import { createInternalTraefikIngressConfig, withDefault } from "../shared/utils";
+import { createTraefikIngressConfig, withDefault } from "../shared/utils";
 
 export function createArgoCdChartValues(config: IArgoCdBootstrapConfig): IArgoCdChartValues {
   return {
@@ -36,7 +36,7 @@ function createArgoCdRepositories() {
 
 export function createArgoCdIngressSpec(domain: string) {
   return {
-    ...createTraefikIngressConfig(true),
+    ...createTraefikIngressConfig("stg", true, false),
     rules: [
       {
         host: domain,

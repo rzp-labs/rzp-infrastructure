@@ -1,89 +1,132 @@
-import type * as k8s from "@pulumi/kubernetes";
+import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import { createArgoCdChartValues } from "../../config/argocd-config";
-import { ChartComponent } from "../../shared/base-chart-component";
-import { NamespaceComponent } from "../../shared/base-namespace-component";
-import { ARGOCD_DEFAULTS } from "../../shared/constants";
 import type { IArgoCdBootstrapConfig } from "../../shared/types";
-
-import { ArgoCdIngress } from "./argocd-ingress";
-import { ArgoCdSelfApp } from "./argocd-self-app";
+import { createTraefikIngressConfig, withDefault } from "../../shared/utils";
 
 /**
  * ArgoCD Bootstrap Component
  *
- * Deploys ArgoCD to K3s cluster to enable GitOps workflow.
- * This is the foundation component that enables all other services
- * to be deployed via GitOps patterns.
- *
- * REFACTORED: Now uses generic NamespaceComponent and ChartComponent
- * for the core Helm deployment, while keeping ArgoCD-specific components
- * (admin secret, ingress, self-app) as separate ComponentResources.
+ * Deploys ArgoCD directly without abstraction layers.
+ * Creates only the essential resources: namespace, chart, and ingress.
  */
 export class ArgoCdBootstrap extends pulumi.ComponentResource {
-  public readonly namespaceComponent: NamespaceComponent;
-  public readonly chartComponent: ChartComponent;
-  public readonly ingressComponent: ArgoCdIngress;
-  public readonly selfAppComponent: ArgoCdSelfApp;
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
-  public readonly argoCdApp: k8s.apiextensions.CustomResource;
-  public readonly ingress: k8s.networking.v1.Ingress;
+  public readonly ingress?: k8s.networking.v1.Ingress;
+  public readonly serverServiceName: string;
 
   constructor(name: string, config: IArgoCdBootstrapConfig, opts?: pulumi.ComponentResourceOptions) {
-    super("rzp-infra:argocd:ArgoCdBootstrap", name, {}, opts);
+    super("rzp-infra:argocd:Bootstrap", name, {}, opts);
 
-    this.namespaceComponent = this.createNamespace(name);
-    this.namespace = this.namespaceComponent.namespace;
-    this.chartComponent = this.createChart(name, config);
-    this.chart = this.chartComponent.chart;
-
-    this.ingressComponent = this.createIngress(name, config);
-    this.ingress = this.ingressComponent.ingress;
-
-    this.selfAppComponent = this.createSelfApp(name, config);
-    this.argoCdApp = this.selfAppComponent.application;
-
-    this.registerAllOutputs();
-  }
-
-  private createNamespace(name: string): NamespaceComponent {
-    return new NamespaceComponent(
-      name,
-      { namespaceName: ARGOCD_DEFAULTS.NAMESPACE, appName: "argocd" },
-      { parent: this },
-    );
-  }
-
-  private createChart(name: string, config: IArgoCdBootstrapConfig): ChartComponent {
-    return new ChartComponent(
-      name,
+    // Create namespace directly
+    this.namespace = new k8s.core.v1.Namespace(
+      `${name}-namespace`,
       {
-        chartName: ARGOCD_DEFAULTS.CHART_NAME,
-        chartRepo: ARGOCD_DEFAULTS.CHART_REPO,
-        chartVersion: ARGOCD_DEFAULTS.CHART_VERSION,
-        namespace: this.namespace,
-        values: createArgoCdChartValues(config),
+        metadata: {
+          name: "argocd",
+          labels: {
+            "app.kubernetes.io/name": "argocd",
+            "app.kubernetes.io/managed-by": "pulumi",
+          },
+        },
       },
       { parent: this },
     );
-  }
 
-  private createIngress(name: string, config: IArgoCdBootstrapConfig): ArgoCdIngress {
-    return new ArgoCdIngress(name, { config, namespace: this.namespace }, { parent: this });
-  }
+    // Deploy ArgoCD chart directly
+    this.chart = new k8s.helm.v3.Chart(
+      `${name}-chart`,
+      {
+        chart: "argo-cd",
+        fetchOpts: { repo: "https://argoproj.github.io/argo-helm" },
+        version: "5.51.6",
+        namespace: this.namespace.metadata.name,
+        values: {
+          installCRDs: true,
+          global: {
+            domain: withDefault(config.domain, "argocd.local"),
+          },
+          server: {
+            service: { type: "ClusterIP" },
+            ingress: { enabled: false },
+            config: {
+              repositories: {
+                "rzp-infrastructure": {
+                  url: "https://github.com/rzp-labs/rzp-infrastructure.git",
+                  name: "rzp-infrastructure",
+                  type: "git",
+                },
+              },
+            },
+            extraArgs: ["--insecure"],
+          },
+          configs: {
+            secret: { createSecret: true },
+            params: {
+              "server.insecure": "true",
+            },
+          },
+          dex: { enabled: false },
+        },
+      },
+      { parent: this, dependsOn: [this.namespace] },
+    );
 
-  private createSelfApp(name: string, config: IArgoCdBootstrapConfig): ArgoCdSelfApp {
-    return new ArgoCdSelfApp(name, { config, namespace: this.namespace }, { parent: this, dependsOn: [this.chart] });
-  }
+    // Create ingress only if requested (requires ingress controller)
+    if (config.createIngress !== false) {
+      this.ingress = new k8s.networking.v1.Ingress(
+        `${name}-ingress`,
+        {
+          metadata: {
+            name: "argocd-server-ingress",
+            namespace: this.namespace.metadata.name,
+            annotations: {
+              ...createTraefikIngressConfig("stg", true, false).annotations,
+            },
+          },
+          spec: this.createIngressSpec(config),
+        },
+        { parent: this, dependsOn: [this.chart] },
+      );
+    }
 
-  private registerAllOutputs(): void {
+    // Set server service name based on chart release name
+    this.serverServiceName = `${name}-chart-server`;
+
     this.registerOutputs({
       namespace: this.namespace,
       chart: this.chart,
       ingress: this.ingress,
-      argoCdApp: this.argoCdApp,
+      serverServiceName: this.serverServiceName,
     });
+  }
+
+  private createIngressSpec(config: IArgoCdBootstrapConfig) {
+    const domain = withDefault(config.domain, "argocd.local");
+
+    return {
+      ...createTraefikIngressConfig("stg", true, false),
+      rules: [
+        {
+          host: domain,
+          http: {
+            paths: [
+              {
+                path: "/",
+                pathType: "Prefix",
+                backend: {
+                  service: {
+                    name: this.serverServiceName,
+                    port: { number: 80 },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+      tls: [{ hosts: [domain], secretName: "argocd-server-tls" }],
+    };
   }
 }

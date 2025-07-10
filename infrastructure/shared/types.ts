@@ -24,6 +24,14 @@ export interface IProxmoxConfig {
   };
 }
 
+/**
+ * Ingress access type for components
+ * - external: Accessible from public internet
+ * - internal: Accessible only from internal network
+ * - none: No ingress/web interface
+ */
+export type IngressType = "external" | "internal" | "none";
+
 export interface INetworkConfig {
   readonly net4Prefix: string;
   readonly net6Prefix: string;
@@ -86,6 +94,7 @@ export interface IProxmoxNodeArgs {
   readonly config: IProxmoxConfig;
   readonly nodeConfig: IK3sNodeConfig;
   readonly provider: proxmoxve.Provider;
+  readonly cloudImage: DebianCloudImage;
 }
 
 export interface IVmCloudInitArgs {
@@ -154,6 +163,7 @@ export interface IClusterOutput {
 export interface IArgoCdBootstrapConfig {
   readonly repositoryUrl: string;
   readonly domain?: string;
+  readonly createIngress?: boolean; // NEW: Optional ingress creation
 }
 
 export interface IArgoCdChartValues {

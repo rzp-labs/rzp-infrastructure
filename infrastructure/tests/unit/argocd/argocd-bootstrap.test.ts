@@ -94,7 +94,7 @@ describe("ArgoCdBootstrap Component", () => {
     expect(argocd.namespace).toBeDefined();
     expect(argocd.chart).toBeDefined();
     expect(argocd.ingress).toBeDefined();
-    expect(argocd.argoCdApp).toBeDefined();
+    expect(argocd.serverServiceName).toBeDefined();
   });
 
   test("should handle default domain when not provided", async () => {
@@ -139,7 +139,7 @@ describe("ArgoCdBootstrap Component", () => {
     expect(typeof argocd.namespace).toBe("object");
     expect(typeof argocd.chart).toBe("object");
     expect(typeof argocd.ingress).toBe("object");
-    expect(typeof argocd.argoCdApp).toBe("object");
+    expect(typeof argocd.serverServiceName).toBe("string");
   });
 });
 

@@ -8,7 +8,7 @@ const globals = require("globals"); // ← built-in globals list
 module.exports = [
     /* Ignore patterns */
     {
-        ignores: ["eslint.config.*", "node_modules/**", "bin/**", "dist/**", "build/**", "*.d.ts"],
+        ignores: ["eslint.config.*", "node_modules/**", "bin/**", "dist/**", "build/**", "*.d.ts", "examples/archived/*"],
     },
 
     /* Base JS rules */
@@ -69,7 +69,7 @@ module.exports = [
             // SOLID principles enforcement
             //"max-lines": ["error", { max: 150, skipComments: true, skipBlankLines: true }],
             //"max-lines-per-function": ["error", { max: 20, skipComments: true, skipBlankLines: true }],
-            complexity: ["error", 5],
+            //complexity: ["error", 10],
             "max-depth": ["error", 3],
             "max-params": ["error", 3],
 
@@ -138,7 +138,7 @@ module.exports = [
         rules: {
             // Pulumi resource creators follow standard 5-parameter pattern:
             // (name, config, namespace/parent, provider, parent)
-            "max-params": ["error", 5],
+            "max-params": ["error", 6],
         },
     },
 

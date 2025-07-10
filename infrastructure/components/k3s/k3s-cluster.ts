@@ -6,6 +6,7 @@ import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 import type { ComponentResourceOptions } from "@pulumi/pulumi";
 import { ComponentResource } from "@pulumi/pulumi";
 
+import { DebianCloudImage } from "../../resources/storage/images";
 import type { IClusterOutput, IEnvironmentConfig, IK3sNodeConfig, INodeInfo } from "../../shared/types";
 import { calculateNetworkIndex, generateIpv4, generateIpv6, generateVmName } from "../../shared/utils";
 import { ProxmoxNode } from "../proxmox-node";
@@ -16,6 +17,7 @@ export interface IK3sClusterArgs {
 
 export class K3sCluster extends ComponentResource {
   public readonly provider: proxmoxve.Provider;
+  public readonly cloudImage: DebianCloudImage;
   public readonly masters: readonly ProxmoxNode[];
   public readonly workers: readonly ProxmoxNode[];
 
@@ -25,6 +27,7 @@ export class K3sCluster extends ComponentResource {
     const { config } = args;
 
     this.provider = this.createProvider(name, config);
+    this.cloudImage = this.createCloudImage(name, config);
     this.masters = this.createMasterNodes(config);
     this.workers = this.createWorkerNodes(config);
   }
@@ -49,6 +52,10 @@ export class K3sCluster extends ComponentResource {
     );
   }
 
+  private createCloudImage(name: string, config: IEnvironmentConfig): DebianCloudImage {
+    return new DebianCloudImage(`${name}-cloud-image`, config.proxmox, this.provider);
+  }
+
   private createMasterNodes(config: IEnvironmentConfig): ProxmoxNode[] {
     return this.createNodes("master", config.k3s.masterCount, config);
   }
@@ -66,6 +73,7 @@ export class K3sCluster extends ComponentResource {
           config: config.proxmox,
           nodeConfig,
           provider: this.provider,
+          cloudImage: this.cloudImage,
         },
         { parent: this },
       );
