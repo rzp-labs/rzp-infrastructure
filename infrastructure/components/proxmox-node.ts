@@ -6,7 +6,7 @@ import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 import type { ComponentResourceOptions } from "@pulumi/pulumi";
 import * as pulumi from "@pulumi/pulumi";
 
-import { getSshPublicKey } from "../config/base";
+import { getSshPublicKey } from "../config/vm-config";
 import { getInlineCloudInitConfig } from "../resources/storage/cloud-init";
 import type { DebianCloudImage } from "../resources/storage/images";
 import type { IK3sNodeConfig, IProxmoxNodeArgs } from "../shared/types";

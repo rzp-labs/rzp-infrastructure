@@ -1,4 +1,4 @@
-import { getProxmoxConfig } from "../../../config/base";
+import { getProxmoxConfig } from "../../../config/vm-config";
 import { K8sTestClient } from "../../helpers/k3s/k8s-test-client";
 import type { IK8sTestClient } from "../../helpers/k3s/k8s-test-client-interface";
 import { type IPulumiTunnelResult, createK3sTunnelProvisioner } from "../../helpers/k3s/pulumi-tunnel-provisioner";

@@ -21,7 +21,7 @@ void pulumi.runtime.setMocks({
 });
 
 // Mock the config module to avoid SSH key requirement
-jest.mock("../../../config/base", () => ({
+jest.mock("../../../config/vm-config", () => ({
   getSshPublicKey: () => pulumi.output("ssh-rsa AAAAB3NzaC1yc2ETEST test@example.com"),
 }));
 

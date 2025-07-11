@@ -1,7 +1,7 @@
 import * as command from "@pulumi/command";
 import * as pulumi from "@pulumi/pulumi";
 
-import { getProxmoxConfig } from "../../../config/base";
+import { getProxmoxConfig } from "../../../config/vm-config";
 
 export interface IPulumiTunnelConfig {
   readonly remoteHost: string;
