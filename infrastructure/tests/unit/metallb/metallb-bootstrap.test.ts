@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 
-import { MetalLBBootstrap } from "../../../components/metallb/metallb-bootstrap";
+import { MetalLBComponent } from "../../../components/metallb/component-metallb";
 
 // Mock Pulumi runtime for testing - specific typed interfaces
 interface IK8sMetadata {
@@ -45,25 +45,27 @@ void pulumi.runtime.setMocks({
   },
 });
 
-describe("MetalLBBootstrap", () => {
+describe("MetalLBComponent", () => {
   const mockConfig = {
-    kubeconfig: pulumi.output("mock-kubeconfig"),
+    namespace: "metallb-system",
+    chartVersion: "0.13.12",
+    environment: "dev" as const,
     ipRange: "10.10.0.200-10.10.0.205",
   };
 
   it("should create MetalLB component with all required resources", async () => {
     // Act
-    const metallb = new MetalLBBootstrap("test-metallb", mockConfig);
+    const metallb = new MetalLBComponent("test-metallb", mockConfig);
 
     // Assert
-    expect(metallb).toBeInstanceOf(MetalLBBootstrap);
+    expect(metallb).toBeInstanceOf(MetalLBComponent);
     expect(metallb.namespace).toBeDefined();
     expect(metallb.chart).toBeDefined();
   });
 
   it("should follow SOLID principles with clear single responsibility", async () => {
     // Act
-    const metallb = new MetalLBBootstrap("test-metallb", mockConfig);
+    const metallb = new MetalLBComponent("test-metallb", mockConfig);
 
     // Assert - Component should have clear single responsibility
     expect(typeof metallb.namespace).toBe("object");
@@ -73,12 +75,14 @@ describe("MetalLBBootstrap", () => {
   it("should handle minimal configuration", async () => {
     // Arrange
     const minimalConfig = {
-      kubeconfig: pulumi.output("minimal-kubeconfig"),
+      namespace: "metallb-system",
+      chartVersion: "0.13.12",
+      environment: "stg" as const,
       ipRange: "192.168.1.200-192.168.1.205",
     };
 
     // Act
-    const metallb = new MetalLBBootstrap("minimal-metallb", minimalConfig);
+    const metallb = new MetalLBComponent("minimal-metallb", minimalConfig);
 
     // Assert
     expect(metallb.namespace).toBeDefined();

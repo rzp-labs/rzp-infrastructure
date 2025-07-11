@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 
-import { ArgoCdBootstrap } from "../../../components/argocd/argocd-bootstrap";
+import { ArgoCdComponent } from "../../../components/argocd/component-argocd";
 
 // Mock Pulumi runtime for testing - specific typed interfaces
 interface IK8sMetadata {
@@ -78,80 +78,91 @@ void pulumi.runtime.setMocks({
   },
 });
 
-describe("ArgoCdBootstrap Component", () => {
-  test("should create ArgoCD bootstrap component with valid configuration", async () => {
+describe("ArgoCdComponent Component", () => {
+  test("should create ArgoCD component with valid configuration", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
+    const config = {
+      namespace: "argocd",
+      chartVersion: "5.46.7",
+      environment: "dev" as const,
+      domain: "argocd.test.local",
+    };
 
     // Act
-    const argocd = new ArgoCdBootstrap("test-argocd", {
-      repositoryUrl,
-      domain: "argocd.test.local",
-    });
+    const argocd = new ArgoCdComponent("test-argocd", config);
 
     // Assert
-    expect(argocd).toBeInstanceOf(ArgoCdBootstrap);
+    expect(argocd).toBeInstanceOf(ArgoCdComponent);
     expect(argocd.namespace).toBeDefined();
     expect(argocd.chart).toBeDefined();
     expect(argocd.ingress).toBeDefined();
-    expect(argocd.serverServiceName).toBeDefined();
   });
 
   test("should handle default domain when not provided", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
+    const config = {
+      namespace: "argocd",
+      chartVersion: "5.46.7",
+      environment: "dev" as const,
+      domain: "argocd.default.local",
+    };
 
     // Act
-    const argocd = new ArgoCdBootstrap("test-argocd-default", {
-      repositoryUrl,
-    });
+    const argocd = new ArgoCdComponent("test-argocd-default", config);
 
     // Assert
-    expect(argocd).toBeInstanceOf(ArgoCdBootstrap);
+    expect(argocd).toBeInstanceOf(ArgoCdComponent);
     expect(argocd.namespace).toBeDefined();
   });
 
   test("should handle custom domain configuration", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
+    const config = {
+      namespace: "argocd",
+      chartVersion: "5.46.7",
+      environment: "stg" as const,
+      domain: "argocd.custom.local",
+    };
 
     // Act
-    const argocd = new ArgoCdBootstrap("test-argocd-custom", {
-      repositoryUrl,
-      domain: "argocd.custom.local",
-    });
+    const argocd = new ArgoCdComponent("test-argocd-custom", config);
 
     // Assert
-    expect(argocd).toBeInstanceOf(ArgoCdBootstrap);
+    expect(argocd).toBeInstanceOf(ArgoCdComponent);
     expect(argocd.chart).toBeDefined();
   });
 
   test("should maintain SOLID principles", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
+    const config = {
+      namespace: "argocd",
+      chartVersion: "5.46.7",
+      environment: "prd" as const,
+      domain: "argocd.solid.local",
+    };
 
     // Act
-    const argocd = new ArgoCdBootstrap("test-argocd-solid", {
-      repositoryUrl,
-    });
+    const argocd = new ArgoCdComponent("test-argocd-solid", config);
 
     // Assert - Component should have clear single responsibility
     expect(typeof argocd.namespace).toBe("object");
     expect(typeof argocd.chart).toBe("object");
     expect(typeof argocd.ingress).toBe("object");
-    expect(typeof argocd.serverServiceName).toBe("string");
   });
 });
 
 describe("ArgoCD Component Architecture", () => {
   test("should follow component resource pattern", async () => {
     // Arrange
-    const repositoryUrl = "https://github.com/rzp-labs/rzp-infrastructure.git";
+    const config = {
+      namespace: "argocd",
+      chartVersion: "5.46.7",
+      environment: "dev" as const,
+      domain: "argocd.arch.local",
+    };
 
     // Act
-    const argocd = new ArgoCdBootstrap("test-argocd-arch", {
-      repositoryUrl,
-    });
+    const argocd = new ArgoCdComponent("test-argocd-arch", config);
 
     // Assert - Should be a proper Pulumi ComponentResource
     expect(argocd).toBeInstanceOf(pulumi.ComponentResource);

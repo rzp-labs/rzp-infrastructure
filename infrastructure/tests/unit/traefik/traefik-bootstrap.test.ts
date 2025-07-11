@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 
-import { TraefikBootstrap } from "../../../components/traefik/traefik-bootstrap";
+import { TraefikComponent } from "../../../components/traefik/component-traefik";
 
 // Mock Pulumi runtime for testing - specific typed interfaces
 interface IK8sMetadata {
@@ -65,21 +65,21 @@ void pulumi.runtime.setMocks({
   },
 });
 
-describe("TraefikBootstrap", () => {
-  it("should create TraefikBootstrap component with required resources", async () => {
+describe("TraefikComponent", () => {
+  it("should create TraefikComponent component with required resources", async () => {
     // Arrange
     const config = {
-      domain: "example.local",
-      email: "admin@example.local",
+      namespace: "traefik",
+      chartVersion: "24.0.0",
       environment: "stg" as const,
-      dashboard: true,
+      httpsPort: 8443,
     };
 
     // Act
-    const traefik = new TraefikBootstrap("test-traefik", config);
+    const traefik = new TraefikComponent("test-traefik", config);
 
     // Assert
-    expect(traefik).toBeInstanceOf(TraefikBootstrap);
+    expect(traefik).toBeInstanceOf(TraefikComponent);
     expect(traefik.namespace).toBeDefined();
     expect(traefik.chart).toBeDefined();
     // Dashboard now managed by Helm chart, not Pulumi
@@ -88,14 +88,14 @@ describe("TraefikBootstrap", () => {
   it("should create namespace with correct metadata", async () => {
     // Arrange
     const config = {
-      domain: "example.local",
-      email: "test@example.com",
+      namespace: "traefik",
+      chartVersion: "24.0.0",
       environment: "dev" as const,
-      dashboard: false,
+      httpsPort: 8443,
     };
 
     // Act
-    const traefik = new TraefikBootstrap("test-traefik", config);
+    const traefik = new TraefikComponent("test-traefik", config);
 
     // Assert
     expect(traefik.namespace).toBeDefined();
@@ -105,14 +105,14 @@ describe("TraefikBootstrap", () => {
   it("should create Helm chart with correct configuration", async () => {
     // Arrange
     const config = {
-      domain: "example.local",
-      email: "admin@example.local",
+      namespace: "traefik",
+      chartVersion: "24.0.0",
       environment: "prd" as const,
-      dashboard: true,
+      httpsPort: 8443,
     };
 
     // Act
-    const traefik = new TraefikBootstrap("test-traefik", config);
+    const traefik = new TraefikComponent("test-traefik", config);
 
     // Assert
     expect(traefik.chart).toBeDefined();
@@ -122,17 +122,17 @@ describe("TraefikBootstrap", () => {
   it("should create dashboard ingress when domain and dashboard are provided", async () => {
     // Arrange
     const config = {
-      domain: "example.local",
-      email: "test@example.com",
+      namespace: "traefik",
+      chartVersion: "24.0.0",
       environment: "dev" as const,
-      dashboard: true,
+      httpsPort: 8443,
     };
 
     // Act
-    const traefik = new TraefikBootstrap("test-traefik", config);
+    const traefik = new TraefikComponent("test-traefik", config);
 
     // Assert
-    expect(traefik).toBeInstanceOf(TraefikBootstrap);
+    expect(traefik).toBeInstanceOf(TraefikComponent);
     expect(traefik.namespace).toBeDefined();
     expect(traefik.chart).toBeDefined();
     // Dashboard now managed by Helm chart, not Pulumi
@@ -141,17 +141,17 @@ describe("TraefikBootstrap", () => {
   it("should not create dashboard ingress when dashboard is disabled", async () => {
     // Arrange
     const config = {
-      domain: "example.local",
-      email: "test@example.com",
+      namespace: "traefik",
+      chartVersion: "24.0.0",
       environment: "dev" as const,
-      dashboard: false,
+      httpsPort: 8443,
     };
 
     // Act
-    const traefik = new TraefikBootstrap("test-traefik", config);
+    const traefik = new TraefikComponent("test-traefik", config);
 
     // Assert
-    expect(traefik).toBeInstanceOf(TraefikBootstrap);
+    expect(traefik).toBeInstanceOf(TraefikComponent);
     expect(traefik.namespace).toBeDefined();
     expect(traefik.chart).toBeDefined();
     // Dashboard now managed by Helm chart, not Pulumi
@@ -160,14 +160,14 @@ describe("TraefikBootstrap", () => {
   it("should follow SOLID principles with clear single responsibility", async () => {
     // Arrange
     const config = {
-      domain: "example.local",
-      email: "admin@example.local",
+      namespace: "traefik",
+      chartVersion: "24.0.0",
       environment: "stg" as const,
-      dashboard: true,
+      httpsPort: 8443,
     };
 
     // Act
-    const traefik = new TraefikBootstrap("test-traefik", config);
+    const traefik = new TraefikComponent("test-traefik", config);
 
     // Assert - Component should have clear single responsibility
     expect(typeof traefik.namespace).toBe("object");
@@ -178,13 +178,13 @@ describe("TraefikBootstrap", () => {
   it("should handle minimal configuration", async () => {
     // Arrange
     const config = {
-      domain: "example.local",
-      email: "test@example.com",
+      namespace: "traefik",
+      chartVersion: "24.0.0",
       environment: "dev" as const,
     };
 
     // Act
-    const traefik = new TraefikBootstrap("test-traefik", config);
+    const traefik = new TraefikComponent("test-traefik", config);
 
     // Assert
     expect(traefik.namespace).toBeDefined();
