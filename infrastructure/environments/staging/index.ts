@@ -8,6 +8,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 import * as Components from "../../components";
 import { getStagingConfig } from "../../config/staging";
+import { createArgoCdApplication } from "../../helpers/argocd/application-factory";
 import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
@@ -150,46 +151,27 @@ export const argoCd = new Components.ArgoCdComponent(
 // completing the bootstrap-to-GitOps transition with identical configurations.
 // Using Kubernetes CustomResource instead of ArgoCD provider to avoid proxy/cert issues.
 
-// MetalLB ArgoCD Application - using direct CustomResource approach
-export const metallbApp = new k8s.apiextensions.CustomResource(
+// MetalLB ArgoCD Application - using helper factory
+export const metallbApp = createArgoCdApplication(
   "stg-metallb-app",
   {
-    apiVersion: "argoproj.io/v1alpha1",
-    kind: "Application",
-    metadata: {
-      name: "metallb",
-      namespace: "argocd",
-      labels: {
-        "app.kubernetes.io/name": "metallb",
-        "app.kubernetes.io/managed-by": "pulumi",
-        "app.kubernetes.io/component": "argocd-application",
-      },
-    },
-    spec: {
-      project: "default",
-      sources: [
-        {
-          repoUrl: "https://metallb.github.io/metallb",
-          chart: "metallb",
-          targetRevision: "0.15.2",
-          helm: {
-            values: metallbBootstrap.helmValuesOutput,
-          },
+    name: "metallb",
+    sources: [
+      {
+        repoUrl: "https://metallb.github.io/metallb",
+        chart: "metallb",
+        targetRevision: "0.15.2",
+        helm: {
+          values: metallbBootstrap.helmValuesOutput,
         },
-      ],
-      destination: {
-        server: "https://kubernetes.default.svc",
-        namespace: "metallb-system",
       },
-      syncPolicy: {
-        automated: {
-          prune: true,
-          selfHeal: true,
-        },
-        syncOptions: ["CreateNamespace=true"],
-      },
+    ],
+    destination: {
+      server: "https://kubernetes.default.svc",
+      namespace: "metallb-system",
     },
   },
+  argoCd.namespace.metadata.name,
   {
     dependsOn: [argoCd.chart],
     provider: stagingK8sProvider,

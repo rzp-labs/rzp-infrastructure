@@ -1,6 +1,8 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
+import { createWebhookReadinessJob } from "../../helpers/health/webhook-readiness";
+
 /**
  * MetalLB Component
  *
@@ -122,38 +124,16 @@ export class MetalLBComponent extends pulumi.ComponentResource {
     );
 
     // Wait for MetalLB webhook to be ready before creating IP pool
-    const webhookReadiness = new k8s.batch.v1.Job(
-      `${name}-webhook-readiness`,
+    const webhookReadiness = createWebhookReadinessJob(
       {
-        metadata: {
-          name: `${name}-webhook-readiness`,
-          namespace: this.namespace.metadata.name,
-          generateName: `${name}-webhook-readiness-`,
-        },
-        spec: {
-          ttlSecondsAfterFinished: 300, // Clean up after 5 minutes
-          template: {
-            spec: {
-              restartPolicy: "Never",
-              containers: [
-                {
-                  name: "webhook-readiness",
-                  image: "curlimages/curl:7.86.0",
-                  command: [
-                    "sh",
-                    "-c",
-                    "until curl -k https://metallb-webhook-service.metallb-system.svc:443/healthz; do echo 'Waiting for webhook...'; sleep 5; done; echo 'Webhook ready'",
-                  ],
-                },
-              ],
-            },
-          },
-        },
+        componentName: name,
+        namespace: args.namespace,
+        deploymentName: `${name}-chart-webhook`,
+        timeoutSeconds: 300,
       },
       {
         parent: this,
         dependsOn: [this.chart],
-        replaceOnChanges: ["*"], // Force recreation on any change
       },
     );
 

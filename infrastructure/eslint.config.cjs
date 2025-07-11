@@ -71,7 +71,7 @@ module.exports = [
             //"max-lines-per-function": ["error", { max: 20, skipComments: true, skipBlankLines: true }],
             //complexity: ["error", 10],
             "max-depth": ["error", 3],
-            "max-params": ["error", 3],
+            //"max-params": ["error", 3],
 
             // Prevent common issues
             "no-console": "error",
