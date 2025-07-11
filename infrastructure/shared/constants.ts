@@ -52,63 +52,8 @@ export const K3S_INSTALLATION = {
   LOCALHOST_IP: "127.0.0.1",
 } as const;
 
-// ArgoCD Constants
-export const ARGOCD_DEFAULTS = {
-  CHART_NAME: "argo-cd",
-  CHART_REPO: "https://argoproj.github.io/argo-helm",
-  CHART_VERSION: "5.51.6", // Keep current stable version
-  NAMESPACE: "argocd",
-  DEFAULT_DOMAIN: "argocd.local",
-  SERVICE_TYPE: "ClusterIP",
-} as const;
-
-// Traefik Constants
-export const TRAEFIK_DEFAULTS = {
-  CHART_NAME: "traefik",
-  CHART_REPO: "https://traefik.github.io/charts",
-  CHART_VERSION: "28.3.0", // Keep current stable version
-  NAMESPACE: "traefik-system",
-  SERVICE_TYPE: "LoadBalancer",
-  REPLICAS: 1,
-  WEB_PORT: 80,
-  WEBSECURE_PORT: 443,
-  DASHBOARD_PORT: 9000,
-} as const;
-
-// MetalLB Constants
-export const METALLB_DEFAULTS = {
-  CHART_NAME: "metallb",
-  CHART_REPO: "https://metallb.github.io/metallb",
-  CHART_VERSION: "0.15.2",
-  NAMESPACE: "metallb-system",
-  STAGING_IP_RANGE: "10.10.0.200-10.10.0.201",
-  PRODUCTION_IP_RANGE: "10.10.0.202-10.10.0.205",
-} as const;
-
-// cert-manager Constants
-export const CERT_MANAGER_DEFAULTS = {
-  CHART_NAME: "cert-manager",
-  CHART_REPO: "https://charts.jetstack.io",
-  CHART_VERSION: "v1.18.2", // Updated from v1.15.3 to latest stable
-  NAMESPACE: "cert-manager",
-} as const;
-
-// Let's Encrypt Constants
-export const LETSENCRYPT = {
-  PROD_SERVER: "https://acme-v02.api.letsencrypt.org/directory",
-  STAGING_SERVER: "https://acme-staging-v02.api.letsencrypt.org/directory",
-} as const;
-
 // DNS Constants
 export const DNS_DEFAULTS = {
   SERVERS: ["1.1.1.1", "1.0.0.1"], // Cloudflare DNS
   DOMAIN: "local",
-} as const;
-
-// Resource Timeout Constants
-export const RESOURCE_TIMEOUTS = {
-  KUBERNETES: { create: "10m", update: "5m", delete: "3m" },
-  NAMESPACE: { create: "2m", update: "1m", delete: "3m" },
-  HELM_CHART: { create: "10m", update: "5m", delete: "3m" },
-  VM: { create: "15m", update: "10m", delete: "5m" },
 } as const;

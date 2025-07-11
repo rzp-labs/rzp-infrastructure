@@ -5,12 +5,9 @@
 //import * as command from "@pulumi/command";
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
-//import * as argocd from "@three14/pulumi-argocd";
-//import * as yaml from "js-yaml";
 
 import * as Components from "../../components";
 import { getStagingConfig } from "../../config/staging";
-//import { getArgoCdAdminPassword } from "../../helpers";
 import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
@@ -23,19 +20,6 @@ const cloudflareConfig = new pulumi.Config("cloudflare");
 const domain = cloudflareConfig.require("domain");
 const email = cloudflareConfig.require("email");
 const apiToken = cloudflareConfig.requireSecret("apiToken");
-
-// =============================================================================
-// PROVIDER CONFIGURATION
-// =============================================================================
-
-// Proxmox provider for VM infrastructure
-// Note: Currently using provider from config, but this shows how to create environment-specific providers
-// const stagingProxmoxProvider = new proxmoxve.Provider("stg-proxmox", {
-//   endpoint: config.proxmox.endpoint,
-//   username: config.proxmox.username,
-//   password: config.proxmox.password,
-//   insecure: config.proxmox.insecure,
-// });
 
 // =============================================================================
 // INFRASTRUCTURE DEPLOYMENT
@@ -158,187 +142,6 @@ export const argoCd = new Components.ArgoCdComponent(
     provider: stagingK8sProvider,
   },
 );
-/* Get ArgoCD admin password using helper
-const argoCdAdminPasswordResult = getArgoCdAdminPassword(
-  "argocd-get-admin-password",
-  {
-    masterNode: cluster.masters.map((m) => m.config)[0],
-    ssh: {
-      username: config.proxmox.ssh!.username!,
-      privateKey: config.proxmox.ssh!.privateKey!,
-    },
-    deploymentName: "stg-argocd-chart-server",
-    namespace: "argocd",
-  },
-  { dependsOn: [argoCd.chart, masterInstall.k3sHealthCheck] },
-);
-// =============================================================================
-// ARGOCD PROVIDER CONFIGURATION
-// =============================================================================
-
-// Add staging cluster to existing kubeconfig using kubectl config commands
-const kubeconfigFile = new command.local.Command("add-stg-cluster", {
-  create: credentials.result.kubeconfig.apply((config) => {
-    const kubeconfigObj = yaml.load(config) as {
-      clusters: Array<{ cluster: { server: string; "certificate-authority-data": string } }>;
-      users: Array<{ user: { "client-certificate-data": string; "client-key-data": string } }>;
-    };
-    const cluster = kubeconfigObj.clusters[0].cluster;
-    const user = kubeconfigObj.users[0].user;
-
-    return `
-# Add staging cluster
-kubectl config set-cluster stg-k3s \
-  --server="${cluster.server}" \
-  --certificate-authority-data="${cluster["certificate-authority-data"]}" \
-  --embed-certs=true
-
-# Add staging user
-kubectl config set-credentials stg-k3s-admin \
-  --client-certificate-data="${user["client-certificate-data"]}" \
-  --client-key-data="${user["client-key-data"]}" \
-  --embed-certs=true
-
-# Add staging context
-kubectl config set-context stg-k3s \
-  --cluster=stg-k3s \
-  --user=stg-k3s-admin
-
-# Use staging context
-kubectl config use-context stg-k3s
-
-echo "Added stg-k3s cluster and set as current context"
-    `;
-  }),
-});
-
-// ArgoCD provider for GitOps application management
-const stagingArgoCdProvider = new argocd.Provider(
-  "stg-argocd-provider",
-  {
-    authToken: argoCdAdminPasswordResult.token,
-    portForwardWithNamespace: "argocd",
-    insecure: true,
-  },
-  {
-    dependsOn: [argoCd.chart, argoCd.ingress, argoCdAdminPasswordResult.command, kubeconfigFile], // Wait for kubeconfig file
-  },
-);
-
-// =============================================================================
-// GITOPS PHASE: ArgoCD Applications Using Same Components
-// =============================================================================
-
-// Now deploy ArgoCD applications that use the same components with identical configs
-// This completes the bootstrap-to-GitOps transition pattern
-
-// MetalLB ArgoCD Application
-export const metallbApp = new argocd.Application(
-  "stg-metallb-app",
-  {
-    metadata: {
-      name: "metallb",
-      namespace: "argocd",
-    },
-    spec: {
-      project: "default",
-      sources: [
-        {
-          repoUrl: "https://metallb.github.io/metallb",
-          chart: "metallb",
-          targetRevision: "0.15.2",
-          helm: {
-            values: metallbBootstrap.helmValuesOutput, // Reference bootstrap component values
-          },
-        },
-      ],
-      destination: {
-        server: "https://kubernetes.default.svc",
-        namespace: "metallb-system",
-      },
-      syncPolicy: {
-        automated: { prune: true, selfHeal: true },
-        syncOptions: ["CreateNamespace=true"],
-      },
-    },
-  },
-  {
-    provider: stagingArgoCdProvider,
-    dependsOn: [argoCd.chart, argoCd.ingress],
-  },
-);
-
-// Traefik ArgoCD Application
-export const traefikApp = new argocd.Application(
-  "stg-traefik-app",
-  {
-    metadata: {
-      name: "traefik",
-      namespace: "argocd",
-    },
-    spec: {
-      project: "default",
-      sources: [
-        {
-          repoUrl: "https://traefik.github.io/charts",
-          chart: "traefik",
-          targetRevision: "36.3.0",
-          helm: {
-            values: traefikBootstrap.helmValuesOutput, // Reference bootstrap component values
-          },
-        },
-      ],
-      destination: {
-        server: "https://kubernetes.default.svc",
-        namespace: "traefik",
-      },
-      syncPolicy: {
-        automated: { prune: true, selfHeal: true },
-        syncOptions: ["CreateNamespace=true"],
-      },
-    },
-  },
-  {
-    provider: stagingArgoCdProvider,
-    dependsOn: [argoCd.chart, argoCd.ingress],
-  },
-);
-
-// cert-manager ArgoCD Application
-export const certManagerApp = new argocd.Application(
-  "stg-cert-manager-app",
-  {
-    metadata: {
-      name: "cert-manager",
-      namespace: "argocd",
-    },
-    spec: {
-      project: "default",
-      sources: [
-        {
-          repoUrl: "https://charts.jetstack.io",
-          chart: "cert-manager",
-          targetRevision: "v1.16.1",
-          helm: {
-            values: certManagerBootstrap.helmValuesOutput, // Reference bootstrap component values
-          },
-        },
-      ],
-      destination: {
-        server: "https://kubernetes.default.svc",
-        namespace: "cert-manager",
-      },
-      syncPolicy: {
-        automated: { prune: true, selfHeal: true },
-        syncOptions: ["CreateNamespace=true"],
-      },
-    },
-  },
-  {
-    provider: stagingArgoCdProvider,
-    dependsOn: [argoCd.chart, argoCd.ingress],
-  },
-);*/
 
 // =============================================================================
 // GITOPS PHASE: ArgoCD Applications (using Kubernetes CustomResource approach)
@@ -402,7 +205,6 @@ export const workerIps = cluster.workerIps;
 export const allNodes = cluster.allNodes;
 export const kubeconfig = credentials.result.kubeconfig;
 export const argoCdUrl = argoCd.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
-//export const argoCdToken = argoCdAdminPasswordResult.token;
 
 // Utility function for role determination
 export const getVmRoleFromId = (vmId: number): IK3sNodeConfig["role"] => {

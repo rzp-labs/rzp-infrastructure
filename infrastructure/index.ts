@@ -9,5 +9,5 @@
 export * from "./environments/staging";
 
 // Re-export shared utilities for external use
-export { getVmRole, isTemplate } from "./shared/utils";
+export { getVmRole } from "./shared/utils";
 export type { INodeInfo, IClusterOutput } from "./shared/types";

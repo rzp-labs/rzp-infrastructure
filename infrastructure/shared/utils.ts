@@ -28,13 +28,6 @@ export function getVmRole(
 }
 
 /**
- * Checks if a VM ID is in the template range
- */
-export function isTemplate(vmId: number): boolean {
-  return vmId >= 9000 && vmId < 9100;
-}
-
-/**
  * Generates an IPv4 address for a node
  */
 export function generateIpv4(prefix: string, hostBase: number, index: number): string {
@@ -101,24 +94,6 @@ export function calculateNetworkIndex(config: {
  */
 export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-/**
- * Boolean utilities
- */
-
-/**
- * Safely checks if a value is truthy, handling null/undefined
- */
-export function isTruthy(value: unknown): boolean {
-  return Boolean(value);
-}
-
-/**
- * Provides a default value for optional boolean properties
- */
-export function withDefault<T>(value: T | undefined, defaultValue: T): T {
-  return value ?? defaultValue;
 }
 
 /**
@@ -193,11 +168,4 @@ export function createTraefikIngressAnnotations(
   }
 
   return baseAnnotations;
-}
-
-/**
- * Create TLS configuration for ingress
- */
-export function createIngressTlsConfig(host: string, secretName: string) {
-  return [{ hosts: [host], secretName }];
 }

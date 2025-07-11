@@ -1,7 +1,7 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import { createWebhookReadinessJob } from "../../helpers/k8s/webhook-readiness";
+import { createWebhookReadinessJob } from "../../helpers/health/webhook-readiness";
 
 /**
  * cert-manager Component
