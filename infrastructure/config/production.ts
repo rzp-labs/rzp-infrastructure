@@ -1,5 +1,5 @@
 /**
- * Staging environment configuration
+ * Production environment configuration
  */
 
 import * as pulumi from "@pulumi/pulumi";
@@ -14,9 +14,20 @@ function getK3sClusterConfig(): IK3sClusterConfig {
   const network = getNetworkConfig();
   const vmResources = getVmResourceConfig();
 
-  const vmidBase = cfg.getNumber("vmidBase") ?? 120;
-  const masterCount = cfg.getNumber("masterCount") ?? 1;
-  const workerCount = cfg.getNumber("workerCount") ?? 1;
+  // Production masters get 4GB, workers get 8GB
+  const productionMasterResources = {
+    ...vmResources,
+    memory: vmResources.memory * 2, // 4GB for masters
+  };
+
+  const productionWorkerResources = {
+    ...vmResources,
+    memory: vmResources.memory * 4, // 8GB for workers
+  };
+
+  const vmidBase = cfg.getNumber("vmidBase") ?? 220;
+  const masterCount = cfg.getNumber("masterCount") ?? 2;
+  const workerCount = cfg.getNumber("workerCount") ?? 2;
 
   return {
     masterCount,
@@ -25,14 +36,14 @@ function getK3sClusterConfig(): IK3sClusterConfig {
     masterVmidStart: vmidBase + VM_ID_RANGES.MASTERS.OFFSET,
     workerVmidStart: vmidBase + VM_ID_RANGES.WORKERS.OFFSET,
     network,
-    masterVmResources: vmResources,
-    workerVmResources: vmResources,
+    masterVmResources: productionMasterResources,
+    workerVmResources: productionWorkerResources,
   };
 }
 
-export function getStagingConfig(): IEnvironmentConfig {
+export function getProductionConfig(): IEnvironmentConfig {
   return {
-    name: "staging",
+    name: "production",
     proxmox: getProxmoxConfig(),
     k3s: getK3sClusterConfig(),
   };

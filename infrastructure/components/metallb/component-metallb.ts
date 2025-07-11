@@ -150,8 +150,8 @@ export class MetalLBComponent extends pulumi.ComponentResource {
           },
         },
       },
-      { 
-        parent: this, 
+      {
+        parent: this,
         dependsOn: [this.chart],
         replaceOnChanges: ["*"], // Force recreation on any change
       },

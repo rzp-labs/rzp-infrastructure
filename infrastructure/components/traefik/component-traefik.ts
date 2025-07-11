@@ -13,6 +13,7 @@ export interface ITraefikArgs {
   readonly namespace: string;
   readonly chartVersion: string;
   readonly environment: "dev" | "stg" | "prd";
+  readonly httpsPort?: number; // Optional HTTPS port, defaults to 8443
 }
 
 export class TraefikComponent extends pulumi.ComponentResource {
@@ -40,6 +41,7 @@ export class TraefikComponent extends pulumi.ComponentResource {
     );
 
     // Build opinionated Helm values
+    const httpsPort = args.httpsPort ?? 8443; // Default to 8443 for production
     const helmValues = {
       // Deployment - single replica for homelab
       deployment: {
@@ -67,11 +69,11 @@ export class TraefikComponent extends pulumi.ComponentResource {
           },
         },
         websecure: {
-          port: 8443, // Custom port for router forwarding 443 → 8443
+          port: httpsPort, // Configurable HTTPS port
           expose: {
             default: true,
           },
-          exposedPort: 8443, // Service should expose 8443 to match router forwarding
+          exposedPort: httpsPort, // Service should expose same port
           tls: {
             enabled: true,
           },

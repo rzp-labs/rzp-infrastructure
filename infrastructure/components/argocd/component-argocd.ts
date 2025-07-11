@@ -58,16 +58,13 @@ export class ArgoCdComponent extends pulumi.ComponentResource {
           server: {
             service: { type: "ClusterIP" },
             ingress: { enabled: false }, // We create our own
-            extraArgs: ["--insecure"], // Traefik handles TLS
+            extraArgs: ["--insecure"], // Required for gRPC behind proxy
+            // Traefik handles TLS termination for web UI, but API needs internal TLS
             config: {
-              // Pre-configure infrastructure repository
-              repositories: {
-                "rzp-infrastructure": {
-                  url: "https://github.com/rzp-labs/rzp-infrastructure.git",
-                  name: "rzp-infrastructure",
-                  type: "git",
-                },
-              },
+              // Pre-configure infrastructure repository as YAML string
+              repositories: `- url: https://github.com/rzp-labs/rzp-infrastructure.git
+  name: rzp-infrastructure
+  type: git`,
             },
             // Production-ready resource limits
             resources: {
@@ -107,7 +104,7 @@ export class ArgoCdComponent extends pulumi.ComponentResource {
           dex: { enabled: false },
         },
       },
-      { parent: this, dependsOn: [this.namespace] },
+      { parent: this, dependsOn: [this.namespace], replaceOnChanges: ["*"] },
     );
 
     // Create Traefik ingress for ArgoCD

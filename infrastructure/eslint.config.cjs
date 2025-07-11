@@ -169,7 +169,7 @@ module.exports = [
             "@typescript-eslint/strict-boolean-expressions": "warn",
             "max-lines-per-function": "off",
             "max-lines": "off",
-            complexity: "off",
+            "complexity": "off",
             "max-depth": "off",
             "no-console": "warn", // Allow console in tests for debugging
         },

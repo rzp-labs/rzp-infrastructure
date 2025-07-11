@@ -97,7 +97,7 @@ export class K3sCluster extends ComponentResource {
       name,
       ip4: generateIpv4(config.k3s.network.net4Prefix, config.k3s.network.ipHostBase, networkIndex),
       ip6: generateIpv6(config.k3s.network.net6Prefix, config.k3s.network.ipHostBase, networkIndex),
-      resources: config.k3s.vmResources,
+      resources: role === "master" ? config.k3s.masterVmResources : config.k3s.workerVmResources,
     };
   }
 

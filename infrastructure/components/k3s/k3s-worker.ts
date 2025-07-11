@@ -87,8 +87,8 @@ export class K3sWorker extends pulumi.ComponentResource {
       host: args.node.ip4,
       user: args.sshUsername,
       privateKey: args.sshPrivateKey,
-      dialErrorLimit: 20,
-      perDialTimeout: 30,
+      dialErrorLimit: 60, // Retry SSH connection up to 60 times
+      perDialTimeout: 10, // 10 second timeout per attempt
     };
   }
 }

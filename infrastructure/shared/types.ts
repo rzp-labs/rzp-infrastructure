@@ -64,7 +64,8 @@ export interface IK3sClusterConfig {
   readonly masterVmidStart: number;
   readonly workerVmidStart: number;
   readonly network: INetworkConfig;
-  readonly vmResources: IVmResourceConfig;
+  readonly masterVmResources: IVmResourceConfig;
+  readonly workerVmResources: IVmResourceConfig;
 }
 
 // Configuration interfaces moved from /config files for consistency

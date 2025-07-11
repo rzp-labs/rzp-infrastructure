@@ -33,6 +33,8 @@ function buildConnectionConfig(config: IVmHealthCheckConfig) {
     host: config.host,
     user: config.user,
     privateKey: config.privateKey,
+    dialErrorLimit: 30, // Retry SSH connection up to 30 times
+    perDialTimeout: 20, // 20 second timeout per attempt
   };
 }
 
@@ -48,9 +50,15 @@ function buildCommandOptions(opts: pulumi.ComponentResourceOptions | undefined, 
 function buildVmHealthScript(timeoutSeconds: number): string {
   return `#!/bin/bash
     set -e
+    
+    # SSH connection successful, starting VM health checks
+    echo "SSH connection successful, starting VM health checks..."
+    
     ${buildCloudInitWait(timeoutSeconds)}
     ${buildKernelModuleChecks()}
     ${buildNetworkChecks()}
+    
+    echo "All VM health checks completed successfully"
   `;
 }
 

@@ -86,9 +86,15 @@ export function createArgoCdAdminPasswordCommand(
           sleep 2
         done
 
-        # Get the admin password
+        # Get the admin password and retrieve auth token
         echo "Retrieving ArgoCD admin password..."
-        sudo k3s kubectl -n ${namespace} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+        password=$(sudo k3s kubectl -n ${namespace} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | python3 -c "import base64, sys; print(base64.b64decode(sys.stdin.read().strip()).decode().strip())")
+        
+        echo "Getting ArgoCD auth token..."
+        curl -k -s -X POST https://stg.argocd.rzp.one/api/v1/session \
+          -d '{"username":"admin","password":"'$password'"}' \
+          -H "Content-Type: application/json" | \
+          python3 -c "import json, sys; print(json.load(sys.stdin)['token'])"
       `,
     },
     opts,
@@ -96,13 +102,13 @@ export function createArgoCdAdminPasswordCommand(
 }
 
 /**
- * Gets the ArgoCD admin password as a Pulumi output
+ * Gets the ArgoCD auth token as a Pulumi output
  */
 export function getArgoCdAdminPassword(
   name: string,
   config: IArgoCdAdminPasswordConfig,
   opts?: pulumi.ComponentResourceOptions,
-): pulumi.Output<string> {
-  const command = createArgoCdAdminPasswordCommand(name, config, opts);
-  return command.stdout;
+): { token: pulumi.Output<string>; command: command.remote.Command } {
+  const cmd = createArgoCdAdminPasswordCommand(name, config, opts);
+  return { token: cmd.stdout, command: cmd };
 }

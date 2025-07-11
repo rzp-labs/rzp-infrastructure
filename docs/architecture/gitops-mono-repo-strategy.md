@@ -90,7 +90,7 @@ orchestration cluster
 │
 ├── bootstrap/                             # Tier 0: Manual bootstrap
 │   └── argocd/                            # ArgoCD bootstrap
-│       ├── gotk-sync.yaml                 # Points to Forgejo instance
+│       ├── gotk-sync.yaml                 # Points to Harness instance
 │       ├── namespace.yaml                 # ArgoCD namespace
 │       └── README.md                      # Recovery instructions
 ├── kubernetes/
@@ -257,6 +257,7 @@ orchestration cluster
    - Network policy
 
 4. **Standardize configurations**
+
    - Consistent naming
    - Common labels
    - Shared secrets via External Secrets Operator

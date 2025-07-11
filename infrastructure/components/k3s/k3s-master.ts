@@ -39,8 +39,27 @@ export class K3sMaster extends pulumi.ComponentResource {
       privateKey: pulumi.output(args.sshPrivateKey),
     };
 
-    // Add VM health check to wait for cloud-init and networking
-    this.vmHealthCheck = createVmHealthCheck(name, healthConfig, { parent: this });
+    // Wait for VM network connectivity (indicates cloud-init network setup complete)
+    const networkCheck = new command.local.Command(
+      `${name}-network-check`,
+      {
+        create: `
+          echo "Waiting for VM network connectivity at ${args.node.ip4}..."
+          while ! ping -c 1 -W 5 ${args.node.ip4} > /dev/null 2>&1; do
+            echo "Ping failed, waiting 5 seconds..."
+            sleep 5
+          done
+          echo "VM network is ready, SSH should be available"
+        `,
+      },
+      { parent: this },
+    );
+
+    // Add VM health check after network is ready
+    this.vmHealthCheck = createVmHealthCheck(name, healthConfig, {
+      parent: this,
+      dependsOn: [networkCheck],
+    });
 
     // Install K3s after VM is healthy
     const installCommand = this.createInstallCommand(args);
@@ -82,8 +101,8 @@ export class K3sMaster extends pulumi.ComponentResource {
       host: args.node.ip4,
       user: args.sshUsername,
       privateKey: args.sshPrivateKey,
-      dialErrorLimit: 20, // Retry SSH connection up to 20 times
-      perDialTimeout: 30, // 30 second timeout per attempt
+      dialErrorLimit: 60, // Retry SSH connection up to 60 times
+      perDialTimeout: 10, // 10 second timeout per attempt
     };
   }
 

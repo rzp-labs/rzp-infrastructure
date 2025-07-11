@@ -1,6 +1,8 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
+import { createWebhookReadinessJob } from "../../helpers/k8s/webhook-readiness";
+
 /**
  * cert-manager Component
  *
@@ -117,6 +119,18 @@ export class CertManagerComponent extends pulumi.ComponentResource {
       { parent: this, dependsOn: [this.chart] },
     );
 
+    // Create the ClusterIssuer with a delay to allow webhook to be ready
+    // Wait for cert-manager webhook deployment to be available before creating ClusterIssuer
+    const webhookReadiness = createWebhookReadinessJob(
+      {
+        componentName: name,
+        namespace: args.namespace,
+        deploymentName: `${name}-chart-webhook`,
+        timeoutSeconds: 300,
+      },
+      { parent: this, dependsOn: [this.chart] },
+    );
+
     // Create Let's Encrypt cluster issuer with environment-specific server
     this.clusterIssuer = new k8s.apiextensions.CustomResource(
       `${name}-letsencrypt-issuer`,
@@ -156,7 +170,10 @@ export class CertManagerComponent extends pulumi.ComponentResource {
           },
         },
       },
-      { parent: this, dependsOn: [this.cloudflareSecret] },
+      {
+        parent: this,
+        dependsOn: [this.cloudflareSecret, webhookReadiness],
+      },
     );
 
     // Register outputs
