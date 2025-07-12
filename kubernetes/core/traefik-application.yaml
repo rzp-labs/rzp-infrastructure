@@ -1,0 +1,69 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: stg-argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://traefik.github.io/charts
+    chart: traefik
+    targetRevision: 36.3.0
+    helm:
+      values: |
+        # Deployment - single replica for homelab
+        deployment:
+          enabled: true
+          replicas: 1
+        # Service - LoadBalancer for external access
+        service:
+          enabled: true
+          type: LoadBalancer
+        # Ports - homelab standard with router forwarding
+        ports:
+          web:
+            port: 8000
+            expose:
+              default: false # HTTP disabled for security
+            redirections:
+              entryPoint:
+                to: websecure
+                scheme: https
+                permanent: true
+          websecure:
+            port: 443
+            expose:
+              default: true
+            exposedPort: 443
+            tls:
+              enabled: true
+        # Ingress class - default for cluster
+        ingressClass:
+          enabled: true
+          isDefaultClass: true
+        # Security and redirect configuration
+        globalArguments:
+          - "--global.sendanonymoususage=false"
+          - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+          - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+        # Production-ready resource limits
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: stg-traefik
+  syncPolicy:
+    automated:
+      prune: false # Temporary - disable prune during adoption
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Replace=true # Adopt existing resources
+      - Prune=false # Temporary - prevent deletion during adoption

@@ -1,0 +1,63 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: stg-argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.16.1
+    helm:
+      values: |
+        # Always install CRDs
+        installCRDs: true
+        # Global configuration
+        global:
+          logLevel: 2
+          leaderElection:
+            namespace: stg-cert-manager
+        # Startup API check configuration
+        startupapicheck:
+          enabled: false # Disable for faster deployment
+          timeout: "5m"
+        # Controller resources - production ready
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        # Webhook resources
+        webhook:
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+        # CA Injector resources
+        cainjector:
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: stg-cert-manager
+  syncPolicy:
+    automated:
+      prune: false # Temporary - disable prune during adoption
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Replace=true # Adopt existing resources
+      - Prune=false # Temporary - prevent deletion during adoption

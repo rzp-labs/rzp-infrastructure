@@ -30,6 +30,7 @@ export interface IArgoCdApplicationConfig {
   readonly sources: IArgoCdApplicationSource[];
   readonly destination: IArgoCdApplicationDestination;
   readonly project?: string;
+  readonly enableAdoption?: boolean; // Enable Replace=true, Prune=false for resource adoption
 }
 
 /**
@@ -67,10 +68,10 @@ export function createArgoCdApplication(
         destination: config.destination,
         syncPolicy: {
           automated: {
-            prune: true,
+            prune: config.enableAdoption === true ? false : true, // Disable prune during adoption
             selfHeal: true,
           },
-          syncOptions: ["CreateNamespace=true"],
+          syncOptions: ["CreateNamespace=true", ...(config.enableAdoption === true ? ["Replace=true"] : [])],
         },
       },
     },

@@ -8,7 +8,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 import * as Components from "../../components";
 import { getStagingConfig } from "../../config/staging";
-// import { createArgoCdApplication } from "../../helpers/argocd/application-factory";
+import { createArgoCdApplication } from "../../helpers/argocd/application-factory";
 import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
@@ -170,6 +170,63 @@ export const argoCd = new Components.ArgoCdComponent(
 //       server: "https://kubernetes.default.svc",
 //       namespace: "stg-metallb",
 //     },
+//     enableAdoption: true, // Enable Replace=true, Prune=false for adoption
+//   },
+//   argoCd.namespace.metadata.name,
+//   {
+//     dependsOn: [argoCd.chart],
+//     provider: stagingK8sProvider,
+//   },
+// );
+
+// // cert-manager ArgoCD Application
+// export const certManagerApp = createArgoCdApplication(
+//   "stg-cert-manager-app",
+//   {
+//     name: "cert-manager",
+//     sources: [
+//       {
+//         repoURL: "https://charts.jetstack.io",
+//         chart: "cert-manager",
+//         targetRevision: "v1.16.1",
+//         helm: {
+//           values: certManagerBootstrap.helmValuesOutput,
+//         },
+//       },
+//     ],
+//     destination: {
+//       server: "https://kubernetes.default.svc",
+//       namespace: "stg-cert-manager",
+//     },
+//     enableAdoption: true, // Enable Replace=true, Prune=false for adoption
+//   },
+//   argoCd.namespace.metadata.name,
+//   {
+//     dependsOn: [argoCd.chart],
+//     provider: stagingK8sProvider,
+//   },
+// );
+
+// // Traefik ArgoCD Application
+// export const traefikApp = createArgoCdApplication(
+//   "stg-traefik-app",
+//   {
+//     name: "traefik",
+//     sources: [
+//       {
+//         repoURL: "https://traefik.github.io/charts",
+//         chart: "traefik",
+//         targetRevision: "36.3.0",
+//         helm: {
+//           values: traefikBootstrap.helmValuesOutput,
+//         },
+//       },
+//     ],
+//     destination: {
+//       server: "https://kubernetes.default.svc",
+//       namespace: "stg-traefik",
+//     },
+//     enableAdoption: true, // Enable Replace=true, Prune=false for adoption
 //   },
 //   argoCd.namespace.metadata.name,
 //   {
