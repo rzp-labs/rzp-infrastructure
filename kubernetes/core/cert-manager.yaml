@@ -58,6 +58,6 @@ spec:
       prune: false # Temporary - disable prune during adoption
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
-      - Replace=true # Adopt existing resources
-      - Prune=false # Temporary - prevent deletion during adoption
+    - CreateNamespace=false
+    - Replace=true # Adopt existing resources
+    - Prune=false # Temporary - prevent deletion during adoption

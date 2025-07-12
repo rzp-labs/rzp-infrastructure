@@ -96,11 +96,16 @@ orchestration cluster
 ├── kubernetes/
 │   ├── core/                              # Essential cluster services
 │   │   ├── namespaces/                    # Namespace definitions
-│   │   ├── metallb/                       # LoadBalancer (10.10.0.200-210)
-│   │   ├── cert-manager/                  # TLS certificate management
-│   │   ├── external-secrets/              # Infisical integration
-│   │   ├── longhorn/                      # Distributed storage
-│   │   └── traefik/                       # Ingress controller
+│   │   ├── metallb.yaml                       # LoadBalancer (10.10.0.200-210)
+│   │   ├── cert-manager.yaml                  # TLS certificate management
+│   │   ├── external-secrets.yaml              # Infisical integration
+│   │   ├── longhorn.yaml                      # Distributed storage
+│   │   └── traefik.yaml                       # Ingress controller
+    │   └── shared-config/                     # Shared configurations
+    │       ├── ingress-routes/                # Traefik routes
+    │       ├── network-policies/              # Security policies
+    │       ├── backup-policies/               # Velero backup specs
+    │       └── secrets/                       # Sealed secrets
 │   │
 │   ├── platform/                          # Shared platform services
 │   │   ├── observability/                 # Observability stack
@@ -151,11 +156,7 @@ orchestration cluster
 │   │   │
 │   │   └── [more categories]/             # 70+ more services
 │   │
-│   └── shared-config/                     # Shared configurations
-│       ├── ingress-routes/                # Traefik routes
-│       ├── network-policies/              # Security policies
-│       ├── backup-policies/               # Velero backup specs
-│       └── secrets/                       # Sealed secrets
+
 ├── docs/                                  # The missing knowledge layer
 │   ├── architecture/
 │   │   ├── decisions/                     # ADRs (numbered, immutable)
