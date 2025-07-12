@@ -144,7 +144,7 @@ export class MetalLBComponent extends pulumi.ComponentResource {
         apiVersion: "metallb.io/v1beta1",
         kind: "IPAddressPool",
         metadata: {
-          name: `${args.environment}-ip-pool`,
+          name: `${name}-ip-pool`,
           namespace: this.namespace.metadata.name,
           labels: {
             "app.kubernetes.io/name": "metallb",
@@ -166,7 +166,7 @@ export class MetalLBComponent extends pulumi.ComponentResource {
         apiVersion: "metallb.io/v1beta1",
         kind: "L2Advertisement",
         metadata: {
-          name: `${args.environment}-l2-advertisement`,
+          name: `${name}-l2-advertisement`,
           namespace: this.namespace.metadata.name,
           labels: {
             "app.kubernetes.io/name": "metallb",

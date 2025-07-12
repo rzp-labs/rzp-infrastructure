@@ -72,6 +72,24 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
+        # Custom resources for IP pool configuration
+        extraResources:
+          - apiVersion: metallb.io/v1beta1
+            kind: IPAddressPool
+            metadata:
+              name: stg-ip-pool
+              namespace: stg-metallb
+            spec:
+              addresses:
+                - 10.10.0.200-10.10.0.201
+          - apiVersion: metallb.io/v1beta1
+            kind: L2Advertisement
+            metadata:
+              name: stg-l2-advertisement
+              namespace: stg-metallb
+            spec:
+              ipAddressPools:
+                - stg-ip-pool
   destination:
     server: https://kubernetes.default.svc
     namespace: stg-metallb
