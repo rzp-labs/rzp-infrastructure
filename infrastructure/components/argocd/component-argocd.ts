@@ -41,7 +41,7 @@ export class ArgoCdComponent extends pulumi.ComponentResource {
 
     // Deploy ArgoCD with opinionated homelab configuration
     this.chart = new k8s.helm.v3.Chart(
-      `${name}-chart`,
+      name,
       {
         chart: "argo-cd",
         fetchOpts: { repo: "https://argoproj.github.io/argo-helm" },
@@ -132,7 +132,7 @@ export class ArgoCdComponent extends pulumi.ComponentResource {
                     pathType: "Prefix",
                     backend: {
                       service: {
-                        name: `${name}-chart-server`,
+                        name: `${name}-server`,
                         port: { number: 80 },
                       },
                     },

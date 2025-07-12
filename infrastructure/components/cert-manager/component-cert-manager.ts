@@ -87,7 +87,7 @@ export class CertManagerComponent extends pulumi.ComponentResource {
 
     // Deploy cert-manager with opinionated homelab configuration
     this.chart = new k8s.helm.v3.Chart(
-      `${name}-chart`,
+      name,
       {
         chart: "cert-manager",
         fetchOpts: { repo: "https://charts.jetstack.io" },
@@ -125,7 +125,7 @@ export class CertManagerComponent extends pulumi.ComponentResource {
       {
         componentName: name,
         namespace: args.namespace,
-        deploymentName: `${name}-chart-webhook`,
+        deploymentName: `${name}-webhook`,
         timeoutSeconds: 300,
       },
       { parent: this, dependsOn: [this.chart] },

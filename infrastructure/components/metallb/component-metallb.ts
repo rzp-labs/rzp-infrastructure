@@ -112,7 +112,7 @@ export class MetalLBComponent extends pulumi.ComponentResource {
 
     // Deploy MetalLB with opinionated homelab configuration
     this.chart = new k8s.helm.v3.Chart(
-      `${name}-chart`,
+      name,
       {
         chart: "metallb",
         fetchOpts: { repo: "https://metallb.github.io/metallb" },
@@ -128,7 +128,7 @@ export class MetalLBComponent extends pulumi.ComponentResource {
       {
         componentName: name,
         namespace: args.namespace,
-        deploymentName: `${name}-chart-controller`,
+        deploymentName: `${name}-controller`,
         timeoutSeconds: 300,
       },
       {

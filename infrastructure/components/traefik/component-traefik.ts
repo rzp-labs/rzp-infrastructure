@@ -108,7 +108,7 @@ export class TraefikComponent extends pulumi.ComponentResource {
 
     // Deploy Traefik with opinionated homelab configuration
     this.chart = new k8s.helm.v3.Chart(
-      `${name}-chart`,
+      name,
       {
         chart: "traefik",
         fetchOpts: { repo: "https://traefik.github.io/charts" },

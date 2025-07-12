@@ -8,7 +8,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 import * as Components from "../../components";
 import { getStagingConfig } from "../../config/staging";
-import { createArgoCdApplication } from "../../helpers/argocd/application-factory";
+// import { createArgoCdApplication } from "../../helpers/argocd/application-factory";
 import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
@@ -85,9 +85,9 @@ const stagingK8sProvider = new k8s.Provider(
 
 // 1. Deploy MetalLB for LoadBalancer support
 export const metallbBootstrap = new Components.MetalLBComponent(
-  "stg-metallb-bootstrap",
+  "stg-metallb",
   {
-    namespace: "metallb-system",
+    namespace: "stg-metallb",
     chartVersion: "0.15.2",
     environment: "stg",
     ipRange: "10.10.0.200-10.10.0.201",
@@ -100,9 +100,9 @@ export const metallbBootstrap = new Components.MetalLBComponent(
 
 // 2. Deploy Traefik for ingress controller
 export const traefikBootstrap = new Components.TraefikComponent(
-  "stg-traefik-bootstrap",
+  "stg-traefik",
   {
-    namespace: "traefik",
+    namespace: "stg-traefik",
     chartVersion: "36.3.0",
     environment: "stg",
     httpsPort: 443, // Staging uses port 443 for direct traffic
@@ -115,9 +115,9 @@ export const traefikBootstrap = new Components.TraefikComponent(
 
 // 3. Deploy cert-manager for TLS certificates
 export const certManagerBootstrap = new Components.CertManagerComponent(
-  "stg-cert-manager-bootstrap",
+  "stg-cert-manager",
   {
-    namespace: "cert-manager",
+    namespace: "stg-cert-manager",
     chartVersion: "v1.16.1",
     environment: "stg",
     cloudflareApiToken: apiToken,
@@ -133,7 +133,7 @@ export const certManagerBootstrap = new Components.CertManagerComponent(
 export const argoCd = new Components.ArgoCdComponent(
   "stg-argocd",
   {
-    namespace: "argocd",
+    namespace: "stg-argocd",
     chartVersion: "5.51.6",
     environment: "stg",
     domain: `argocd.stg.${domain}`,
@@ -152,31 +152,31 @@ export const argoCd = new Components.ArgoCdComponent(
 // Using Kubernetes CustomResource instead of ArgoCD provider to avoid proxy/cert issues.
 
 // MetalLB ArgoCD Application - using helper factory
-export const metallbApp = createArgoCdApplication(
-  "stg-metallb-app",
-  {
-    name: "metallb",
-    sources: [
-      {
-        repoURL: "https://metallb.github.io/metallb",
-        chart: "metallb",
-        targetRevision: "0.15.2",
-        helm: {
-          values: metallbBootstrap.helmValuesOutput,
-        },
-      },
-    ],
-    destination: {
-      server: "https://kubernetes.default.svc",
-      namespace: "metallb-system",
-    },
-  },
-  argoCd.namespace.metadata.name,
-  {
-    dependsOn: [argoCd.chart],
-    provider: stagingK8sProvider,
-  },
-);
+// export const metallbApp = createArgoCdApplication(
+//   "stg-metallb-app",
+//   {
+//     name: "metallb",
+//     sources: [
+//       {
+//         repoURL: "https://metallb.github.io/metallb",
+//         chart: "metallb",
+//         targetRevision: "0.15.2",
+//         helm: {
+//           values: metallbBootstrap.helmValuesOutput,
+//         },
+//       },
+//     ],
+//     destination: {
+//       server: "https://kubernetes.default.svc",
+//       namespace: "stg-metallb",
+//     },
+//   },
+//   argoCd.namespace.metadata.name,
+//   {
+//     dependsOn: [argoCd.chart],
+//     provider: stagingK8sProvider,
+//   },
+// );
 
 // =============================================================================
 // EXPORTS
