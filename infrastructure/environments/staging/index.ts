@@ -158,7 +158,7 @@ export const metallbApp = createArgoCdApplication(
     name: "metallb",
     sources: [
       {
-        repoUrl: "https://metallb.github.io/metallb",
+        repoURL: "https://metallb.github.io/metallb",
         chart: "metallb",
         targetRevision: "0.15.2",
         helm: {

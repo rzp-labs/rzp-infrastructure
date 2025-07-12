@@ -128,7 +128,7 @@ export class MetalLBComponent extends pulumi.ComponentResource {
       {
         componentName: name,
         namespace: args.namespace,
-        deploymentName: `${name}-chart-webhook`,
+        deploymentName: `${name}-chart-controller`,
         timeoutSeconds: 300,
       },
       {

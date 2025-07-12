@@ -9,7 +9,7 @@ import * as k8s from "@pulumi/kubernetes";
 import type * as pulumi from "@pulumi/pulumi";
 
 export interface IArgoCdApplicationSource {
-  readonly repoUrl: string;
+  readonly repoURL: string;
   readonly chart?: string;
   readonly targetRevision: string;
   readonly path?: string;
