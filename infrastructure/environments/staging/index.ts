@@ -8,7 +8,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 import * as Components from "../../components";
 import { getStagingConfig } from "../../config/staging";
-import { createArgoCdApplication } from "../../helpers/argocd/application-factory";
+//import { createArgoCdApplication } from "../../helpers/argocd/application-factory";
 import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
@@ -32,7 +32,7 @@ export const cluster = new Components.K3sCluster("stg-k3s", {
 });
 
 // Install K3s master
-export const masterInstall = new Components.K3sMaster("k3s-master", {
+export const masterInstall = new Components.K3sMaster("stg-k3s-master", {
   node: cluster.masters.map((m) => m.config)[0],
   sshUsername: config.proxmox.ssh!.username!,
   sshPrivateKey: config.proxmox.ssh!.privateKey!,
@@ -56,7 +56,7 @@ export const credentials = new Components.K3sCredentials(
 export const workerInstalls = cluster.workers.map(
   (worker, index) =>
     new Components.K3sWorker(
-      `k3s-worker-${index}`,
+      `stg-k3s-worker-${index}`,
       {
         node: worker.config,
         sshUsername: config.proxmox.ssh!.username!,
@@ -72,7 +72,7 @@ export const workerInstalls = cluster.workers.map(
 
 // Kubernetes provider for all K8s resources (created after components are ready)
 const stagingK8sProvider = new k8s.Provider(
-  "stg-k8s",
+  "stg-k8s-provider",
   { kubeconfig: credentials.result.kubeconfig },
   {
     dependsOn: [masterInstall.k3sHealthCheck, ...workerInstalls],
@@ -85,7 +85,7 @@ const stagingK8sProvider = new k8s.Provider(
 
 // 1. Deploy MetalLB for LoadBalancer support
 export const metallbBootstrap = new Components.MetalLBComponent(
-  "stg-metallb",
+  "metallb",
   {
     namespace: "stg-metallb",
     chartVersion: "0.15.2",
@@ -100,7 +100,7 @@ export const metallbBootstrap = new Components.MetalLBComponent(
 
 // 2. Deploy Traefik for ingress controller
 export const traefikBootstrap = new Components.TraefikComponent(
-  "stg-traefik",
+  "traefik",
   {
     namespace: "stg-traefik",
     chartVersion: "36.3.0",
@@ -115,7 +115,7 @@ export const traefikBootstrap = new Components.TraefikComponent(
 
 // 3. Deploy cert-manager for TLS certificates
 export const certManagerBootstrap = new Components.CertManagerComponent(
-  "stg-cert-manager",
+  "cert-manager",
   {
     namespace: "stg-cert-manager",
     chartVersion: "v1.16.1",
@@ -131,7 +131,7 @@ export const certManagerBootstrap = new Components.CertManagerComponent(
 
 // 4. Deploy ArgoCD for GitOps
 export const argoCd = new Components.ArgoCdComponent(
-  "stg-argocd",
+  "argocd",
   {
     namespace: "stg-argocd",
     chartVersion: "5.51.6",

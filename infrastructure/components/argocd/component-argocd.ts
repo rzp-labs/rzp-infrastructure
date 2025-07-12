@@ -25,7 +25,7 @@ export class ArgoCdComponent extends pulumi.ComponentResource {
 
     // Create namespace
     this.namespace = new k8s.core.v1.Namespace(
-      `${name}-namespace`,
+      `${args.namespace}`,
       {
         metadata: {
           name: args.namespace,

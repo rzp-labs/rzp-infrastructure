@@ -29,7 +29,7 @@ export class MetalLBComponent extends pulumi.ComponentResource {
 
     // Create namespace with security labels for privileged MetalLB
     this.namespace = new k8s.core.v1.Namespace(
-      `${name}-namespace`,
+      `${args.namespace}`,
       {
         metadata: {
           name: args.namespace,
