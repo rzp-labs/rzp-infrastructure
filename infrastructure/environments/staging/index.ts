@@ -2,9 +2,9 @@
  * Staging environment deployment with proper provider architecture
  */
 
-//import * as command from "@pulumi/command";
-// import * as k8s from "@pulumi/kubernetes";
-// import * as pulumi from "@pulumi/pulumi";
+// import * as command from "@pulumi/command";
+import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
 
 import * as Components from "../../components";
 import { getStagingConfig } from "../../config/staging";
@@ -16,11 +16,11 @@ import { getVmRole } from "../../shared/utils";
 const config = getStagingConfig();
 
 // Get Cloudflare configuration directly
-// const cloudflareConfig = new pulumi.Config("cloudflare");
+const cloudflareConfig = new pulumi.Config("cloudflare");
 
-// const domain = cloudflareConfig.require("domain");
-// const email = cloudflareConfig.require("email");
-// const apiToken = cloudflareConfig.requireSecret("apiToken");
+const domain = cloudflareConfig.require("domain");
+const email = cloudflareConfig.require("email");
+const apiToken = cloudflareConfig.requireSecret("apiToken");
 
 // =============================================================================
 // INFRASTRUCTURE DEPLOYMENT
@@ -71,78 +71,78 @@ export const workerInstalls = cluster.workers.map(
 );
 
 // Kubernetes provider for all K8s resources (created after components are ready)
-// const stagingK8sProvider = new k8s.Provider(
-//   "stg-k8s-provider",
-//   { kubeconfig: credentials.result.kubeconfig },
-//   {
-//     dependsOn: [masterInstall.k3sHealthCheck, ...workerInstalls],
-//   },
-// );
+const stagingK8sProvider = new k8s.Provider(
+  "stg-k8s-provider",
+  { kubeconfig: credentials.result.kubeconfig },
+  {
+    dependsOn: [masterInstall.k3sHealthCheck, ...workerInstalls],
+  },
+);
 
 // =============================================================================
 // BOOTSTRAP PHASE: Direct Pulumi Deployment
 // =============================================================================
 
 // 1. Deploy MetalLB for LoadBalancer support
-// export const metallbBootstrap = new Components.MetalLBComponent(
-//   "metallb",
-//   {
-//     namespace: "stg-metallb",
-//     chartVersion: "0.15.2",
-//     environment: "stg",
-//     ipRange: "10.10.0.200-10.10.0.201",
-//   },
-//   {
-//     dependsOn: workerInstalls,
-//     provider: stagingK8sProvider,
-//   },
-// );
+export const metallbBootstrap = new Components.MetalLBComponent(
+  "metallb",
+  {
+    namespace: "stg-metallb",
+    chartVersion: "0.15.2",
+    environment: "stg",
+    ipRange: "10.10.0.200-10.10.0.201",
+  },
+  {
+    dependsOn: workerInstalls,
+    provider: stagingK8sProvider,
+  },
+);
 
-// // 2. Deploy Traefik for ingress controller
-// export const traefikBootstrap = new Components.TraefikComponent(
-//   "traefik",
-//   {
-//     namespace: "stg-traefik",
-//     chartVersion: "36.3.0",
-//     environment: "stg",
-//     httpsPort: 443, // Staging uses port 443 for direct traffic
-//   },
-//   {
-//     dependsOn: [metallbBootstrap],
-//     provider: stagingK8sProvider,
-//   },
-// );
+// 2. Deploy Traefik for ingress controller
+export const traefikBootstrap = new Components.TraefikComponent(
+  "traefik",
+  {
+    namespace: "stg-traefik",
+    chartVersion: "36.3.0",
+    environment: "stg",
+    httpsPort: 443, // Staging uses port 443 for direct traffic
+  },
+  {
+    dependsOn: [metallbBootstrap],
+    provider: stagingK8sProvider,
+  },
+);
 
-// // 3. Deploy cert-manager for TLS certificates
-// export const certManagerBootstrap = new Components.CertManagerComponent(
-//   "cert-manager",
-//   {
-//     namespace: "stg-cert-manager",
-//     chartVersion: "v1.16.1",
-//     environment: "stg",
-//     cloudflareApiToken: apiToken,
-//     email: email,
-//   },
-//   {
-//     dependsOn: [traefikBootstrap],
-//     provider: stagingK8sProvider,
-//   },
-// );
+// 3. Deploy cert-manager for TLS certificates
+export const certManagerBootstrap = new Components.CertManagerComponent(
+  "cert-manager",
+  {
+    namespace: "stg-cert-manager",
+    chartVersion: "v1.16.1",
+    environment: "stg",
+    cloudflareApiToken: apiToken,
+    email: email,
+  },
+  {
+    dependsOn: [traefikBootstrap],
+    provider: stagingK8sProvider,
+  },
+);
 
-// // 4. Deploy ArgoCD for GitOps
-// export const argoCd = new Components.ArgoCdComponent(
-//   "argocd",
-//   {
-//     namespace: "stg-argocd",
-//     chartVersion: "5.51.6",
-//     environment: "stg",
-//     domain: `argocd.stg.${domain}`,
-//   },
-//   {
-//     dependsOn: [certManagerBootstrap.clusterIssuer],
-//     provider: stagingK8sProvider,
-//   },
-// );
+// 4. Deploy ArgoCD for GitOps
+export const argoCd = new Components.ArgoCdComponent(
+  "argocd",
+  {
+    namespace: "stg-argocd",
+    chartVersion: "5.51.6",
+    environment: "stg",
+    domain: `argocd.stg.${domain}`,
+  },
+  {
+    dependsOn: [certManagerBootstrap.clusterIssuer],
+    provider: stagingK8sProvider,
+  },
+);
 
 // =============================================================================
 // GITOPS PHASE: ArgoCD Applications (using Kubernetes CustomResource approach)
@@ -243,7 +243,7 @@ export const masterIps = cluster.masterIps;
 export const workerIps = cluster.workerIps;
 export const allNodes = cluster.allNodes;
 export const kubeconfig = credentials.result.kubeconfig;
-//export const argoCdUrl = argoCd.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
+export const argoCdUrl = argoCd.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
 
 // Utility function for role determination
 export const getVmRoleFromId = (vmId: number): IK3sNodeConfig["role"] => {

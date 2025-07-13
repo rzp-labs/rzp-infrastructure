@@ -55,7 +55,7 @@ spec:
     namespace: stg-cert-manager
   syncPolicy:
     automated:
-      prune: true # Temporary - disable prune during adoption
+      prune: false # Temporary - disable prune during adoption
       selfHeal: true
     syncOptions:
     - CreateNamespace=false
