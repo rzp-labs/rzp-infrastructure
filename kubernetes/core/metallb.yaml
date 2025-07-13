@@ -8,75 +8,75 @@ metadata:
 spec:
   project: default
   sources:
-    # Source 1: MetalLB Helm Chart
-    - repoURL: https://metallb.github.io/metallb
-      chart: metallb
-      targetRevision: 0.15.2
-      helm:
-        values: |
-          # Controller - single replica with security
-          controller:
-            enabled: true
-            resources:
-              requests:
-                cpu: "100m"
-                memory: "128Mi"
-              limits:
-                cpu: "200m"
-                memory: "256Mi"
-            securityContext:
-              runAsNonRoot: true
-              runAsUser: 65534
-              fsGroup: 65534
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop: ["ALL"]
-          # Speaker - with control plane tolerations
-          speaker:
-            enabled: true
-            resources:
-              requests:
-                cpu: "100m"
-                memory: "128Mi"
-              limits:
-                cpu: "200m"
-                memory: "256Mi"
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop: ["ALL"]
-                add: ["NET_RAW"]
-            tolerations:
-              - key: "node-role.kubernetes.io/control-plane"
-                operator: "Exists"
-                effect: "NoSchedule"
-              - key: "node-role.kubernetes.io/master"
-                operator: "Exists"
-                effect: "NoSchedule"
-          # Webhook - minimal resources
-          webhook:
-            enabled: true
-            resources:
-              requests:
-                cpu: "50m"
-                memory: "64Mi"
-              limits:
-                cpu: "100m"
-                memory: "128Mi"
-            securityContext:
-              runAsNonRoot: true
-              runAsUser: 65534
-              fsGroup: 65534
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop: ["ALL"]
-    # Source 2: Custom Resources from Git
-    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
-      targetRevision: HEAD
-      path: kubernetes/core
+  # Source 1: MetalLB Helm Chart
+  - repoURL: https://metallb.github.io/metallb
+    chart: metallb
+    targetRevision: 0.15.2
+    helm:
+      values: |
+        # Controller - single replica with security
+        controller:
+          enabled: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            fsGroup: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+        # Speaker - with control plane tolerations
+        speaker:
+          enabled: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+              add: ["NET_RAW"]
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+            - key: "node-role.kubernetes.io/master"
+              operator: "Exists"
+              effect: "NoSchedule"
+        # Webhook - minimal resources
+        webhook:
+          enabled: true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            fsGroup: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+  # Source 2: Custom Resources from Git
+  - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+    targetRevision: HEAD
+    path: kubernetes/core
   destination:
     server: https://kubernetes.default.svc
     namespace: stg-metallb
@@ -88,3 +88,4 @@ spec:
     - CreateNamespace=false
     - Replace=true # Adopt existing resources
     - Prune=false # Temporary - prevent deletion during adoption
+    - ServerSideApply=true
