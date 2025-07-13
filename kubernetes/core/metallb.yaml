@@ -76,7 +76,7 @@ spec:
   # Source 2: Custom Resources from Git
   - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
-    path: kubernetes/core
+    path: kubernetes/core/metallb-resources
   destination:
     server: https://kubernetes.default.svc
     namespace: stg-metallb
