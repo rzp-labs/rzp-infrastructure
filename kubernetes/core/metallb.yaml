@@ -82,10 +82,9 @@ spec:
     namespace: stg-metallb
   syncPolicy:
     automated:
-      prune: false # Temporary - disable prune during adoption
+      prune: true # Temporary - disable prune during adoption
       selfHeal: true
     syncOptions:
     - CreateNamespace=false
     - Replace=true # Adopt existing resources
-    - Prune=false # Temporary - prevent deletion during adoption
     - ServerSideApply=true
