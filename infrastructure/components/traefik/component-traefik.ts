@@ -43,6 +43,12 @@ export class TraefikComponent extends pulumi.ComponentResource {
     // Build opinionated Helm values
     const httpsPort = args.httpsPort ?? 8443; // Default to 8443 for production
     const helmValues = {
+      // Install CRDs for Middleware, IngressRoute, etc.
+      installCRDs: true,
+      // Force update annotation to ensure CRDs are installed
+      annotations: {
+        "pulumi.com/forceUpdate": new Date().toISOString(),
+      },
       // Deployment - single replica for homelab
       deployment: {
         enabled: true,
@@ -116,7 +122,7 @@ export class TraefikComponent extends pulumi.ComponentResource {
         namespace: this.namespace.metadata.name,
         values: helmValues,
       },
-      { parent: this, dependsOn: [this.namespace] },
+      { parent: this, dependsOn: [this.namespace], replaceOnChanges: ["*"] },
     );
 
     // Register outputs

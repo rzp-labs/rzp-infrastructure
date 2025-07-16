@@ -2,13 +2,11 @@
  * Staging environment deployment with proper provider architecture
  */
 
-// import * as command from "@pulumi/command";
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
 import * as Components from "../../components";
 import { getStagingConfig } from "../../config/staging";
-//import { createArgoCdApplication } from "../../helpers/argocd/application-factory";
 import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
@@ -21,6 +19,10 @@ const cloudflareConfig = new pulumi.Config("cloudflare");
 const domain = cloudflareConfig.require("domain");
 const email = cloudflareConfig.require("email");
 const apiToken = cloudflareConfig.requireSecret("apiToken");
+
+// Get Longhorn configuration
+const projectConfig = new pulumi.Config("rzp-infra");
+const longhornPassword = projectConfig.requireSecret("longhornPassword");
 
 // =============================================================================
 // INFRASTRUCTURE DEPLOYMENT
@@ -129,7 +131,35 @@ export const certManagerBootstrap = new Components.CertManagerComponent(
   },
 );
 
-// 4. Deploy ArgoCD for GitOps
+// 4. Deploy Longhorn for distributed storage with enhanced RBAC and validation
+export const longhornBootstrap = new Components.LonghornComponent(
+  "longhorn",
+  {
+    namespace: "stg-longhorn",
+    chartVersion: "1.7.2",
+    environment: "stg",
+    domain: `longhorn.stg.${domain}`,
+    defaultStorageClass: true,
+    replicaCount: 2,
+    adminPassword: longhornPassword,
+    // Enhanced uninstaller RBAC configuration
+    enableUninstallerRbac: true,
+    uninstallerTimeoutSeconds: 900, // 15 minutes for staging environment
+    // Prerequisite validation for staging environment
+    validatePrerequisites: true,
+    // Enhanced deployment monitoring and error handling
+    enableDeploymentMonitoring: true,
+    deploymentTimeoutSeconds: 2400, // 40 minutes for staging (longer than production)
+    maxRetries: 5, // More retries for staging environment
+    enableStatusTracking: true,
+  },
+  {
+    dependsOn: [certManagerBootstrap],
+    provider: stagingK8sProvider,
+  },
+);
+
+// 5. Deploy ArgoCD for GitOps
 export const argoCd = new Components.ArgoCdComponent(
   "argocd",
   {
@@ -139,101 +169,10 @@ export const argoCd = new Components.ArgoCdComponent(
     domain: `argocd.stg.${domain}`,
   },
   {
-    dependsOn: [certManagerBootstrap.clusterIssuer],
+    dependsOn: [longhornBootstrap],
     provider: stagingK8sProvider,
   },
 );
-
-// =============================================================================
-// GITOPS PHASE: ArgoCD Applications (using Kubernetes CustomResource approach)
-// =============================================================================
-// These ArgoCD Applications will manage the same components that were bootstrapped,
-// completing the bootstrap-to-GitOps transition with identical configurations.
-// Using Kubernetes CustomResource instead of ArgoCD provider to avoid proxy/cert issues.
-
-// MetalLB ArgoCD Application - using helper factory
-// export const metallbApp = createArgoCdApplication(
-//   "stg-metallb-app",
-//   {
-//     name: "metallb",
-//     sources: [
-//       {
-//         repoURL: "https://metallb.github.io/metallb",
-//         chart: "metallb",
-//         targetRevision: "0.15.2",
-//         helm: {
-//           values: metallbBootstrap.helmValuesOutput,
-//         },
-//       },
-//     ],
-//     destination: {
-//       server: "https://kubernetes.default.svc",
-//       namespace: "stg-metallb",
-//     },
-//     enableAdoption: true, // Enable Replace=true, Prune=false for adoption
-//   },
-//   argoCd.namespace.metadata.name,
-//   {
-//     dependsOn: [argoCd.chart],
-//     provider: stagingK8sProvider,
-//   },
-// );
-
-// // cert-manager ArgoCD Application
-// export const certManagerApp = createArgoCdApplication(
-//   "stg-cert-manager-app",
-//   {
-//     name: "cert-manager",
-//     sources: [
-//       {
-//         repoURL: "https://charts.jetstack.io",
-//         chart: "cert-manager",
-//         targetRevision: "v1.16.1",
-//         helm: {
-//           values: certManagerBootstrap.helmValuesOutput,
-//         },
-//       },
-//     ],
-//     destination: {
-//       server: "https://kubernetes.default.svc",
-//       namespace: "stg-cert-manager",
-//     },
-//     enableAdoption: true, // Enable Replace=true, Prune=false for adoption
-//   },
-//   argoCd.namespace.metadata.name,
-//   {
-//     dependsOn: [argoCd.chart],
-//     provider: stagingK8sProvider,
-//   },
-// );
-
-// // Traefik ArgoCD Application
-// export const traefikApp = createArgoCdApplication(
-//   "stg-traefik-app",
-//   {
-//     name: "traefik",
-//     sources: [
-//       {
-//         repoURL: "https://traefik.github.io/charts",
-//         chart: "traefik",
-//         targetRevision: "36.3.0",
-//         helm: {
-//           values: traefikBootstrap.helmValuesOutput,
-//         },
-//       },
-//     ],
-//     destination: {
-//       server: "https://kubernetes.default.svc",
-//       namespace: "stg-traefik",
-//     },
-//     enableAdoption: true, // Enable Replace=true, Prune=false for adoption
-//   },
-//   argoCd.namespace.metadata.name,
-//   {
-//     dependsOn: [argoCd.chart],
-//     provider: stagingK8sProvider,
-//   },
-// );
 
 // =============================================================================
 // EXPORTS
@@ -244,6 +183,13 @@ export const workerIps = cluster.workerIps;
 export const allNodes = cluster.allNodes;
 export const kubeconfig = credentials.result.kubeconfig;
 export const argoCdUrl = argoCd.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
+
+// Enhanced Longhorn exports for staging environment monitoring
+export const longhornUrl = longhornBootstrap.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
+export const longhornUninstallerRbac = longhornBootstrap.uninstallerRbac;
+export const longhornPrerequisiteValidation = longhornBootstrap.prerequisiteValidation;
+export const longhornDeploymentStatus = longhornBootstrap.statusConfigMap;
+export const longhornHelmValues = longhornBootstrap.helmValuesOutput;
 
 // Utility function for role determination
 export const getVmRoleFromId = (vmId: number): IK3sNodeConfig["role"] => {

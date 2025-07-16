@@ -151,3 +151,8 @@ export interface ICloudflareDNSConfig {
     subdomain?: string;
   }>;
 }
+
+/**
+ * Shared environment type used across all components
+ */
+export type Environment = "dev" | "stg" | "prd";

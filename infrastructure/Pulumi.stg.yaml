@@ -24,3 +24,5 @@ config:
   cloudflare:zoneId: fac3b4a6d26396c32a87dfdc7c15acdc
   cloudflare:apiToken:
     secure: v1:QntgVodqMzNIK3L6:Qp/i7XHSdSUc62015GzT0RNJLyct9GbO9ugfzdglOSbj/E2KzKc7aUz50dss9VQksdGQd/aqoak=
+  rzp-infra:longhornPassword:
+    secure: v1:5Wu9HDQWIeuvSZ8W:MgEOhLx747bPByXn3IuH4BD4l4sV2ZHNpU5ZvbH8E7nOBfjn
