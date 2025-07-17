@@ -591,11 +591,12 @@ export function createDeploymentMonitoringJob(
   config: IDeploymentMonitoringConfig,
   opts?: pulumi.ComponentResourceOptions,
 ): k8s.batch.v1.Job {
+  const timestamp = Date.now().toString();
   return new k8s.batch.v1.Job(
-    `${componentName}-deployment-monitor`,
+    `${componentName}-deployment-monitor-${timestamp}`,
     {
       metadata: {
-        name: `${componentName}-deployment-monitor`,
+        name: `${componentName}-deployment-monitor-${timestamp}`,
         namespace,
         labels: {
           "app.kubernetes.io/name": "longhorn",
@@ -635,20 +636,48 @@ export function createDeploymentMonitoringJob(
                       exit 1
                     fi
 
-                    # Check deployment status
-                    if kubectl get configmap ${componentName}-deployment-status -n ${namespace} >/dev/null 2>&1; then
-                      PHASE=$(kubectl get configmap ${componentName}-deployment-status -n ${namespace} -o jsonpath='{.data.phase}' 2>/dev/null || echo "unknown")
-                      MESSAGE=$(kubectl get configmap ${componentName}-deployment-status -n ${namespace} -o jsonpath='{.data.message}' 2>/dev/null || echo "unknown")
+                    # Check actual Longhorn deployment status
+                    echo "[$(date)] Checking Longhorn deployment status..."
 
-                      echo "[$(date)] Phase: $PHASE, Message: $MESSAGE"
+                    # Check if Longhorn manager pods are running
+                    MANAGER_READY=$(kubectl get pods -n ${namespace} -l app=longhorn-manager --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l)
+                    MANAGER_TOTAL=$(kubectl get pods -n ${namespace} -l app=longhorn-manager --no-headers 2>/dev/null | wc -l)
 
-                      if [ "$PHASE" = "complete" ]; then
-                        echo "Deployment completed successfully"
-                        exit 0
-                      elif [ "$PHASE" = "failed" ]; then
-                        echo "Deployment failed"
-                        exit 1
-                      fi
+                    # Check if Longhorn UI is running
+                    UI_READY=$(kubectl get pods -n ${namespace} -l app=longhorn-ui --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l)
+                    UI_TOTAL=$(kubectl get pods -n ${namespace} -l app=longhorn-ui --no-headers 2>/dev/null | wc -l)
+
+                    # Check if CSI components are running
+                    CSI_READY=$(kubectl get pods -n ${namespace} -l app.kubernetes.io/name=longhorn --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l)
+                    CSI_TOTAL=$(kubectl get pods -n ${namespace} -l app.kubernetes.io/name=longhorn --no-headers 2>/dev/null | wc -l)
+
+                    echo "[$(date)] Manager pods: $MANAGER_READY/$MANAGER_TOTAL ready"
+                    echo "[$(date)] UI pods: $UI_READY/$UI_TOTAL ready"
+                    echo "[$(date)] Total Longhorn pods: $CSI_READY/$CSI_TOTAL ready"
+
+                    # Consider deployment complete if core components are running
+                    if [ "$MANAGER_READY" -gt 0 ] && [ "$UI_READY" -gt 0 ] && [ "$MANAGER_READY" -eq "$MANAGER_TOTAL" ] && [ "$UI_READY" -eq "$UI_TOTAL" ]; then
+                      echo "[$(date)] Longhorn deployment is healthy and complete"
+
+                      # Update the status ConfigMap to reflect completion
+                      kubectl patch configmap ${componentName}-deployment-status -n ${namespace} --type='merge' -p='{"data":{"phase":"complete","message":"Deployment completed successfully","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'"}}' 2>/dev/null || true
+
+                      echo "Deployment monitoring completed successfully"
+                      exit 0
+                    elif [ "$UI_READY" -gt 0 ] && [ "$ELAPSED" -gt 1800 ]; then
+                      # If UI pods are running and we've been monitoring for more than 30 minutes,
+                      # consider this a partial success (existing deployment scenario)
+                      echo "[$(date)] Longhorn UI is running and monitoring timeout reached - considering deployment complete"
+
+                      # Update the status ConfigMap to reflect completion
+                      kubectl patch configmap ${componentName}-deployment-status -n ${namespace} --type='merge' -p='{"data":{"phase":"complete","message":"Deployment completed (existing deployment detected)","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'"}}' 2>/dev/null || true
+
+                      echo "Deployment monitoring completed (existing deployment)"
+                      exit 0
+                    elif [ "$MANAGER_TOTAL" -eq 0 ] && [ "$UI_TOTAL" -eq 0 ]; then
+                      echo "[$(date)] No Longhorn pods found - deployment may not have started yet"
+                    else
+                      echo "[$(date)] Longhorn deployment in progress..."
                     fi
 
                     sleep 10

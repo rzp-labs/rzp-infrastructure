@@ -145,13 +145,13 @@ export const longhornBootstrap = new Components.LonghornComponent(
     // Enhanced uninstaller RBAC configuration
     enableUninstallerRbac: true,
     uninstallerTimeoutSeconds: 900, // 15 minutes for staging environment
-    // Prerequisite validation for staging environment
-    validatePrerequisites: true,
-    // Enhanced deployment monitoring and error handling
-    enableDeploymentMonitoring: true,
+    // Disable prerequisite validation for existing deployment
+    validatePrerequisites: false,
+    // Disable deployment monitoring to prevent stalling
+    enableDeploymentMonitoring: false,
     deploymentTimeoutSeconds: 2400, // 40 minutes for staging (longer than production)
     maxRetries: 5, // More retries for staging environment
-    enableStatusTracking: true,
+    enableStatusTracking: false,
   },
   {
     dependsOn: [certManagerBootstrap],

@@ -61,8 +61,9 @@ describe("Longhorn Prerequisite Validation", () => {
       const resources = createPrerequisiteValidation(config);
 
       // Verify all resources are created
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
+      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
       expect(resources.validationJob).toBeInstanceOf(k8s.batch.v1.Job);
 
       // Test role configuration
@@ -72,7 +73,6 @@ describe("Longhorn Prerequisite Validation", () => {
 
       expect(roleState).toMatchObject({
         name: "test-longhorn-prerequisite-validation-role",
-        namespace: "longhorn-system",
         labels: {
           "app.kubernetes.io/name": "longhorn",
           "app.kubernetes.io/managed-by": "pulumi",
@@ -125,7 +125,6 @@ describe("Longhorn Prerequisite Validation", () => {
       });
 
       expect(jobState).toMatchObject({
-        name: "custom-longhorn-prerequisite-validation",
         namespace: "custom-namespace",
         labels: {
           "app.kubernetes.io/name": "longhorn",
@@ -133,6 +132,9 @@ describe("Longhorn Prerequisite Validation", () => {
           "app.kubernetes.io/component": "prerequisite-validation",
         },
       });
+
+      // Job name should start with the component name (but may have timestamp suffix)
+      expect(jobState.name).toMatch(/^custom-longhorn-prerequisite-validation/);
 
       // Test job spec configuration
       const jobSpec = await new Promise<Record<string, unknown>>((resolve) => {
@@ -176,7 +178,7 @@ describe("Longhorn Prerequisite Validation", () => {
 
       expect(roleBindingState).toMatchObject({
         apiGroup: "rbac.authorization.k8s.io",
-        kind: "Role",
+        kind: "ClusterRole",
         name: "test-longhorn-prerequisite-validation-role",
       });
 
@@ -187,7 +189,7 @@ describe("Longhorn Prerequisite Validation", () => {
       expect(subjects).toEqual([
         {
           kind: "ServiceAccount",
-          name: "default",
+          name: "test-longhorn-prerequisite-validation",
           namespace: "longhorn-system",
         },
       ]);
@@ -331,8 +333,9 @@ describe("Longhorn Prerequisite Validation", () => {
       it("should create validation with open-iscsi configuration", async () => {
         const resources = createOpenIscsiValidation("test-longhorn", "longhorn-system");
 
-        expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
-        expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+        expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
+        expect(resources.role).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+        expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
         expect(resources.validationJob).toBeInstanceOf(k8s.batch.v1.Job);
 
         // Verify the validation script includes open-iscsi validation
@@ -346,8 +349,9 @@ describe("Longhorn Prerequisite Validation", () => {
       it("should create validation with comprehensive configuration", async () => {
         const resources = createComprehensiveValidation("test-longhorn", "longhorn-system");
 
-        expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
-        expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+        expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
+        expect(resources.role).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+        expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
         expect(resources.validationJob).toBeInstanceOf(k8s.batch.v1.Job);
 
         // Verify the validation script includes both open-iscsi and multipath validation
@@ -380,11 +384,14 @@ describe("Longhorn Prerequisite Validation", () => {
 
       const resources = createPrerequisiteValidation(config);
 
-      // Role should be created first (no dependencies)
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
+      // ServiceAccount should be created first (no dependencies)
+      expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
 
-      // RoleBinding should depend on Role
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      // ClusterRole should be created first (no dependencies)
+      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+
+      // ClusterRoleBinding should depend on ClusterRole
+      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
 
       // ValidationJob should depend on RoleBinding
       expect(resources.validationJob).toBeInstanceOf(k8s.batch.v1.Job);
@@ -633,8 +640,8 @@ describe("Longhorn Prerequisite Validation", () => {
 
       // Verify error detection
       expect(script).toContain("VALIDATION_FAILED=1");
-      expect(script).toContain("open-iscsi (iscsid) is required but not found or not running");
-      expect(script).toContain("not found or not active");
+      expect(script).toContain("open-iscsi (iscsid) not found or not running");
+      expect(script).toContain("not found - attempting to install");
 
       // Verify success reporting
       expect(script).toContain("service ($service) is active");
@@ -727,11 +734,11 @@ describe("Longhorn Prerequisite Validation", () => {
       const script = jobArgs[1];
 
       // Verify kubectl availability check
-      expect(script).toContain("command_exists kubectl");
+      expect(script).toContain('command_exists "kubectl"');
       expect(script).toContain("kubectl is not available");
 
       // Verify cluster connectivity check
-      expect(script).toContain("kubectl cluster-info");
+      expect(script).toContain("kubectl get nodes");
       expect(script).toContain("Cannot connect to Kubernetes cluster");
     });
 

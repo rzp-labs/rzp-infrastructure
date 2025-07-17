@@ -88,8 +88,14 @@
   - Test deployment in staging environment with new features
   - _Requirements: 1.1, 4.4_
 
-- [ ] 15. Create documentation for new Longhorn features
+- [x] 15. Create documentation for new Longhorn features
   - Document new RBAC configuration options and their usage
   - Add troubleshooting guide for common uninstaller issues
   - Create deployment guide with prerequisite validation steps
   - _Requirements: 2.1, 2.2_
+
+- [x] 16. Fix deployment failures in prerequisite validation and settings jobs
+  - Fix unbound variable error in prerequisite validation script
+  - Update CRD management RBAC to use ClusterRole for cluster-scoped resources
+  - Ensure settings precreation job uses proper ServiceAccount with permissions
+  - _Requirements: 2.1, 2.2, 4.1_

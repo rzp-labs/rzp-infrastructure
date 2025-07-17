@@ -41,17 +41,20 @@ describe("Longhorn CRD Management", () => {
 
       const resources = createCrdManagement(config);
 
-      // Verify role creation
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
+      // Verify ServiceAccount creation
+      expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
 
-      // Verify role binding creation
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      // Verify ClusterRole creation
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+
+      // Verify ClusterRoleBinding creation
+      expect(resources.clusterRoleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
 
       // Verify pre-creation job
       expect(resources.preCreationJob).toBeInstanceOf(k8s.batch.v1.Job);
     });
 
-    it("should create role with proper resource type", () => {
+    it("should create ClusterRole with proper resource type", () => {
       const config: ICrdManagementConfig = {
         componentName: "test-longhorn",
         namespace: "longhorn-system",
@@ -59,11 +62,11 @@ describe("Longhorn CRD Management", () => {
 
       const resources = createCrdManagement(config);
 
-      // Verify role is created with expected type
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
+      // Verify ClusterRole is created with expected type
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
     });
 
-    it("should create role binding with proper resource type", () => {
+    it("should create ClusterRoleBinding with proper resource type", () => {
       const config: ICrdManagementConfig = {
         componentName: "test-longhorn",
         namespace: "longhorn-system",
@@ -71,8 +74,8 @@ describe("Longhorn CRD Management", () => {
 
       const resources = createCrdManagement(config);
 
-      // Verify role binding is created with expected type
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      // Verify ClusterRoleBinding is created with expected type
+      expect(resources.clusterRoleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
     });
 
     it("should create pre-creation job with proper resource type", () => {
@@ -123,8 +126,9 @@ describe("Longhorn CRD Management", () => {
       const resources = createDeletingConfirmationFlagJob("test-longhorn", "longhorn-system");
 
       // Verify all resources are created
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+      expect(resources.clusterRoleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
       expect(resources.preCreationJob).toBeInstanceOf(k8s.batch.v1.Job);
       expect(resources.settingsJob).toBeInstanceOf(k8s.batch.v1.Job);
     });
@@ -132,8 +136,9 @@ describe("Longhorn CRD Management", () => {
     it("should create all required resource types", () => {
       const resources = createDeletingConfirmationFlagJob("longhorn", "longhorn-system");
 
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+      expect(resources.clusterRoleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
       expect(resources.preCreationJob).toBeInstanceOf(k8s.batch.v1.Job);
       expect(resources.settingsJob).toBeInstanceOf(k8s.batch.v1.Job);
     });
@@ -149,8 +154,9 @@ describe("Longhorn CRD Management", () => {
       const resources = createCrdManagement(config);
 
       // Should create basic resources without settings job
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+      expect(resources.clusterRoleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
       expect(resources.preCreationJob).toBeInstanceOf(k8s.batch.v1.Job);
       expect(resources.settingsJob).toBeUndefined();
     });
@@ -165,8 +171,9 @@ describe("Longhorn CRD Management", () => {
       const resources = createCrdManagement(config);
 
       // Should create all basic resources
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+      expect(resources.clusterRoleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
       expect(resources.preCreationJob).toBeInstanceOf(k8s.batch.v1.Job);
     });
 
@@ -184,8 +191,9 @@ describe("Longhorn CRD Management", () => {
       const resources = createCrdManagement(config);
 
       // Should create all resources including settings job
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      expect(resources.serviceAccount).toBeInstanceOf(k8s.core.v1.ServiceAccount);
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
+      expect(resources.clusterRoleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
       expect(resources.preCreationJob).toBeInstanceOf(k8s.batch.v1.Job);
       expect(resources.settingsJob).toBeInstanceOf(k8s.batch.v1.Job);
     });
@@ -423,7 +431,7 @@ describe("Longhorn CRD Management", () => {
   });
 
   describe("RBAC Configuration for CRD Management", () => {
-    it("should create role with CRD management permissions", () => {
+    it("should create ClusterRole with CRD management permissions", () => {
       const config: ICrdManagementConfig = {
         componentName: "test-longhorn",
         namespace: "longhorn-system",
@@ -431,11 +439,11 @@ describe("Longhorn CRD Management", () => {
 
       const resources = createCrdManagement(config);
 
-      // Verify role is created for CRD management
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
+      // Verify ClusterRole is created for CRD management
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
     });
 
-    it("should create role with Longhorn resource permissions", () => {
+    it("should create ClusterRole with Longhorn resource permissions", () => {
       const config: ICrdManagementConfig = {
         componentName: "test-longhorn",
         namespace: "longhorn-system",
@@ -443,11 +451,11 @@ describe("Longhorn CRD Management", () => {
 
       const resources = createCrdManagement(config);
 
-      // Verify role is created for Longhorn resources
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
+      // Verify ClusterRole is created for Longhorn resources
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
     });
 
-    it("should create role with settings management permissions", () => {
+    it("should create ClusterRole with settings management permissions", () => {
       const config: ICrdManagementConfig = {
         componentName: "test-longhorn",
         namespace: "longhorn-system",
@@ -455,11 +463,11 @@ describe("Longhorn CRD Management", () => {
 
       const resources = createCrdManagement(config);
 
-      // Verify role is created for settings management
-      expect(resources.role).toBeInstanceOf(k8s.rbac.v1.Role);
+      // Verify ClusterRole is created for settings management
+      expect(resources.clusterRole).toBeInstanceOf(k8s.rbac.v1.ClusterRole);
     });
 
-    it("should create role binding with correct subject configuration", () => {
+    it("should create ClusterRoleBinding with correct subject configuration", () => {
       const config: ICrdManagementConfig = {
         componentName: "test-longhorn",
         namespace: "longhorn-system",
@@ -467,11 +475,11 @@ describe("Longhorn CRD Management", () => {
 
       const resources = createCrdManagement(config);
 
-      // Verify role binding is created with proper subject
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      // Verify ClusterRoleBinding is created with proper subject
+      expect(resources.clusterRoleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
     });
 
-    it("should create role binding with correct role reference", () => {
+    it("should create ClusterRoleBinding with correct role reference", () => {
       const config: ICrdManagementConfig = {
         componentName: "test-longhorn",
         namespace: "longhorn-system",
@@ -479,8 +487,8 @@ describe("Longhorn CRD Management", () => {
 
       const resources = createCrdManagement(config);
 
-      // Verify role binding is created with proper role reference
-      expect(resources.roleBinding).toBeInstanceOf(k8s.rbac.v1.RoleBinding);
+      // Verify ClusterRoleBinding is created with proper role reference
+      expect(resources.clusterRoleBinding).toBeInstanceOf(k8s.rbac.v1.ClusterRoleBinding);
     });
   });
 });

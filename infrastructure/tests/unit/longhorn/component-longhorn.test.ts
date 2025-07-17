@@ -116,8 +116,9 @@ describe("Longhorn Component with RBAC Management", () => {
 
       // Verify CRD management resources are created
       expect(component.crdManagement).toBeDefined();
-      expect(component.crdManagement.role).toBeDefined();
-      expect(component.crdManagement.roleBinding).toBeDefined();
+      expect(component.crdManagement.serviceAccount).toBeDefined();
+      expect(component.crdManagement.clusterRole).toBeDefined();
+      expect(component.crdManagement.clusterRoleBinding).toBeDefined();
       expect(component.crdManagement.preCreationJob).toBeDefined();
       expect(component.crdManagement.settingsJob).toBeDefined();
     });

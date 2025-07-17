@@ -20,8 +20,9 @@ export interface ICrdManagementConfig {
 }
 
 export interface ICrdManagementResources {
-  readonly role: k8s.rbac.v1.Role;
-  readonly roleBinding: k8s.rbac.v1.RoleBinding;
+  readonly serviceAccount: k8s.core.v1.ServiceAccount;
+  readonly clusterRole: k8s.rbac.v1.ClusterRole;
+  readonly clusterRoleBinding: k8s.rbac.v1.ClusterRoleBinding;
   readonly preCreationJob: k8s.batch.v1.Job;
   readonly settingsJob?: k8s.batch.v1.Job;
 }
@@ -40,12 +41,12 @@ export function createCrdManagement(
 ): ICrdManagementResources {
   const { componentName, namespace, timeoutSeconds = 300, requiredSettings = [] } = config;
 
-  // Create RBAC for CRD management jobs
-  const role = new k8s.rbac.v1.Role(
-    `${componentName}-crd-management-role`,
+  // Create ServiceAccount for CRD management jobs
+  const serviceAccount = new k8s.core.v1.ServiceAccount(
+    `${componentName}-crd-management-sa`,
     {
       metadata: {
-        name: `${componentName}-crd-management-role`,
+        name: `${componentName}-crd-management`,
         namespace,
         labels: {
           "app.kubernetes.io/name": "longhorn",
@@ -53,8 +54,24 @@ export function createCrdManagement(
           "app.kubernetes.io/component": "crd-management",
         },
       },
+    },
+    opts,
+  );
+
+  // Create ClusterRole for CRD management jobs (needs cluster-wide permissions for CRDs)
+  const clusterRole = new k8s.rbac.v1.ClusterRole(
+    `${componentName}-crd-management-clusterrole`,
+    {
+      metadata: {
+        name: `${componentName}-crd-management-clusterrole`,
+        labels: {
+          "app.kubernetes.io/name": "longhorn",
+          "app.kubernetes.io/managed-by": "pulumi",
+          "app.kubernetes.io/component": "crd-management",
+        },
+      },
       rules: [
-        // Permissions for CRD operations
+        // Permissions for CRD operations (cluster-scoped)
         {
           apiGroups: ["apiextensions.k8s.io"],
           resources: ["customresourcedefinitions"],
@@ -74,15 +91,14 @@ export function createCrdManagement(
         },
       ],
     },
-    opts,
+    { ...opts, dependsOn: [serviceAccount] },
   );
 
-  const roleBinding = new k8s.rbac.v1.RoleBinding(
-    `${componentName}-crd-management-rolebinding`,
+  const clusterRoleBinding = new k8s.rbac.v1.ClusterRoleBinding(
+    `${componentName}-crd-management-clusterrolebinding`,
     {
       metadata: {
-        name: `${componentName}-crd-management-rolebinding`,
-        namespace,
+        name: `${componentName}-crd-management-clusterrolebinding`,
         labels: {
           "app.kubernetes.io/name": "longhorn",
           "app.kubernetes.io/managed-by": "pulumi",
@@ -91,28 +107,28 @@ export function createCrdManagement(
       },
       roleRef: {
         apiGroup: "rbac.authorization.k8s.io",
-        kind: "Role",
-        name: role.metadata.name,
+        kind: "ClusterRole",
+        name: clusterRole.metadata.name,
       },
       subjects: [
         {
           kind: "ServiceAccount",
-          name: "default",
+          name: serviceAccount.metadata.name,
           namespace,
         },
       ],
     },
-    { ...opts, dependsOn: [role] },
+    { ...opts, dependsOn: [clusterRole] },
   );
 
-  // Create CRD pre-creation and validation job
+  // Create CRD pre-creation and validation job with unique name
+  const timestamp = Date.now().toString();
   const preCreationJob = new k8s.batch.v1.Job(
-    `${componentName}-crd-precreation`,
+    `${componentName}-crd-precreation-${timestamp}`,
     {
       metadata: {
-        name: `${componentName}-crd-precreation`,
+        name: `${componentName}-crd-precreation-${Date.now()}`,
         namespace,
-        generateName: `${componentName}-crd-precreation-`,
         labels: {
           "app.kubernetes.io/name": "longhorn",
           "app.kubernetes.io/managed-by": "pulumi",
@@ -125,6 +141,7 @@ export function createCrdManagement(
         template: {
           spec: {
             restartPolicy: "Never",
+            serviceAccountName: serviceAccount.metadata.name,
             containers: [
               {
                 name: "crd-precreation",
@@ -208,7 +225,7 @@ export function createCrdManagement(
         },
       },
     },
-    { ...opts, dependsOn: [roleBinding] },
+    { ...opts, dependsOn: [clusterRoleBinding] },
   );
 
   let settingsJob: k8s.batch.v1.Job | undefined;
@@ -218,8 +235,20 @@ export function createCrdManagement(
     const settingsScript = requiredSettings
       .map(
         (setting) => `
-        echo "Creating/updating Longhorn setting: ${setting.name}"
-        kubectl apply -f - <<EOF
+        echo "Checking if Longhorn setting ${setting.name} exists..."
+        if kubectl get settings.longhorn.io ${setting.name} -n ${namespace} >/dev/null 2>&1; then
+          CURRENT_VALUE=$(kubectl get settings.longhorn.io ${setting.name} -n ${namespace} -o jsonpath='{.value}')
+          echo "Setting ${setting.name} already exists with value: $CURRENT_VALUE"
+          if [ "$CURRENT_VALUE" = "${setting.value}" ]; then
+            echo "Setting ${setting.name} already has the correct value: ${setting.value}"
+          else
+            echo "Updating setting ${setting.name} from $CURRENT_VALUE to ${setting.value}"
+            kubectl patch settings.longhorn.io ${setting.name} -n ${namespace} --type='merge' -p='{"value":"${setting.value}"}'
+            echo "Setting ${setting.name} updated successfully"
+          fi
+        else
+          echo "Creating new Longhorn setting: ${setting.name}"
+          kubectl apply -f - <<EOF
 apiVersion: longhorn.io/v1beta2
 kind: Setting
 metadata:
@@ -231,23 +260,28 @@ metadata:
     app.kubernetes.io/component: settings
 value: "${setting.value}"
 EOF
-        echo "Setting ${setting.name} created/updated successfully"
+          echo "Setting ${setting.name} created successfully"
+        fi
 
-        # Verify the setting was applied correctly
+        # Verify the setting has the correct value
         echo "Verifying setting ${setting.name}..."
-        kubectl get settings.longhorn.io ${setting.name} -n ${namespace} -o jsonpath='{.value}' | grep -q "${setting.value}"
-        echo "Setting ${setting.name} verified with value: ${setting.value}"
+        FINAL_VALUE=$(kubectl get settings.longhorn.io ${setting.name} -n ${namespace} -o jsonpath='{.value}')
+        if [ "$FINAL_VALUE" = "${setting.value}" ]; then
+          echo "✓ Setting ${setting.name} verified with correct value: ${setting.value}"
+        else
+          echo "✗ Setting ${setting.name} has incorrect value: $FINAL_VALUE (expected: ${setting.value})"
+          exit 1
+        fi
         `,
       )
       .join("\n");
 
     settingsJob = new k8s.batch.v1.Job(
-      `${componentName}-settings-precreation`,
+      `${componentName}-settings-precreation-${timestamp}`,
       {
         metadata: {
-          name: `${componentName}-settings-precreation`,
+          name: `${componentName}-settings-precreation-${timestamp}`,
           namespace,
-          generateName: `${componentName}-settings-precreation-`,
           labels: {
             "app.kubernetes.io/name": "longhorn",
             "app.kubernetes.io/managed-by": "pulumi",
@@ -260,6 +294,7 @@ EOF
           template: {
             spec: {
               restartPolicy: "Never",
+              serviceAccountName: serviceAccount.metadata.name,
               containers: [
                 {
                   name: "settings-precreation",
@@ -293,8 +328,9 @@ EOF
   }
 
   return {
-    role,
-    roleBinding,
+    serviceAccount,
+    clusterRole,
+    clusterRoleBinding,
     preCreationJob,
     settingsJob,
   };
