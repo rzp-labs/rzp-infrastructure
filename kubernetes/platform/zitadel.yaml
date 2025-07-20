@@ -152,7 +152,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: zitadel-app-secrets
-                  key: master-key
+                  key: zitadel-master-key
 
         # Service configuration
         service:
