@@ -122,19 +122,59 @@ export class K3sMaster extends pulumi.ComponentResource {
       ${k3sInstall}
       echo "K3s server installation completed"
 
-      # Download and execute K3s master setup script
-      echo "Downloading K3s master setup script..."
-      curl -fsSL -o setup-k3s-master.sh https://raw.githubusercontent.com/rzp-labs/rzp-infrastructure/main/infrastructure/scripts/setup-k3s-master.sh
-      chmod +x setup-k3s-master.sh
+      # Install Helm for GitOps operations
+      echo "Installing Helm..."
+      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      chmod 700 get_helm.sh
+      ./get_helm.sh
+      rm get_helm.sh
+      echo "Helm installation completed"
+
+      # Set up kubeconfig for admin operations
+      echo "Setting up kubeconfig for user ${args.sshUsername}..."
+      mkdir -p /home/${args.sshUsername}/.kube
       
-      # Execute setup script with parameters
-      ./setup-k3s-master.sh \
-        --username "${args.sshUsername}" \
-        --node-ip "${args.node.ip4}" \
-        --is-first-master "${args.isFirstMaster ?? true}"
+      # Wait for K3s kubeconfig to be created
+      echo "Waiting for K3s kubeconfig to be created..."
+      until [ -f /etc/rancher/k3s/k3s.yaml ]; do
+        echo "Waiting for K3s kubeconfig to be created..."
+        sleep 2
+      done
       
-      # Clean up script
-      rm setup-k3s-master.sh
+      # Copy and configure kubeconfig (requires sudo for root-owned file)
+      sudo cp /etc/rancher/k3s/k3s.yaml /home/${args.sshUsername}/.kube/config
+      
+      # Fix server endpoint in kubeconfig for remote access
+      sudo sed -i 's/127.0.0.1:6443/${args.node.ip4}:6443/g' /home/${args.sshUsername}/.kube/config
+      sudo chown ${args.sshUsername}:${args.sshUsername} /home/${args.sshUsername}/.kube/config
+      sudo chmod 600 /home/${args.sshUsername}/.kube/config
+      
+      echo "Kubeconfig setup completed"
+
+      # Label node for Longhorn disk discovery (first master only)
+      if [ "${args.isFirstMaster ?? true}" = "true" ]; then
+        echo "Configuring Longhorn disk discovery labels..."
+        export KUBECONFIG=/home/${args.sshUsername}/.kube/config
+        
+        # Wait for API server to be ready with timeout
+        echo "Waiting for Kubernetes API server to be ready..."
+        TIMEOUT=300
+        ELAPSED=0
+        until kubectl get nodes > /dev/null 2>&1; do
+          if [ \$ELAPSED -ge \$TIMEOUT ]; then
+            echo "ERROR: Timeout waiting for Kubernetes API server"
+            exit 1
+          fi
+          echo "Waiting for Kubernetes API server... (\$ELAPSED/\$TIMEOUT seconds)"
+          sleep 5
+          ELAPSED=\$((ELAPSED + 5))
+        done
+        
+        # Label all nodes for Longhorn disk discovery
+        echo "Applying Longhorn disk discovery labels..."
+        kubectl label nodes --all node.longhorn.io/create-default-disk=true --overwrite
+        echo "Longhorn disk discovery labels applied successfully"
+      fi
 
       echo "k3s, Helm, and kubeconfig setup completed"
     `;
