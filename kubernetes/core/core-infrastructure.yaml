@@ -49,3 +49,15 @@ spec:
     jsonPointers:
     - /spec
     - /status
+  - group: "metallb.io"
+    kind: L2Advertisement
+    name: "*"
+    jsonPointers:
+    - /spec
+    - /status
+  - group: "metallb.io"
+    kind: IPAddressPool
+    name: "*"
+    jsonPointers:
+    - /spec
+    - /status
