@@ -105,6 +105,7 @@ spec:
       values: |
         zitadel:
           # Use external database
+          masterkeySecretName: zitadel-app-secrets
           configmapConfig:
             Database:
               Postgres:
@@ -147,10 +148,7 @@ spec:
                     secretKeyRef:
                       name: zitadel-db-credentials
                       key: zitadel-postgres-password
-          # Master key as direct secret reference
-          masterkeyFromSecret:
-            name: zitadel-app-secrets
-            key: zitadel-master-key
+          # Master key secret name reference
 
         # Service configuration
         service:
