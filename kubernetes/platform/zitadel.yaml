@@ -106,14 +106,7 @@ spec:
         zitadel:
           # Use external database
           masterkeySecretName: zitadel-app-secrets
-          
-        # Enable initialization jobs
-        initJob:
-          enabled: true
-        setupJob:
-          enabled: true
-          
-        configmapConfig:
+          configmapConfig:
             Database:
               Postgres:
                 Host: zitadel-postgres-postgresql
@@ -138,6 +131,12 @@ spec:
               Enabled: false  # TLS handled by Traefik
             LogLevel: info
             LogFormat: text
+
+        # Enable initialization jobs
+        initJob:
+          enabled: true
+        setupJob:
+          enabled: true
 
         # Secret configuration
         secretConfig:
