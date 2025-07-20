@@ -15,9 +15,9 @@ spec:
     targetRevision: HEAD
     path: kubernetes/core
     directory:
-      recurse: true
+      recurse: false
       include: "{*.yaml,namespaces/*.yaml}"
-      exclude: "core-infrastructure.yaml,README.md,longhorn-config/**,infisical-secrets/**,metallb-config/**,cert-manager-config/**"
+      exclude: "core-infrastructure.yaml,README.md"
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
