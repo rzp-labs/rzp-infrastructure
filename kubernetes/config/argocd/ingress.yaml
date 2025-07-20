@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-server-ingress
+    app.kubernetes.io/part-of: argocd
+  annotations:
+    # Traefik configuration
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+    # cert-manager for TLS certificates
+    cert-manager.io/cluster-issuer: cloudflare-issuer
+
+    # ArgoCD specific annotations for gRPC-Web support
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+
+    # Additional ArgoCD server configuration
+    argocd.argoproj.io/backend-protocol: "GRPC"
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - argocd.stg.rzp.one
+    secretName: argocd-server-tls
+  rules:
+  - host: argocd.stg.rzp.one
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 443
