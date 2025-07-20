@@ -18,19 +18,19 @@ spec:
       values: |
         # Install CRDs for Middleware, IngressRoute, etc.
         installCRDs: true
-        
+
         # Deployment - single replica for homelab (matching Pulumi)
         deployment:
           enabled: true
           replicas: 1
-        
+
         # Service - LoadBalancer for external access with specific IP
         service:
           enabled: true
           type: LoadBalancer
           spec:
             loadBalancerIP: "10.10.0.200"
-        
+
         # Ports - homelab standard matching staging environment
         ports:
           web:
@@ -49,18 +49,18 @@ spec:
             exposedPort: 443
             tls:
               enabled: true
-        
+
         # Ingress class - default for cluster
         ingressClass:
           enabled: true
           isDefaultClass: true
-        
+
         # Security and redirect configuration
         globalArguments:
           - "--global.sendanonymoususage=false"
           - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
           - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-        
+
         # Production-ready resource limits (matching Pulumi)
         resources:
           requests:
@@ -69,7 +69,7 @@ spec:
           limits:
             cpu: "300m"
             memory: "256Mi"
-        
+
         # Dashboard configuration with proper ingress
         ingressRoute:
           dashboard:
@@ -80,14 +80,14 @@ spec:
             entryPoints: ["websecure"]
             tls:
               secretName: traefik-dashboard-tls
-        
+
         # Disable built-in ACME (cert-manager handles certificates)
         certificatesResolvers: {}
-        
+
         # Global security settings
         additionalArguments:
           - "--global.checknewversion=false"
-        
+
         # Persistence for configuration and certificates
         persistence:
           enabled: true

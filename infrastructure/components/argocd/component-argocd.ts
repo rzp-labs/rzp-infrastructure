@@ -18,7 +18,7 @@ export interface IArgoCdArgs {
 export class ArgoCdComponent extends pulumi.ComponentResource {
   public readonly namespace: k8s.core.v1.Namespace;
   public readonly chart: k8s.helm.v3.Chart;
-  public readonly ingress: k8s.networking.v1.Ingress;
+  public readonly ingress?: k8s.networking.v1.Ingress;
 
   constructor(name: string, args: IArgoCdArgs, opts?: pulumi.ComponentResourceOptions) {
     super("rzp-infra:argocd:Component", name, {}, opts);
@@ -107,56 +107,13 @@ export class ArgoCdComponent extends pulumi.ComponentResource {
       { parent: this, dependsOn: [this.namespace], replaceOnChanges: ["*"] },
     );
 
-    // Create Traefik ingress for ArgoCD
-    this.ingress = new k8s.networking.v1.Ingress(
-      `${name}-ingress`,
-      {
-        metadata: {
-          name: "argocd-server-ingress",
-          namespace: this.namespace.metadata.name,
-          annotations: {
-            "kubernetes.io/ingress.class": "traefik",
-            "traefik.ingress.kubernetes.io/router.entrypoints": "websecure",
-            "traefik.ingress.kubernetes.io/router.tls": "true",
-            "cert-manager.io/cluster-issuer": `letsencrypt-${args.environment}`,
-          },
-        },
-        spec: {
-          rules: [
-            {
-              host: args.domain,
-              http: {
-                paths: [
-                  {
-                    path: "/",
-                    pathType: "Prefix",
-                    backend: {
-                      service: {
-                        name: `${name}-server`,
-                        port: { number: 80 },
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-          tls: [
-            {
-              hosts: [args.domain],
-              secretName: "argocd-server-tls",
-            },
-          ],
-        },
-      },
-      { parent: this, dependsOn: [this.chart] },
-    );
+    // TODO: Create ingress after Traefik is deployed
+    // this.ingress = new k8s.networking.v1.Ingress(...)
 
     // Register outputs
     this.registerOutputs({
       namespace: this.namespace,
       chart: this.chart,
-      ingress: this.ingress,
     });
   }
 }

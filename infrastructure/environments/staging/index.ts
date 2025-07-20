@@ -2,8 +2,7 @@
  * Staging environment deployment with proper provider architecture
  */
 import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
-import * as command from "@pulumi/command";
-// import * as k8s from "@pulumi/kubernetes";
+import * as k8s from "@pulumi/kubernetes";
 
 import * as Components from "../../components";
 import { getStagingConfig } from "../../config/staging";
@@ -21,7 +20,7 @@ export const proxmoxProvider = new proxmoxve.Provider("proxmox", {
   ssh: config.proxmox.ssh,
 });
 
-// // Get Cloudflare configuration directly
+// Get Cloudflare configuration directly
 // const cloudflareConfig = new pulumi.Config("cloudflare");
 
 // const domain = cloudflareConfig.require("domain");
@@ -123,108 +122,76 @@ export const workerInstalls = cluster.workers.map(
     ),
 );
 
-// // Kubernetes provider for all K8s resources (created after components are ready)
-// const stagingK8sProvider = new k8s.Provider(
-//   "stg-k8s-provider",
-//   { kubeconfig: credentials.result.kubeconfig },
+// Kubernetes provider for all K8s resources (created after components are ready)
+const stagingK8sProvider = new k8s.Provider(
+  "stg-k8s-provider",
+  { kubeconfig: credentials.result.kubeconfig },
+  {
+    dependsOn: [firstMaster.k3sHealthCheck, ...additionalMasters.map((m) => m.k3sHealthCheck), ...workerInstalls],
+  },
+);
+
+// =============================================================================
+// BOOTSTRAP PHASE: ArgoCD Deployment
+// =============================================================================
+
+// 5. Deploy ArgoCD for GitOps
+export const argoCd = new Components.ArgoCdComponent(
+  "argocd",
+  {
+    namespace: "argocd",
+    chartVersion: "5.51.6",
+    environment: "stg",
+    domain: `argocd.stg.rzp.one`,
+  },
+  {
+    dependsOn: [stagingK8sProvider],
+    provider: stagingK8sProvider,
+  },
+);
+
+// // After ArgoCD is deployed, create the root app-of-apps
+// export const argoCdBootstrap = new command.remote.Command(
+//   "argocd-app-of-apps",
 //   {
-//     dependsOn: [firstMaster.k3sHealthCheck, ...additionalMasters.map((m) => m.k3sHealthCheck), ...workerInstalls],
+//     connection: {
+//       host: cluster.masters[0].config.ip4,
+//       user: config.proxmox.ssh!.username!,
+//       privateKey: config.proxmox.ssh!.privateKey!,
+//     },
+//     create: `
+//       # Set kubeconfig
+//       export KUBECONFIG=/home/${config.proxmox.ssh!.username!}/.kube/config
+
+//       # Wait for ArgoCD to be ready
+//       kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
+
+//       # Apply root app-of-apps with server-side apply
+//       kubectl apply --server-side -f - <<EOF
+// apiVersion: argoproj.io/v1alpha1
+// kind: Application
+// metadata:
+//   name: platform-core
+//   namespace: argocd
+// spec:
+//   source:
+//     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+//     path: kubernetes/core
+//     targetRevision: main
+//   destination:
+//     server: https://kubernetes.default.svc
+//   syncPolicy:
+//     automated:
+//       prune: true
+//       selfHeal: true
+// EOF
+//     `,
+//   },
+//   {
+//     dependsOn: [argoCd], // Wait for ArgoCD component to be deployed
 //   },
 // );
 
-// // =============================================================================
-// // BOOTSTRAP PHASE: ArgoCD Deployment
-// // =============================================================================
-// After K3s cluster is ready, bootstrap ArgoCD
-export const argoCdBootstrap = new command.remote.Command(
-  "argocd-bootstrap",
-  {
-    connection: {
-      host: cluster.masters[0].config.ip4,
-      user: config.proxmox.ssh!.username!,
-      privateKey: config.proxmox.ssh!.privateKey!,
-    },
-    create: `
-      # Add ArgoCD Helm repository
-      helm repo add argo https://argoproj.github.io/argo-helm
-      helm repo update
-
-      # Add Infisical Helm repository
-      helm repo add infisical-helm https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/
-      helm repo update
-
-      # Install Infisical Secrets Operator first
-      helm install infisical-secrets-operator infisical-helm/infisical-secrets-operator \
-        --namespace infisical-secrets-system \
-        --create-namespace \
-        --values - <<INFISICAL_VALUES
-installCRDs: true
-controllerManager:
-  replicas: 1
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
-INFISICAL_VALUES
-
-      # Wait for Infisical Operator to be ready
-      kubectl wait --for=condition=available --timeout=300s deployment/infisical-secrets-operator-controller-manager -n infisical-secrets-system
-
-      # Create Infisical Cloud authentication secret (bootstrap credentials)
-      kubectl create secret generic infisical-cloud-universal-auth \
-        --namespace infisical-secrets-system \
-        --from-literal=clientId="\${INFISICAL_CLOUD_CLIENT_ID}" \
-        --from-literal=clientSecret="\${INFISICAL_CLOUD_CLIENT_SECRET}" \
-        --dry-run=client -o yaml | kubectl apply -f -
-
-      # Install ArgoCD
-      helm install argocd argo/argo-cd \
-        --namespace argocd \
-        --create-namespace \
-        --values - <<HELM_VALUES
-server:
-  service:
-    type: ClusterIP
-  extraArgs:
-    - --insecure
-  config:
-    repositories: \|
-      - url: https://github.com/rzp-labs/rzp-infrastructure.git
-        name: rzp-infrastructure
-        type: git
-HELM_VALUES
-
-      # Wait for ArgoCD to be ready
-      kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
-
-      # Apply root app-of-apps with server-side apply
-      kubectl apply --server-side -f - <<EOF
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: platform-core
-  namespace: argocd
-spec:
-  source:
-    repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
-    path: kubernetes/core
-    targetRevision: main
-  destination:
-    server: https://kubernetes.default.svc
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-EOF
-    `,
-  },
-  {
-    dependsOn: [firstMaster, ...additionalMasters, ...workerInstalls], // Wait for K3s installation to complete
-  },
-);
 // // =============================================================================
 // // BOOTSTRAP PHASE: Direct Pulumi Deployment
 // // =============================================================================
@@ -309,20 +276,7 @@ EOF
 //   },
 // );
 
-// // 5. Deploy ArgoCD for GitOps
-// export const argoCd = new Components.ArgoCdComponent(
-//   "argocd",
-//   {
-//     namespace: "stg-argocd",
-//     chartVersion: "5.51.6",
-//     environment: "stg",
-//     domain: `argocd.stg.${domain}`,
-//   },
-//   {
-//     dependsOn: [longhornBootstrap],
-//     provider: stagingK8sProvider,
-//   },
-// );
+// 5. Deploy ArgoCD for GitOps (moved above)
 
 // // 7. Deploy Infisical for secrets management
 // export const infisicalBootstrap = new Components.InfisicalComponent(

@@ -35,7 +35,7 @@ export class K8sTestClient implements IK8sTestClient {
       this.k8sApi = tempApi;
       this.k8sAppsApi = this.kc.makeApiClient(k8s.AppsV1Api);
       this.isConnected = true;
-    } catch (error) {
+    } catch {
       // Don't throw error - let tests handle unavailable cluster gracefully
       this.isConnected = false;
     }

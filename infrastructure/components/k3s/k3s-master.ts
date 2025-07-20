@@ -133,6 +133,8 @@ export class K3sMaster extends pulumi.ComponentResource {
       # Set up kubeconfig for admin operations
       mkdir -p /home/${args.sshUsername}/.kube
       cp /etc/rancher/k3s/k3s.yaml /home/${args.sshUsername}/.kube/config
+      # Fix server endpoint in kubeconfig for remote access
+      sed -i 's/127.0.0.1:6443/${args.node.ip4}:6443/g' /home/${args.sshUsername}/.kube/config
       chown ${args.sshUsername}:${args.sshUsername} /home/${args.sshUsername}/.kube/config
       chmod 600 /home/${args.sshUsername}/.kube/config
 
