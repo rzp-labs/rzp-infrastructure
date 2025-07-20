@@ -106,6 +106,12 @@ spec:
         zitadel:
           # Use external database
           masterkeySecretName: zitadel-app-secrets
+          
+        # Enable initialization jobs
+        initJob:
+          enabled: true
+        setupJob:
+          enabled: true
           configmapConfig:
             Database:
               Postgres:
