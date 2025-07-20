@@ -15,11 +15,8 @@ metadata:
     cert-manager.io/cluster-issuer: cloudflare-issuer
 
     # ArgoCD specific annotations for gRPC-Web support
-    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
-
-    # Additional ArgoCD server configuration
-    argocd.argoproj.io/backend-protocol: "GRPC"
+    # ArgoCD specific Traefik annotations for gRPC-Web support
+    traefik.ingress.kubernetes.io/service.serversscheme: h2c
 spec:
   ingressClassName: traefik
   tls:
