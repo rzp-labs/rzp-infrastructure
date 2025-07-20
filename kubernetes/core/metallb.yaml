@@ -83,6 +83,10 @@ spec:
     jsonPointers:
     - /webhooks/0/clientConfig/caBundle
     - /webhooks/1/clientConfig/caBundle
+  - group: apps
+    kind: DaemonSet
+    jsonPointers:
+    - /metadata/annotations/deprecated.daemonset.template.generation
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
