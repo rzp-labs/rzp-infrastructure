@@ -141,7 +141,7 @@ spec:
               type: http
               inputs: ["kubernetes_logs_parsed"]
               uri: "http://openobserve.observability.svc.cluster.local:5080/api/default/default/_json"
-              method: "POST"
+              method: "post"
               auth:
                 strategy: "basic"
                 user: "admin@rzp.one"
@@ -167,7 +167,7 @@ spec:
               type: http
               inputs: ["host_metrics_processed", "k8s_metrics_processed", "vector_metrics_processed"]
               uri: "http://openobserve.observability.svc.cluster.local:5080/api/default/metrics/_json"
-              method: "POST"
+              method: "post"
               auth:
                 strategy: "basic"
                 user: "admin@rzp.one"
