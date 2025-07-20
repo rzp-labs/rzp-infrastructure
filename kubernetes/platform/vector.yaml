@@ -260,7 +260,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: openobserve-secrets
-                key: root-user-password
+                key: openobserve-root-password
 
         # Node selector and tolerations
         nodeSelector: {}
