@@ -16,7 +16,6 @@ spec:
     path: kubernetes/shared-config
     directory:
       recurse: false
-      exclude: "shared-config.yaml"
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
