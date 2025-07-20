@@ -113,7 +113,8 @@ spec:
     kind: Service
     name: "*"
     jsonPointers:
-    - /status/loadBalancer/ingress
+    - /status/loadBalancer/ingress/0/ipMode
+    - /status/loadBalancer/ingress/1/ipMode
   - group: admissionregistration.k8s.io
     kind: ValidatingWebhookConfiguration
     jsonPointers:
