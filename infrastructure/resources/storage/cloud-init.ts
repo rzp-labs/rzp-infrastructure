@@ -43,7 +43,11 @@ packages:
   - curl
   - wget
   - python3
-  - python3-pip`;
+  - python3-pip
+  # Longhorn storage prerequisites
+  - open-iscsi
+  - nfs-common
+  - util-linux`;
 }
 
 /**
@@ -99,7 +103,10 @@ ${getKernelModules()}`;
 function getSystemServiceCommands(): string {
   return `  # System services
   - [ systemctl, enable, --now, qemu-guest-agent ]
-  - [ systemctl, enable, --now, systemd-resolved ]`;
+  - [ systemctl, enable, --now, systemd-resolved ]
+  # Longhorn storage prerequisites
+  - [ systemctl, enable, --now, iscsid ]
+  - [ systemctl, enable, --now, open-iscsi ]`;
 }
 
 /**
