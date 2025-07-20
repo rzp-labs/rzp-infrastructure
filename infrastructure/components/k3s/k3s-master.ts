@@ -138,6 +138,20 @@ export class K3sMaster extends pulumi.ComponentResource {
       chown ${args.sshUsername}:${args.sshUsername} /home/${args.sshUsername}/.kube/config
       chmod 600 /home/${args.sshUsername}/.kube/config
 
+      # Label node for Longhorn disk discovery (first master only)
+      if [ "${args.isFirstMaster ?? true}" = "true" ]; then
+        echo "Configuring Longhorn disk discovery labels..."
+        export KUBECONFIG=/home/${args.sshUsername}/.kube/config
+        # Wait for API server to be ready
+        until kubectl get nodes > /dev/null 2>&1; do
+          echo "Waiting for Kubernetes API server..."
+          sleep 5
+        done
+        # Label all nodes for Longhorn disk discovery
+        kubectl label nodes --all node.longhorn.io/create-default-disk=true --overwrite
+        echo "Longhorn disk discovery labels applied"
+      fi
+
       echo "k3s, Helm, and kubeconfig setup completed"
     `;
   }
