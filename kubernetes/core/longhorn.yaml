@@ -237,29 +237,3 @@ spec:
     jsonPointers:
     - /metadata/annotations/deployment.kubernetes.io~1revision
 
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: longhorn-config
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "8"  # After Traefik is fully operational
-  labels:
-    app.kubernetes.io/name: longhorn-config
-    app.kubernetes.io/component: platform
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
-    targetRevision: HEAD
-    path: kubernetes/config/longhorn
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: longhorn-system
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - ServerSideApply=true
