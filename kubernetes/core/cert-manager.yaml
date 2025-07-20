@@ -94,7 +94,7 @@ spec:
   source:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
-    path: kubernetes/core/cert-manager-config
+    path: kubernetes/config/cert-manager
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager

@@ -92,7 +92,7 @@ spec:
   source:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
-    path: kubernetes/core/metallb-config
+    path: kubernetes/config/metallb
   destination:
     server: https://kubernetes.default.svc
     namespace: metallb-system

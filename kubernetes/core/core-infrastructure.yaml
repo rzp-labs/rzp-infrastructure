@@ -15,7 +15,7 @@ spec:
     targetRevision: HEAD
     path: kubernetes/core
     directory:
-      recurse: false
+      recurse: true
       include: "{*.yaml,namespaces/*.yaml}"
       exclude: "core-infrastructure.yaml,README.md"
   destination:
