@@ -28,14 +28,6 @@ spec:
             limits:
               cpu: "200m"
               memory: "256Mi"
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 65534
-            fsGroup: 65534
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
 
         # Speaker - with control plane tolerations and security
         speaker:
@@ -49,12 +41,6 @@ spec:
             limits:
               cpu: "200m"
               memory: "256Mi"
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
-              add: ["NET_RAW"]
           tolerations:
             - key: "node-role.kubernetes.io/control-plane"
               operator: "Exists"
@@ -75,14 +61,6 @@ spec:
             limits:
               cpu: "100m"
               memory: "128Mi"
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 65534
-            fsGroup: 65534
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
   destination:
     server: https://kubernetes.default.svc
     namespace: metallb-system
