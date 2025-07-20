@@ -113,7 +113,7 @@ spec:
         setupJob:
           enabled: true
           
-          configmapConfig:
+        configmapConfig:
             Database:
               Postgres:
                 Host: zitadel-postgres-postgresql
