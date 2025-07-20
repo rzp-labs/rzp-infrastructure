@@ -4,7 +4,7 @@ metadata:
   name: shared-config
   namespace: argocd
   annotations:
-argocd.argoproj.io/sync-wave: "11"  # After namespaces (wave 0), before services need middleware
+    argocd.argoproj.io/sync-wave: "11"  # After namespaces (wave 0), before services need middleware
   labels:
     app.kubernetes.io/name: shared-config
     app.kubernetes.io/component: shared
