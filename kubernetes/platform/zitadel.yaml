@@ -147,12 +147,10 @@ spec:
                     secretKeyRef:
                       name: zitadel-db-credentials
                       key: zitadel-postgres-password
-          DefaultInstance:
-            MasterKey:
-              valueFrom:
-                secretKeyRef:
-                  name: zitadel-app-secrets
-                  key: zitadel-master-key
+          # Master key configured via masterkeySecretName
+        
+        # Use secret reference for master key
+        masterkeySecretName: zitadel-app-secrets
 
         # Service configuration
         service:
