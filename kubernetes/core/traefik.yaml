@@ -114,3 +114,8 @@ spec:
     name: "*"
     jsonPointers:
     - /status/loadBalancer/ingress
+  - group: admissionregistration.k8s.io
+    kind: ValidatingWebhookConfiguration
+    jsonPointers:
+    - /webhooks/0/clientConfig/caBundle
+    - /webhooks/1/clientConfig/caBundle

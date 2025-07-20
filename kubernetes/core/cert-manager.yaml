@@ -78,6 +78,18 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
+  ignoreDifferences:
+  - group: admissionregistration.k8s.io
+    kind: ValidatingWebhookConfiguration
+    jsonPointers:
+    - /webhooks/0/clientConfig/caBundle
+    - /webhooks/1/clientConfig/caBundle
+  - group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    jsonPointers:
+    - /webhooks/0/clientConfig/caBundle
+    - /webhooks/1/clientConfig/caBundle
+
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
