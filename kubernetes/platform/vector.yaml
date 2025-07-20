@@ -4,7 +4,7 @@ metadata:
   name: vector
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-wave: "12"
   labels:
     app.kubernetes.io/name: vector
     app.kubernetes.io/component: platform
@@ -292,6 +292,20 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 5m
+  ignoreDifferences:
+  - group: apps
+    kind: DaemonSet
+    jsonPointers:
+    - /metadata/annotations/deprecated.daemonset.template.generation
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /metadata/annotations/deployment.kubernetes.io~1revision
+  - group: ""
+    kind: Secret
+    name: "*"
+    jsonPointers:
+    - /data
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -299,7 +313,7 @@ metadata:
   name: vector-config
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "13"
   labels:
     app.kubernetes.io/name: vector-config
     app.kubernetes.io/component: platform
@@ -308,7 +322,7 @@ spec:
   source:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
-    path: kubernetes/platform/vector-config
+    path: kubernetes/config/vector
   destination:
     server: https://kubernetes.default.svc
     namespace: observability

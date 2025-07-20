@@ -1,19 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: infisical-secret-stores
+  name: shared-config
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "11"
+    argocd.argoproj.io/sync-wave: "20"  # After all infrastructure is ready
   labels:
-    app.kubernetes.io/name: infisical-secret-stores
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/name: shared-config
+    app.kubernetes.io/component: shared
 spec:
   project: default
   source:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
-    path: kubernetes/config/infisical-secrets
+    path: kubernetes/shared-config
+    directory:
+      recurse: false
+      exclude: "shared-config.yaml"
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:

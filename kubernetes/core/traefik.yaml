@@ -70,16 +70,10 @@ spec:
             cpu: "300m"
             memory: "256Mi"
 
-        # Dashboard configuration with proper ingress
+        # Dashboard disabled - using protected version in /config/traefik/
         ingressRoute:
           dashboard:
-            enabled: true
-            annotations:
-              cert-manager.io/cluster-issuer: "letsencrypt-staging"
-            matchRule: Host(`traefik.stg.rzp.one`)
-            entryPoints: ["websecure"]
-            tls:
-              secretName: traefik-dashboard-tls
+            enabled: false
 
         # Disable built-in ACME (cert-manager handles certificates)
         certificatesResolvers: {}

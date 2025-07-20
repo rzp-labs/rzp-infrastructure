@@ -174,10 +174,10 @@ metadata:
   name: openobserve-ingress
   namespace: observability
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    cert-manager.io/cluster-issuer: "cloudflare-issuer"
     traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: "zitadel-auth@kubernetescrd"
+    traefik.ingress.kubernetes.io/router.middlewares: "observability-default-headers@kubernetescrd,observability-zitadel-auth@kubernetescrd"
 spec:
   ingressClassName: traefik
   tls:

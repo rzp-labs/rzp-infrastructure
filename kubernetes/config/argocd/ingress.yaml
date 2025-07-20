@@ -10,6 +10,9 @@ metadata:
     # Traefik configuration
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    
+    # Zitadel authentication
+    traefik.ingress.kubernetes.io/router.middlewares: "argocd-default-headers@kubernetescrd,argocd-zitadel-auth@kubernetescrd"
 
     # cert-manager for TLS certificates
     cert-manager.io/cluster-issuer: cloudflare-issuer

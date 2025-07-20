@@ -4,7 +4,7 @@ metadata:
   name: zitadel-postgres
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "12"
   labels:
     app.kubernetes.io/name: zitadel-postgres
     app.kubernetes.io/component: platform
@@ -74,6 +74,16 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
+  ignoreDifferences:
+  - group: apps
+    kind: StatefulSet
+    jsonPointers:
+    - /metadata/annotations/deployment.kubernetes.io~1revision
+  - group: ""
+    kind: Secret
+    name: "*"
+    jsonPointers:
+    - /data
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -81,7 +91,7 @@ metadata:
   name: zitadel-app
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-wave: "12"
   labels:
     app.kubernetes.io/name: zitadel-app
     app.kubernetes.io/component: platform
@@ -156,9 +166,10 @@ spec:
           enabled: true
           className: traefik
           annotations:
-            cert-manager.io/cluster-issuer: "letsencrypt-staging"
+            cert-manager.io/cluster-issuer: "cloudflare-issuer"
             traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
             traefik.ingress.kubernetes.io/router.tls: "true"
+            traefik.ingress.kubernetes.io/router.middlewares: "zitadel-default-headers@kubernetescrd"
           hosts:
             - host: zitadel.stg.rzp.one
               paths:
@@ -252,6 +263,21 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 5m
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /metadata/annotations/deployment.kubernetes.io~1revision
+  - group: networking.k8s.io
+    kind: Ingress
+    name: "*"
+    jsonPointers:
+    - /metadata/annotations/ingress.kubernetes.io~1ssl-redirect
+  - group: ""
+    kind: Secret
+    name: "*"
+    jsonPointers:
+    - /data
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -259,7 +285,7 @@ metadata:
   name: zitadel-config
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-wave: "14"
   labels:
     app.kubernetes.io/name: zitadel-config
     app.kubernetes.io/component: platform
@@ -268,7 +294,7 @@ spec:
   source:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
-    path: kubernetes/platform/zitadel-config
+    path: kubernetes/config/zitadel
   destination:
     server: https://kubernetes.default.svc
     namespace: zitadel

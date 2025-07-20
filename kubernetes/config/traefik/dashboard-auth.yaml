@@ -1,0 +1,23 @@
+
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard-secure
+  namespace: traefik
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"  # After Zitadel auth is ready
+    cert-manager.io/cluster-issuer: "cloudflare-issuer"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`traefik.stg.rzp.one`)
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService
+      middlewares:
+        - name: default-headers
+        - name: zitadel-auth
+  tls:
+    secretName: traefik-dashboard-tls

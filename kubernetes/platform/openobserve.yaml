@@ -4,7 +4,7 @@ metadata:
   name: openobserve-postgres
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "12"
   labels:
     app.kubernetes.io/name: openobserve-postgres
     app.kubernetes.io/component: platform
@@ -76,6 +76,16 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
+  ignoreDifferences:
+  - group: apps
+    kind: StatefulSet
+    jsonPointers:
+    - /metadata/annotations/deployment.kubernetes.io~1revision
+  - group: ""
+    kind: Secret
+    name: "*"
+    jsonPointers:
+    - /data
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -83,7 +93,7 @@ metadata:
   name: openobserve-app
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-wave: "15"
   labels:
     app.kubernetes.io/name: openobserve-app
     app.kubernetes.io/component: platform
@@ -92,7 +102,7 @@ spec:
   source:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
-    path: kubernetes/platform/openobserve-config
+    path: kubernetes/config/openobserve
   destination:
     server: https://kubernetes.default.svc
     namespace: observability

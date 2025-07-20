@@ -13,17 +13,22 @@ Browser   Ingress    Forward Auth    Identity    Longhorn/OpenObserve
 ## Components
 
 ### **🔐 Zitadel Identity Platform**
+
 - **Primary Service**: `https://zitadel.stg.rzp.one`
 - **Purpose**: OIDC/OAuth2 identity provider
 - **Features**: User management, multi-factor auth, RBAC
 
 ### **🔗 Zitadel Auth Proxy**
+
 - **Service**: `https://auth.stg.rzp.one`
 - **Purpose**: Traefik Forward Auth integration
 - **Technology**: thomseddon/traefik-forward-auth
 
 ### **🛡️ Protected Services**
+
 All platform services use the same authentication flow:
+
+- **ArgoCD**: `https://argocd.stg.rzp.one`
 - **Longhorn UI**: `https://longhorn.stg.rzp.one`
 - **OpenObserve**: `https://openobserve.stg.rzp.one`
 - **Future services**: Automatically protected
@@ -41,6 +46,7 @@ All platform services use the same authentication flow:
 ## Configuration Required
 
 ### **Zitadel Setup**
+
 1. **Access Zitadel**: `https://zitadel.stg.rzp.one`
 2. **Create Organization**: For your platform
 3. **Create Project**: "Platform Services"
@@ -52,26 +58,29 @@ All platform services use the same authentication flow:
    - **Auth Method**: PKCE
 
 ### **Secret Configuration**
-Replace these placeholders with values from Zitadel:
 
-```yaml
-# From Zitadel application configuration
-ZITADEL_AUTH_PROXY_CLIENT_ID_PLACEHOLDER: "your-client-id"
-ZITADEL_AUTH_PROXY_CLIENT_SECRET_PLACEHOLDER: "your-client-secret"
+Secrets are managed through **Infisical Cloud** and automatically synced via Infisical Secrets Operator:
 
-# Generate random 32+ character string
-ZITADEL_AUTH_PROXY_SECRET_PLACEHOLDER: "your-session-secret"
-```
+1. **Add secrets to Infisical Cloud**:
+   - `zitadel-auth-proxy-client-id` - From Zitadel application configuration
+   - `zitadel-auth-proxy-client-secret` - From Zitadel application configuration  
+   - `zitadel-auth-proxy-session-secret` - Generate random 32+ character string
+
+2. **Secrets automatically sync** to Kubernetes via InfisicalSecret resources in `/kubernetes/config/infisical-secrets/`
+
+3. **No manual secret management** required - Infisical Secrets Operator handles synchronization
 
 ## User Management
 
 ### **Add Users in Zitadel**
+
 1. Navigate to **Users** in Zitadel admin
 2. **Create user** with email and initial password
 3. **Assign roles** as needed
 4. User can **change password** on first login
 
 ### **Assign Application Access**
+
 1. Go to **Projects** → "Platform Services"
 2. Select **Authorizations**
 3. **Grant** users/groups access to applications
@@ -80,18 +89,21 @@ ZITADEL_AUTH_PROXY_SECRET_PLACEHOLDER: "your-session-secret"
 ## Benefits
 
 ### **🔐 Security**
+
 - **Modern OIDC/OAuth2** instead of basic auth
 - **Multi-factor authentication** support
 - **Session management** with secure cookies
 - **Centralized user management**
 
 ### **🚀 User Experience**
+
 - **Single Sign-On (SSO)** across all platform services
 - **Modern login flows** with proper redirects
 - **Consistent authentication** experience
 - **Self-service password** reset and management
 
 ### **🛠️ Operations**
+
 - **Centralized audit** logs for authentication
 - **Role-based access** control (RBAC)
 - **Easy user provisioning** and deprovisioning
@@ -102,12 +114,14 @@ ZITADEL_AUTH_PROXY_SECRET_PLACEHOLDER: "your-session-secret"
 To protect new services with Zitadel authentication:
 
 1. **Add middleware** annotation to ingress:
+
    ```yaml
    annotations:
      traefik.ingress.kubernetes.io/router.middlewares: "NAMESPACE-zitadel-auth@kubernetescrd"
    ```
 
 2. **Create middleware** in service namespace:
+
    ```yaml
    apiVersion: traefik.io/v1alpha1
    kind: Middleware
@@ -130,16 +144,19 @@ To protect new services with Zitadel authentication:
 ## Troubleshooting
 
 ### **Authentication Loops**
+
 - Check Zitadel application redirect URIs
 - Verify auth proxy client credentials
 - Check cookie domain configuration
 
 ### **Access Denied**
+
 - Verify user has access to the application in Zitadel
 - Check user roles and project authorizations
 - Review Zitadel audit logs
 
 ### **Service Connectivity**
+
 ```bash
 # Test auth proxy health
 kubectl port-forward -n zitadel svc/zitadel-auth-proxy 4181:4181
