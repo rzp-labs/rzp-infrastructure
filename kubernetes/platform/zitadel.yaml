@@ -135,30 +135,8 @@ spec:
         # Enable initialization jobs
         initJob:
           enabled: true
-          extraEnv:
-            - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: zitadel-db-credentials
-                  key: zitadel-db-password
-            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: zitadel-db-credentials
-                  key: zitadel-postgres-password
         setupJob:
           enabled: true
-          extraEnv:
-            - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: zitadel-db-credentials
-                  key: zitadel-db-password
-            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: zitadel-db-credentials
-                  key: zitadel-postgres-password
 
         # Secret configuration  
         secretConfig:
@@ -250,6 +228,16 @@ spec:
             value: "info"
           - name: ZITADEL_LOG_FORMAT
             value: "text"
+          - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: zitadel-db-credentials
+                key: zitadel-db-password
+          - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: zitadel-db-credentials
+                key: zitadel-postgres-password
 
         # Additional volumes for writable paths
         extraVolumes:
