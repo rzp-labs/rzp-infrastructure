@@ -1,7 +1,9 @@
 import * as k8s from "@pulumi/kubernetes";
+import type { Output } from "@pulumi/pulumi";
 import * as pulumi from "@pulumi/pulumi";
+import * as bcrypt from "bcryptjs";
 
-import { type ICrdManagementResources, createDeletingConfirmationFlagJob } from "../../helpers/longhorn/crd-management";
+import { createDeletingConfirmationFlagJob } from "../../helpers/longhorn/crd-management";
 import {
   DeploymentMonitor,
   DeploymentPhase,
@@ -9,11 +11,13 @@ import {
   createDeploymentMonitoringJob,
   createDeploymentStatusConfigMap,
 } from "../../helpers/longhorn/deployment-monitoring";
+import { type IDiskProvisioningResources, createDiskProvisioningJob } from "../../helpers/longhorn/disk-provisioning";
 import {
   type IPrerequisiteValidationResources,
   createPrerequisiteValidation,
 } from "../../helpers/longhorn/prerequisite-validation";
 import { type IUninstallerRbacResources, createUninstallerRbac } from "../../helpers/longhorn/uninstaller-rbac";
+import { type IVolumeCleanupResources, createVolumeCleanup } from "../../helpers/longhorn/volume-cleanup";
 import type { Environment } from "../../shared/types";
 
 /**
@@ -48,6 +52,16 @@ export interface ILonghornArgs {
   readonly deploymentTimeoutSeconds?: number;
   readonly maxRetries?: number;
   readonly enableStatusTracking?: boolean;
+  // Disk provisioning automation options
+  readonly enableDiskProvisioning?: boolean;
+  readonly diskPath?: string;
+  readonly storageReservedGb?: number;
+  readonly diskProvisioningTimeoutSeconds?: number;
+  readonly diskProvisioningRetryAttempts?: number;
+  // Volume cleanup automation options
+  readonly enableVolumeCleanup?: boolean;
+  readonly volumeCleanupIntervalMinutes?: number;
+  readonly maxVolumeAgeHours?: number;
 }
 
 export class LonghornComponent extends pulumi.ComponentResource {
@@ -56,14 +70,17 @@ export class LonghornComponent extends pulumi.ComponentResource {
   public readonly backupSecret?: k8s.core.v1.Secret;
   public readonly ingress: k8s.networking.v1.Ingress;
   public readonly authMiddleware: k8s.apiextensions.CustomResource;
+  public readonly wsHeadersMiddleware: k8s.apiextensions.CustomResource;
   public readonly authSecret: k8s.core.v1.Secret;
-  public readonly helmValuesOutput: pulumi.Output<string>;
+  public readonly helmValuesOutput: Output<string>;
   public readonly uninstallerRbac?: IUninstallerRbacResources;
-  public readonly crdManagement: ICrdManagementResources;
+  public readonly deletingConfirmationFlag: k8s.apiextensions.CustomResource;
   public readonly prerequisiteValidation?: IPrerequisiteValidationResources;
   public readonly deploymentMonitor?: DeploymentMonitor;
   public readonly statusConfigMap?: k8s.core.v1.ConfigMap;
   public readonly monitoringJob?: k8s.batch.v1.Job;
+  public readonly diskProvisioning?: IDiskProvisioningResources;
+  public readonly volumeCleanup?: IVolumeCleanupResources;
 
   constructor(name: string, args: ILonghornArgs, opts?: pulumi.ComponentResourceOptions) {
     super("rzp-infra:longhorn:Component", name, {}, opts);
@@ -344,25 +361,13 @@ export class LonghornComponent extends pulumi.ComponentResource {
       });
     }
 
-    // Create CRD management resources to ensure proper sequencing
-    // This includes CRD validation and deleting-confirmation-flag setting creation
-    this.crdManagement = createDeletingConfirmationFlagJob(name, args.namespace, {
-      parent: this,
-      dependsOn: [this.namespace],
-    });
-
     // Deploy Longhorn with opinionated homelab configuration
-    // Include RBAC, CRD management, and prerequisite validation resources in dependencies
-    const chartDependencies: pulumi.Resource[] = [this.namespace, this.crdManagement.preCreationJob];
+    // Include RBAC and prerequisite validation in dependencies (confirmation flag created after chart)
+    const chartDependencies: pulumi.Resource[] = [this.namespace];
 
     // Add prerequisite validation dependency if it exists
     if (this.prerequisiteValidation) {
       chartDependencies.push(this.prerequisiteValidation.validationJob);
-    }
-
-    // Add settings job dependency if it exists
-    if (this.crdManagement.settingsJob) {
-      chartDependencies.push(this.crdManagement.settingsJob);
     }
 
     // Add RBAC dependencies if they exist
@@ -398,6 +403,13 @@ export class LonghornComponent extends pulumi.ComponentResource {
       { parent: this, dependsOn: chartDependencies },
     );
 
+    // Create the deleting-confirmation-flag setting after chart installation
+    this.deletingConfirmationFlag = createDeletingConfirmationFlagJob(name, args.namespace, {
+      parent: this,
+      dependsOn: [this.chart], // Depends on chart to ensure Longhorn CRDs exist
+    });
+
+    // Create authentication middleware for Longhorn UI
     // Create authentication middleware for Longhorn UI
     this.authMiddleware = new k8s.apiextensions.CustomResource(
       `${name}-auth-middleware`,
@@ -405,7 +417,7 @@ export class LonghornComponent extends pulumi.ComponentResource {
         apiVersion: "traefik.io/v1alpha1",
         kind: "Middleware",
         metadata: {
-          name: `${args.environment}-longhorn-auth`,
+          name: "longhorn-auth", // Simplified name
           namespace: this.namespace.metadata.name,
         },
         spec: {
@@ -417,8 +429,33 @@ export class LonghornComponent extends pulumi.ComponentResource {
       { parent: this, dependsOn: [this.chart] },
     );
 
-    // Create basic auth secret for Longhorn UI
-    // Uses provided admin password with bcrypt hashing
+    // Create WebSocket headers middleware for Traefik compatibility
+    this.wsHeadersMiddleware = new k8s.apiextensions.CustomResource(
+      `${name}-ws-headers-middleware`,
+      {
+        apiVersion: "traefik.io/v1alpha1",
+        kind: "Middleware",
+        metadata: {
+          name: "longhorn-ws-headers", // Static name
+          namespace: this.namespace.metadata.name,
+        },
+        spec: {
+          headers: {
+            customRequestHeaders: {
+              "X-Forwarded-Proto": "https",
+            },
+          },
+        },
+      },
+      { parent: this, dependsOn: [this.chart] },
+    );
+
+    // Create the user string for the htpasswd secret
+    const htpasswdUser = pulumi
+      .secret(args.adminPassword)
+      .apply((password) => `admin:${bcrypt.hashSync(password, 10)}`);
+
+    // Create basic auth secret for Longhorn UI, ensuring correct base64 encoding
     this.authSecret = new k8s.core.v1.Secret(
       `${name}-auth-secret`,
       {
@@ -427,30 +464,56 @@ export class LonghornComponent extends pulumi.ComponentResource {
           namespace: this.namespace.metadata.name,
         },
         type: "Opaque",
-        stringData: {
-          // Uses htpasswd format with Pulumi-encrypted password
-          users: pulumi.interpolate`admin:${args.adminPassword}`,
+        data: {
+          // Manually base64 encode the user string to ensure correct format
+          users: htpasswdUser.apply((user) => Buffer.from(user).toString("base64")),
         },
       },
-      { parent: this, dependsOn: [this.chart] },
+      { parent: this, dependsOn: [this.namespace] },
     );
 
-    // Create Traefik ingress for Longhorn UI
+    // Create Certificate for Longhorn UI to ensure TLS secret exists before Ingress
+    const certificate = new k8s.apiextensions.CustomResource(
+      `${name}-certificate`,
+      {
+        apiVersion: "cert-manager.io/v1",
+        kind: "Certificate",
+        metadata: {
+          name: "longhorn-frontend-tls",
+          namespace: this.namespace.metadata.name,
+        },
+        spec: {
+          secretName: "longhorn-frontend-tls",
+          duration: "2160h", // 90d
+          renewBefore: "360h", // 15d
+          issuerRef: {
+            name: `letsencrypt-${args.environment}`,
+            kind: "ClusterIssuer",
+          },
+          dnsNames: [args.domain],
+        },
+      },
+      { parent: this, dependsOn: [this.namespace] },
+    );
+
+    // Create Ingress for Longhorn UI with authentication middleware
     this.ingress = new k8s.networking.v1.Ingress(
       `${name}-ingress`,
       {
         metadata: {
-          name: "longhorn-frontend-ingress",
+          name: "longhorn-ingress",
           namespace: this.namespace.metadata.name,
           annotations: {
             "kubernetes.io/ingress.class": "traefik",
             "traefik.ingress.kubernetes.io/router.entrypoints": "websecure",
             "traefik.ingress.kubernetes.io/router.tls": "true",
-            "traefik.ingress.kubernetes.io/router.middlewares": `${args.environment}-longhorn-auth@kubernetescrd`,
             "cert-manager.io/cluster-issuer": `letsencrypt-${args.environment}`,
+            // Reference middleware names with namespace prefix for cross-namespace access
+            "traefik.ingress.kubernetes.io/router.middlewares": pulumi.interpolate`${this.namespace.metadata.name}-longhorn-ws-headers@kubernetescrd,${this.namespace.metadata.name}-longhorn-auth@kubernetescrd`,
           },
         },
         spec: {
+          ingressClassName: "traefik",
           rules: [
             {
               host: args.domain,
@@ -478,21 +541,51 @@ export class LonghornComponent extends pulumi.ComponentResource {
           ],
         },
       },
-      { parent: this, dependsOn: [this.chart, this.authMiddleware, this.authSecret] },
+      {
+        parent: this,
+        dependsOn: [
+          this.chart,
+          this.authMiddleware,
+          this.authSecret,
+          this.wsHeadersMiddleware,
+          certificate, // Add explicit dependency on the Certificate
+        ],
+      },
     );
 
-    // Create deployment monitoring resources if monitoring is enabled
-    if (this.deploymentMonitor) {
-      // Update deployment status to post-deployment validation phase
-      this.deploymentMonitor.updateStatus({
-        phase: DeploymentPhase.POST_DEPLOYMENT_VALIDATION,
-        message: "Validating Longhorn deployment and creating monitoring resources",
-        timestamp: new Date(),
-        retryCount: 0,
-        componentName: name,
-        namespace: args.namespace,
-      });
+    // Create disk provisioning automation if enabled (default: true)
+    if (args.enableDiskProvisioning !== false) {
+      this.diskProvisioning = createDiskProvisioningJob(
+        `${name}-disk-provisioning`,
+        {
+          namespace: args.namespace,
+          environment: args.environment,
+          diskPath: args.diskPath ?? "/var/lib/longhorn",
+          storageReservedGb: args.storageReservedGb ?? 6,
+          timeoutSeconds: args.diskProvisioningTimeoutSeconds ?? 600,
+          retryAttempts: args.diskProvisioningRetryAttempts ?? 3,
+        },
+        opts?.provider,
+        [this.namespace, this.chart], // Add dependency on namespace and chart
+      );
+    }
 
+    // Create volume cleanup automation for staging environments
+    if (args.enableVolumeCleanup !== false && args.environment === "stg") {
+      this.volumeCleanup = createVolumeCleanup(
+        `${name}-volume-cleanup`,
+        {
+          namespace: args.namespace,
+          environment: args.environment,
+          enableAutoCleanup: true, // Enable automatic cleanup for staging
+          cleanupIntervalMinutes: args.volumeCleanupIntervalMinutes ?? 30,
+          maxVolumeAgeHours: args.maxVolumeAgeHours ?? 2, // Clean up volumes older than 2 hours
+        },
+        { parent: this, dependsOn: [this.chart] },
+      );
+    }
+
+    if (this.deploymentMonitor) {
       // Create status ConfigMap for persistent status tracking
       this.statusConfigMap = createDeploymentStatusConfigMap(name, args.namespace, this.deploymentMonitor, {
         parent: this,
@@ -525,14 +618,17 @@ export class LonghornComponent extends pulumi.ComponentResource {
       backupSecret: this.backupSecret,
       ingress: this.ingress,
       authMiddleware: this.authMiddleware,
+      wsHeadersMiddleware: this.wsHeadersMiddleware,
       authSecret: this.authSecret,
       helmValuesOutput: this.helmValuesOutput,
       uninstallerRbac: this.uninstallerRbac,
-      crdManagement: this.crdManagement,
+      deletingConfirmationFlag: this.deletingConfirmationFlag,
       prerequisiteValidation: this.prerequisiteValidation,
       deploymentMonitor: this.deploymentMonitor,
       statusConfigMap: this.statusConfigMap,
       monitoringJob: this.monitoringJob,
+      diskProvisioning: this.diskProvisioning,
+      volumeCleanup: this.volumeCleanup,
     });
   }
 }

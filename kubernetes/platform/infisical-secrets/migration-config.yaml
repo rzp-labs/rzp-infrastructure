@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: infisical-migration-script
+  namespace: infisical
+data:
+  migrate-secrets.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    echo "🔄 Starting Infisical Cloud → Self-hosted migration..."
+
+    # Configuration
+    CLOUD_HOST="https://app.infisical.com"
+    SELF_HOST="https://infisical.stg.rzp.one"
+    PROJECT_SLUG="rzp-infra"
+
+    # Cloud credentials (from External Secrets)
+    CLOUD_CLIENT_ID="${INFISICAL_CLOUD_CLIENT_ID}"
+    CLOUD_CLIENT_SECRET="${INFISICAL_CLOUD_CLIENT_SECRET}"
+
+    # Self-hosted credentials (from External Secrets)
+    SELF_CLIENT_ID="${INFISICAL_SELF_CLIENT_ID}"
+    SELF_CLIENT_SECRET="${INFISICAL_SELF_CLIENT_SECRET}"
+
+    # Function to get auth token
+    get_auth_token() {
+      local host=$1
+      local client_id=$2
+      local client_secret=$3
+
+      curl -s -X POST "${host}/api/v1/auth/universal-auth/login" \
+        -H "Content-Type: application/json" \
+        -d "{\"clientId\":\"${client_id}\",\"clientSecret\":\"${client_secret}\"}" \
+        | jq -r '.accessToken'
+    }
+
+    # Function to get secrets from source
+    get_secrets() {
+      local host=$1
+      local token=$2
+      local project_id=$3
+      local env=$4
+
+      curl -s -H "Authorization: Bearer ${token}" \
+        "${host}/api/v3/secrets?workspaceId=${project_id}&environment=${env}" \
+        | jq -r '.secrets'
+    }
+
+    # Function to create secret in destination
+    create_secret() {
+      local host=$1
+      local token=$2
+      local project_id=$3
+      local env=$4
+      local key=$5
+      local value=$6
+
+      curl -s -X POST "${host}/api/v3/secrets/${key}" \
+        -H "Authorization: Bearer ${token}" \
+        -H "Content-Type: application/json" \
+        -d "{
+          \"workspaceId\":\"${project_id}\",
+          \"environment\":\"${env}\",
+          \"secretValue\":\"${value}\",
+          \"type\":\"shared\"
+        }"
+    }
+
+    echo "🔐 Authenticating with Infisical Cloud..."
+    CLOUD_TOKEN=$(get_auth_token "$CLOUD_HOST" "$CLOUD_CLIENT_ID" "$CLOUD_CLIENT_SECRET")
+
+    echo "🔐 Authenticating with self-hosted Infisical..."
+    SELF_TOKEN=$(get_auth_token "$SELF_HOST" "$SELF_CLIENT_ID" "$SELF_CLIENT_SECRET")
+
+    # Get project IDs (you'll need to set these)
+    CLOUD_PROJECT_ID="${CLOUD_PROJECT_ID}"
+    SELF_PROJECT_ID="${SELF_PROJECT_ID}"
+
+    echo "📦 Fetching secrets from Infisical Cloud..."
+    SECRETS=$(get_secrets "$CLOUD_HOST" "$CLOUD_TOKEN" "$CLOUD_PROJECT_ID" "prod")
+
+    echo "📤 Migrating secrets to self-hosted Infisical..."
+    echo "$SECRETS" | jq -r '.[] | "\(.secretKey)=\(.secretValue)"' | while IFS='=' read -r key value; do
+      echo "  Migrating: $key"
+      create_secret "$SELF_HOST" "$SELF_TOKEN" "$SELF_PROJECT_ID" "stg" "$key" "$value"
+    done
+
+    echo "✅ Migration completed successfully!"
+    echo "🔄 Next steps:"
+    echo "  1. Update ClusterSecretStore to point to self-hosted"
+    echo "  2. Restart External Secrets Operator pods"
+    echo "  3. Verify all secrets are syncing from self-hosted"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: infisical-migration-job
+  namespace: infisical
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: migration
+        image: curlimages/curl:8.4.0
+        command: [ "/bin/sh" ]
+        args: [ "/scripts/migrate-secrets.sh" ]
+        env:
+        # Cloud credentials
+        - name: INFISICAL_CLOUD_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: infisical-cloud-auth-credentials
+              key: client-id
+        - name: INFISICAL_CLOUD_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: infisical-cloud-auth-credentials
+              key: client-secret
+        # Self-hosted credentials (from bootstrap)
+        - name: INFISICAL_SELF_CLIENT_ID
+          value: "INFISICAL_SELF_CLIENT_ID_PLACEHOLDER"
+        - name: INFISICAL_SELF_CLIENT_SECRET
+          value: "INFISICAL_SELF_CLIENT_SECRET_PLACEHOLDER"
+        # Project IDs
+        - name: CLOUD_PROJECT_ID
+          value: "CLOUD_PROJECT_ID_PLACEHOLDER"
+        - name: SELF_PROJECT_ID
+          value: "SELF_PROJECT_ID_PLACEHOLDER"
+        volumeMounts:
+        - name: script
+          mountPath: /scripts
+          readOnly: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+      volumes:
+      - name: script
+        configMap:
+          name: infisical-migration-script
+          defaultMode: 755

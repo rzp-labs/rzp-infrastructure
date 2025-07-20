@@ -1,0 +1,26 @@
+# Platform-wide Infisical Authentication for Self-hosted Instance
+apiVersion: v1
+kind: Secret
+metadata:
+  name: infisical-platform-universal-auth
+  namespace: infisical-secrets-system
+type: Opaque
+stringData:
+  clientId: "INFISICAL_SELF_HOSTED_CLIENT_ID_PLACEHOLDER"
+  clientSecret: "INFISICAL_SELF_HOSTED_CLIENT_SECRET_PLACEHOLDER"
+---
+# Global Infisical Configuration for Self-hosted Instance
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: infisical-platform-config
+  namespace: infisical-secrets-system
+data:
+  # Self-hosted Infisical API endpoint
+  hostAPI: "https://infisical.stg.rzp.one"
+  # Default project for platform secrets
+  projectId: "4668a113-ac3d-4cee-911e-8b3bafec27f0"
+  # Default environment
+  environment: "stg"
+  # TLS verification
+  tlsSkipVerify: "false"

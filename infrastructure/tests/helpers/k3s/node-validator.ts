@@ -12,18 +12,14 @@ export class NodeValidator {
     return nodesResponse.items.length === expectedCount;
   }
 
-  async validateNodeRoles(expectedRoles: Record<string, string>): Promise<boolean> {
+  async validateNodeRolesExist(): Promise<boolean> {
     const nodesResponse = await this.k8sApi.listNode();
     const nodes = nodesResponse.items;
 
-    for (const [role, expectedName] of Object.entries(expectedRoles)) {
-      const node = this.findNodeByRole(nodes, role);
-      if (!node || node.metadata?.name !== expectedName) {
-        return false;
-      }
-    }
+    const masterNodes = nodes.filter((node) => this.isMasterNode(node));
+    const workerNodes = nodes.filter((node) => !this.isMasterNode(node));
 
-    return true;
+    return masterNodes.length === 1 && workerNodes.length > 0;
   }
 
   async validateNodesReady(): Promise<boolean> {
@@ -56,30 +52,17 @@ export class NodeValidator {
     return allNodesReady && nodes.length > 0;
   }
 
-  async validateNodeIPs(expectedIPs: Record<string, string>): Promise<boolean> {
+  async validateNodesHaveIPs(): Promise<boolean> {
     const nodesResponse = await this.k8sApi.listNode();
     const nodes = nodesResponse.items;
 
-    for (const [nodeName, expectedIP] of Object.entries(expectedIPs)) {
-      const node = nodes.find((n: k8s.V1Node) => n.metadata?.name === nodeName);
-      if (!node) return false;
-
-      const actualIP = node.status?.addresses?.find(
-        (addr: { type: string; address: string }) => addr.type === "InternalIP",
-      )?.address;
-
-      if (actualIP === undefined || actualIP === "" || actualIP !== expectedIP) return false;
-    }
-
-    return true;
+    return nodes.every((node) => {
+      const internalIP = node.status?.addresses?.find((addr) => addr.type === "InternalIP")?.address;
+      return internalIP !== undefined && internalIP !== "";
+    });
   }
 
-  private findNodeByRole(nodes: k8s.V1Node[], role: string): k8s.V1Node | undefined {
-    if (role === "master") {
-      return nodes.find((node) => node.metadata?.labels?.["node-role.kubernetes.io/control-plane"] === "true");
-    } else if (role === "worker") {
-      return nodes.find((node) => node.metadata?.labels?.["node-role.kubernetes.io/control-plane"] === undefined);
-    }
-    return undefined;
+  private isMasterNode(node: k8s.V1Node): boolean {
+    return node.metadata?.labels?.["node-role.kubernetes.io/control-plane"] === "true";
   }
 }

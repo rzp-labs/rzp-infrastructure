@@ -294,10 +294,27 @@ export class DeploymentMonitor {
   }
 
   /**
-   * Categorizes errors and provides remediation guidance
+   * Categorizes an error based on its message and phase
    */
   private categorizeError(error: Error, phase: DeploymentPhase): DeploymentError {
     const message = error.message?.toLowerCase() ?? "";
+
+    // Resource conflict errors
+    if (message.includes("conflict") || message.includes("already exists") || message.includes("duplicate")) {
+      return new DeploymentError(
+        error.message,
+        DeploymentErrorType.RESOURCE_CONFLICT,
+        phase,
+        this.config.componentName,
+        this.config.namespace,
+        [
+          "Check for existing resources with the same name",
+          "Ensure that previous deployments have been fully cleaned up",
+        ],
+        true,
+        error,
+      );
+    }
 
     // RBAC permission errors
     if (
@@ -322,7 +339,7 @@ export class DeploymentMonitor {
     }
 
     // CRD conflict errors
-    if (message.includes("crd") || message.includes("customresourcedefinition") || message.includes("already exists")) {
+    if (message.includes("crd") || message.includes("customresourcedefinition")) {
       return new DeploymentError(
         error.message,
         DeploymentErrorType.CRD_CONFLICT,
@@ -397,27 +414,8 @@ export class DeploymentMonitor {
       );
     }
 
-    // Resource conflict errors
-    if (message.includes("conflict") || message.includes("already exists") || message.includes("duplicate")) {
-      return new DeploymentError(
-        error.message,
-        DeploymentErrorType.RESOURCE_CONFLICT,
-        phase,
-        this.config.componentName,
-        this.config.namespace,
-        [
-          "Check for existing resources with the same name",
-          "Verify namespace isolation is working correctly",
-          "Consider using different resource names or namespaces",
-          "Clean up any orphaned resources from previous deployments",
-        ],
-        true,
-        error,
-      );
-    }
-
     // Validation failure errors
-    if (message.includes("validation") || message.includes("invalid") || message.includes("malformed")) {
+    if (message.includes("validation")) {
       return new DeploymentError(
         error.message,
         DeploymentErrorType.VALIDATION_FAILURE,
@@ -425,30 +423,24 @@ export class DeploymentMonitor {
         this.config.componentName,
         this.config.namespace,
         [
-          "Review the configuration values for correctness",
-          "Check that all required fields are provided",
-          "Validate Kubernetes resource specifications",
-          "Ensure compatibility with the target Kubernetes version",
+          "Review the configuration values for the component",
+          "Check for missing or invalid parameters",
+          "Consult the component's documentation for validation rules",
         ],
-        false, // Validation errors usually require configuration fixes
+        false, // Validation errors are typically not retryable
         error,
       );
     }
 
-    // Default to unknown error type
+    // Default to unknown error
     return new DeploymentError(
       error.message,
       DeploymentErrorType.UNKNOWN,
       phase,
       this.config.componentName,
       this.config.namespace,
-      [
-        "Review the error message and stack trace for clues",
-        "Check Kubernetes cluster status and resource availability",
-        "Verify all deployment dependencies are satisfied",
-        "Consider increasing timeout values if the operation is slow",
-      ],
-      true,
+      ["Review the deployment logs for more information"],
+      true, // Unknown errors are often transient, so we'll allow retries
       error,
     );
   }

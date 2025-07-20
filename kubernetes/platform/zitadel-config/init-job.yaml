@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zitadel-init-script
+  namespace: zitadel
+data:
+  init.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    echo "Waiting for Zitadel to be ready..."
+    
+    # Wait for Zitadel API to be available
+    until curl -f http://zitadel:8080/debug/ready; do
+      echo "Waiting for Zitadel API..."
+      sleep 5
+    done
+    
+    echo "Zitadel is ready!"
+    
+    # Initialize default organization and project if needed
+    # This can be extended with zitadel CLI commands for setup
+    echo "Zitadel initialization completed"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: zitadel-init
+  namespace: zitadel
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: zitadel-init
+        image: curlimages/curl:8.4.0
+        command: ["/bin/sh"]
+        args: ["/scripts/init.sh"]
+        volumeMounts:
+        - name: init-script
+          mountPath: /scripts
+          readOnly: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+      volumes:
+      - name: init-script
+        configMap:
+          name: zitadel-init-script
+          defaultMode: 0755

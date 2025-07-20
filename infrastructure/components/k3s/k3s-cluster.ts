@@ -2,7 +2,7 @@
  * Complete K3s cluster component
  */
 
-import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
+import type * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 import type { ComponentResourceOptions } from "@pulumi/pulumi";
 import { ComponentResource } from "@pulumi/pulumi";
 
@@ -26,30 +26,14 @@ export class K3sCluster extends ComponentResource {
 
     const { config } = args;
 
-    this.provider = this.createProvider(name, config);
+    // Use provider passed via opts
+    if (!opts?.provider) {
+      throw new Error("Proxmox provider must be supplied via opts.provider");
+    }
+    this.provider = opts.provider as proxmoxve.Provider;
     this.cloudImage = this.createCloudImage(name, config);
     this.masters = this.createMasterNodes(config);
     this.workers = this.createWorkerNodes(config);
-  }
-
-  private createProvider(name: string, config: IEnvironmentConfig): proxmoxve.Provider {
-    return new proxmoxve.Provider(
-      `${name}-provider`,
-      {
-        endpoint: config.proxmox.endpoint,
-        username: config.proxmox.username,
-        password: config.proxmox.password,
-        insecure: config.proxmox.insecure,
-        ssh: config.proxmox.ssh
-          ? {
-              agent: config.proxmox.ssh.agent,
-              privateKey: config.proxmox.ssh.privateKey,
-              username: config.proxmox.ssh.username,
-            }
-          : undefined,
-      },
-      { parent: this },
-    );
   }
 
   private createCloudImage(name: string, config: IEnvironmentConfig): DebianCloudImage {

@@ -1,0 +1,326 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vector
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+  labels:
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+  source:
+    repoURL: https://helm.vector.dev
+    chart: vector
+    targetRevision: 0.34.0
+    helm:
+      values: |
+        # Vector configuration
+        role: "Aggregator"
+
+        # Custom Vector configuration
+        customConfig:
+          data_dir: /vector-data-dir
+
+          # API configuration
+          api:
+            enabled: true
+            address: "0.0.0.0:8686"
+            playground: true
+
+          # Sources - collect logs and metrics from Kubernetes
+          sources:
+            # Kubernetes logs from all pods
+            kubernetes_logs:
+              type: kubernetes_logs
+              pod_annotation_fields:
+                container_image: "kubernetes.container_image"
+                container_name: "kubernetes.container_name"
+                pod_name: "kubernetes.pod_name"
+                pod_namespace: "kubernetes.pod_namespace"
+                pod_node_name: "kubernetes.pod_node_name"
+                pod_uid: "kubernetes.pod_uid"
+              namespace_annotation_fields:
+                namespace_labels: "kubernetes.namespace_labels"
+
+            # Host metrics
+            host_metrics:
+              type: host_metrics
+              collectors:
+                - cpu
+                - disk
+                - filesystem
+                - load
+                - host
+                - memory
+                - network
+              filesystem:
+                devices:
+                  excludes: ["binfmt_misc"]
+                filesystems:
+                  excludes: ["binfmt_misc"]
+                mountpoints:
+                  excludes: ["*/proc/sys/fs/binfmt_misc"]
+
+            # Kubernetes metrics
+            kubernetes_metrics:
+              type: prometheus_scrape
+              endpoints:
+                - "http://kubernetes.default.svc:443/metrics"
+              bearer_token_file: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+              tls:
+                ca_file: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+            # Vector internal metrics
+            internal_metrics:
+              type: internal_metrics
+
+          # Transforms - process and enrich data
+          transforms:
+            # Parse and enrich Kubernetes logs
+            kubernetes_logs_parsed:
+              type: remap
+              inputs: ["kubernetes_logs"]
+              source: |
+                # Parse JSON logs if possible
+                if is_string(.message) {
+                  parsed = parse_json(.message) ?? {}
+                  . = merge(., parsed)
+                }
+
+                # Add standard fields
+                .timestamp = now()
+                .source_type = "kubernetes"
+                .cluster = "stg"
+
+                # Extract log level
+                if exists(.level) {
+                  .log_level = .level
+                } else if exists(.severity) {
+                  .log_level = .severity
+                } else {
+                  .log_level = "info"
+                }
+
+                # Normalize log level
+                .log_level = downcase(string!(.log_level))
+
+            # Process host metrics
+            host_metrics_processed:
+              type: remap
+              inputs: ["host_metrics"]
+              source: |
+                .timestamp = now()
+                .source_type = "host_metrics"
+                .cluster = "stg"
+                .node = .host
+
+            # Process Kubernetes metrics
+            k8s_metrics_processed:
+              type: remap
+              inputs: ["kubernetes_metrics"]
+              source: |
+                .timestamp = now()
+                .source_type = "kubernetes_metrics"
+                .cluster = "stg"
+
+            # Process internal metrics
+            vector_metrics_processed:
+              type: remap
+              inputs: ["internal_metrics"]
+              source: |
+                .timestamp = now()
+                .source_type = "vector_internal"
+                .cluster = "stg"
+
+          # Sinks - send data to OpenObserve
+          sinks:
+            # Send logs to OpenObserve
+            openobserve_logs:
+              type: http
+              inputs: ["kubernetes_logs_parsed"]
+              uri: "http://openobserve.observability.svc.cluster.local:5080/api/default/default/_json"
+              method: "POST"
+              auth:
+                strategy: "basic"
+                user: "admin@rzp.one"
+                password: "${OPENOBSERVE_PASSWORD}"
+              encoding:
+                codec: "json"
+              compression: "gzip"
+              batch:
+                max_bytes: 1048576  # 1MB
+                timeout_secs: 5
+              buffer:
+                type: "disk"
+                max_size: 268435456  # 256MB
+                when_full: "block"
+              request:
+                retry_attempts: 3
+                retry_initial_backoff_secs: 1
+                retry_max_duration_secs: 60
+                timeout_secs: 30
+
+            # Send metrics to OpenObserve
+            openobserve_metrics:
+              type: http
+              inputs: ["host_metrics_processed", "k8s_metrics_processed", "vector_metrics_processed"]
+              uri: "http://openobserve.observability.svc.cluster.local:5080/api/default/metrics/_json"
+              method: "POST"
+              auth:
+                strategy: "basic"
+                user: "admin@rzp.one"
+                password: "${OPENOBSERVE_PASSWORD}"
+              encoding:
+                codec: "json"
+              compression: "gzip"
+              batch:
+                max_bytes: 1048576  # 1MB
+                timeout_secs: 10
+              buffer:
+                type: "memory"
+                max_events: 10000
+                when_full: "drop_newest"
+              request:
+                retry_attempts: 3
+                retry_initial_backoff_secs: 2
+                retry_max_duration_secs: 120
+                timeout_secs: 30
+
+        # Deployment configuration
+        replicas: 2
+
+        # Resource configuration
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+
+        # Security context
+        podSecurityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          runAsNonRoot: true
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+
+        # Service configuration
+        service:
+          enabled: true
+          type: ClusterIP
+          ports:
+            - name: api
+              port: 8686
+              protocol: TCP
+
+        # Persistence for buffering
+        persistence:
+          enabled: true
+          storageClassName: "longhorn"
+          size: 10Gi
+          accessModes:
+            - ReadWriteOnce
+
+        # RBAC permissions for Kubernetes logs/metrics
+        rbac:
+          create: true
+
+        serviceAccount:
+          create: true
+          annotations: {}
+
+        # Pod disruption budget
+        podDisruptionBudget:
+          enabled: true
+          minAvailable: 1
+
+        # Monitoring
+        monitoring:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: prometheus
+
+        # Environment variables for secrets
+        env:
+          - name: OPENOBSERVE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: openobserve-secrets
+                key: root-user-password
+
+        # Node selector and tolerations
+        nodeSelector: {}
+        tolerations: []
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                    - vector
+                topologyKey: kubernetes.io/hostname
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vector-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+  labels:
+    app.kubernetes.io/name: vector-config
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+    targetRevision: HEAD
+    path: kubernetes/platform/vector-config
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

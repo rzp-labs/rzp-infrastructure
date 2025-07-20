@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector-metrics
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/component: metrics
+spec:
+  ports:
+  - name: metrics
+    port: 8686
+    targetPort: 8686
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: vector
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vector
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/component: metrics
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vector
+      app.kubernetes.io/component: metrics
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-grafana-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  vector-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "Vector Data Pipeline",
+        "tags": ["vector", "logging", "metrics", "observability"],
+        "panels": [
+          {
+            "title": "Events Processed",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(vector_component_sent_events_total[5m])",
+                "legendFormat": "{{component_name}} - {{component_type}}"
+              }
+            ]
+          },
+          {
+            "title": "Events Received",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(vector_component_received_events_total[5m])",
+                "legendFormat": "{{component_name}} - {{component_type}}"
+              }
+            ]
+          },
+          {
+            "title": "Error Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(vector_component_errors_total[5m])",
+                "legendFormat": "{{component_name}} - {{component_type}}"
+              }
+            ]
+          },
+          {
+            "title": "Buffer Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "vector_buffer_byte_size",
+                "legendFormat": "{{component_name}} - Buffer Size"
+              },
+              {
+                "expr": "vector_buffer_max_size_bytes",
+                "legendFormat": "{{component_name}} - Max Size"
+              }
+            ]
+          },
+          {
+            "title": "Memory Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "vector_memory_used_bytes",
+                "legendFormat": "Memory Used"
+              }
+            ]
+          },
+          {
+            "title": "CPU Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(vector_cpu_seconds_total[5m])",
+                "legendFormat": "CPU Usage"
+              }
+            ]
+          }
+        ]
+      }
+    }

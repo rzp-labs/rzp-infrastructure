@@ -110,24 +110,13 @@ describe("Longhorn Component with RBAC Management", () => {
     });
   });
 
-  describe("CRD Management Integration", () => {
-    it("should create CRD management resources", async () => {
+  describe("Declarative Settings Management", () => {
+    it("should create the deletingConfirmationFlag CustomResource", async () => {
       const component = new LonghornComponent("test-longhorn", testArgs);
 
-      // Verify CRD management resources are created
-      expect(component.crdManagement).toBeDefined();
-      expect(component.crdManagement.serviceAccount).toBeDefined();
-      expect(component.crdManagement.clusterRole).toBeDefined();
-      expect(component.crdManagement.clusterRoleBinding).toBeDefined();
-      expect(component.crdManagement.preCreationJob).toBeDefined();
-      expect(component.crdManagement.settingsJob).toBeDefined();
-    });
-
-    it("should create deleting-confirmation-flag setting job", async () => {
-      const component = new LonghornComponent("test-longhorn", testArgs);
-
-      // Verify settings job is created for deleting-confirmation-flag
-      expect(component.crdManagement.settingsJob).toBeDefined();
+      // Verify the CustomResource is created and is of the correct type
+      expect(component.deletingConfirmationFlag).toBeDefined();
+      expect(component.deletingConfirmationFlag).toBeInstanceOf(pulumi.CustomResource);
     });
   });
 
@@ -161,88 +150,6 @@ describe("Longhorn Component with RBAC Management", () => {
       // Verify prerequisite validation is configured for open-iscsi
       expect(component.prerequisiteValidation).toBeDefined();
       expect(component.prerequisiteValidation?.validationJob).toBeDefined();
-    });
-  });
-
-  describe("Resource Dependencies", () => {
-    it("should include RBAC, CRD management, and prerequisite validation resources in chart dependencies", async () => {
-      const component = new LonghornComponent("test-longhorn", testArgs);
-
-      // Verify that the component has all required resources
-      expect(component.namespace).toBeDefined();
-      expect(component.crdManagement).toBeDefined();
-      expect(component.crdManagement.preCreationJob).toBeDefined();
-      expect(component.crdManagement.settingsJob).toBeDefined();
-      expect(component.uninstallerRbac).toBeDefined();
-      expect(component.prerequisiteValidation).toBeDefined();
-      expect(component.prerequisiteValidation?.validationJob).toBeDefined();
-      expect(component.chart).toBeDefined();
-    });
-
-    it("should handle optional prerequisite validation in dependencies", async () => {
-      const component = new LonghornComponent("test-longhorn", {
-        ...testArgs,
-        validatePrerequisites: false,
-      });
-
-      // Verify that the component works without prerequisite validation
-      expect(component.namespace).toBeDefined();
-      expect(component.crdManagement).toBeDefined();
-      expect(component.uninstallerRbac).toBeDefined();
-      expect(component.prerequisiteValidation).toBeUndefined();
-      expect(component.chart).toBeDefined();
-    });
-  });
-
-  describe("Helm Values Integration", () => {
-    it("should include uninstaller ServiceAccount in Helm values", (done) => {
-      const component = new LonghornComponent("test-longhorn", testArgs);
-
-      // Get the Helm values output
-      component.helmValuesOutput.apply((helmValues) => {
-        const parsedValues = JSON.parse(helmValues) as Record<string, unknown>;
-
-        // Verify uninstaller configuration is included
-        expect(parsedValues.uninstall).toBeDefined();
-        expect((parsedValues.uninstall as Record<string, unknown>).force).toBe(true);
-        expect((parsedValues.uninstall as Record<string, unknown>).serviceAccount).toBeDefined();
-        done();
-      });
-    });
-
-    it("should not include uninstaller config when RBAC is disabled", (done) => {
-      const component = new LonghornComponent("test-longhorn", {
-        ...testArgs,
-        enableUninstallerRbac: false,
-      });
-
-      // Get the Helm values output
-      component.helmValuesOutput.apply((helmValues) => {
-        const parsedValues = JSON.parse(helmValues) as Record<string, unknown>;
-
-        // Verify uninstaller configuration is not included
-        expect(parsedValues.uninstall).toBeUndefined();
-        done();
-      });
-    });
-  });
-
-  describe("S3 Backup Integration", () => {
-    it("should work with S3 backup configuration and RBAC", async () => {
-      const component = new LonghornComponent("test-longhorn", {
-        ...testArgs,
-        backupTarget: "s3://test-bucket@us-east-1/",
-        s3BackupConfig: {
-          bucket: "test-bucket",
-          region: "us-east-1",
-          accessKeyId: "test-access-key",
-          secretAccessKey: "test-secret-key",
-        },
-      });
-
-      // Verify both S3 and RBAC resources are created
-      expect(component.backupSecret).toBeDefined();
-      expect(component.uninstallerRbac).toBeDefined();
     });
   });
 
@@ -362,6 +269,227 @@ describe("Longhorn Component with RBAC Management", () => {
       expect(component).toBeDefined();
       expect(component.deploymentMonitor).toBeDefined();
       expect(component.statusConfigMap).toBeDefined();
+    });
+  });
+
+  describe("Disk Provisioning Automation", () => {
+    it("should create disk provisioning resources when enabled", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        enableDiskProvisioning: true,
+        diskPath: "/var/lib/longhorn",
+        storageReservedGb: 10,
+      });
+
+      // Verify disk provisioning resources are created
+      expect(component.diskProvisioning).toBeDefined();
+      expect(component.diskProvisioning?.serviceAccount).toBeDefined();
+      expect(component.diskProvisioning?.clusterRole).toBeDefined();
+      expect(component.diskProvisioning?.clusterRoleBinding).toBeDefined();
+      expect(component.diskProvisioning?.job).toBeDefined();
+    });
+
+    it("should not create disk provisioning when disabled", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        enableDiskProvisioning: false,
+      });
+
+      // Verify disk provisioning resources are not created
+      expect(component.diskProvisioning).toBeUndefined();
+    });
+
+    it("should support custom disk provisioning configuration", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        enableDiskProvisioning: true,
+        diskPath: "/data/longhorn",
+        storageReservedGb: 5,
+        diskProvisioningTimeoutSeconds: 600,
+        diskProvisioningRetryAttempts: 3,
+      });
+
+      // Verify disk provisioning is configured correctly
+      expect(component.diskProvisioning).toBeDefined();
+    });
+  });
+
+  describe("Volume Cleanup Automation", () => {
+    it("should create volume cleanup resources for staging environment", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        environment: "stg" as Environment,
+        enableVolumeCleanup: true,
+        volumeCleanupIntervalMinutes: 15,
+        maxVolumeAgeHours: 1,
+      });
+
+      // Verify volume cleanup resources are created
+      expect(component.volumeCleanup).toBeDefined();
+      expect(component.volumeCleanup?.serviceAccount).toBeDefined();
+      expect(component.volumeCleanup?.role).toBeDefined();
+      expect(component.volumeCleanup?.roleBinding).toBeDefined();
+      expect(component.volumeCleanup?.cleanupScript).toBeDefined();
+      expect(component.volumeCleanup?.cleanupJob).toBeDefined();
+      expect(component.volumeCleanup?.cronJob).toBeDefined();
+    });
+
+    it("should not create volume cleanup for production environment", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        environment: "prd" as Environment,
+        enableVolumeCleanup: true,
+      });
+
+      // Volume cleanup should not be created for production
+      expect(component.volumeCleanup).toBeUndefined();
+    });
+
+    it("should not create volume cleanup when disabled", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        environment: "stg" as Environment,
+        enableVolumeCleanup: false,
+      });
+
+      // Volume cleanup should not be created when disabled
+      expect(component.volumeCleanup).toBeUndefined();
+    });
+
+    it("should use external script file for volume cleanup", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        environment: "stg" as Environment,
+        enableVolumeCleanup: true,
+      });
+
+      // Verify cleanup script ConfigMap is created (following best practices)
+      expect(component.volumeCleanup?.cleanupScript).toBeDefined();
+    });
+
+    it("should follow principle of least privilege for volume cleanup RBAC", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        environment: "stg" as Environment,
+        enableVolumeCleanup: true,
+      });
+
+      // Verify RBAC follows security best practices
+      expect(component.volumeCleanup?.serviceAccount).toBeDefined();
+      expect(component.volumeCleanup?.role).toBeDefined();
+      expect(component.volumeCleanup?.roleBinding).toBeDefined();
+    });
+  });
+
+  describe("Resource Dependencies", () => {
+    it("should include all automation resources in chart dependencies", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        enableDiskProvisioning: true,
+        enableVolumeCleanup: true,
+      });
+
+      // Verify that the component has all required resources
+      expect(component.namespace).toBeDefined();
+      expect(component.deletingConfirmationFlag).toBeDefined();
+      expect(component.uninstallerRbac).toBeDefined();
+      expect(component.prerequisiteValidation).toBeDefined();
+      expect(component.deploymentMonitor).toBeDefined();
+      expect(component.diskProvisioning).toBeDefined();
+      expect(component.volumeCleanup).toBeDefined();
+      expect(component.chart).toBeDefined();
+    });
+
+    it("should handle optional automation features in dependencies", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        validatePrerequisites: false,
+        enableDeploymentMonitoring: false,
+        enableDiskProvisioning: false,
+        enableVolumeCleanup: false,
+      });
+
+      // Verify that the component works without optional features
+      expect(component.namespace).toBeDefined();
+      expect(component.deletingConfirmationFlag).toBeDefined();
+      expect(component.uninstallerRbac).toBeDefined();
+      expect(component.prerequisiteValidation).toBeUndefined();
+      expect(component.deploymentMonitor).toBeUndefined();
+      expect(component.diskProvisioning).toBeUndefined();
+      expect(component.volumeCleanup).toBeUndefined();
+      expect(component.chart).toBeDefined();
+    });
+  });
+
+  describe("Helm Values Integration", () => {
+    it("should include uninstaller ServiceAccount in Helm values", (done) => {
+      const component = new LonghornComponent("test-longhorn", testArgs);
+
+      // Get the Helm values output
+      component.helmValuesOutput.apply((helmValues) => {
+        const parsedValues = JSON.parse(helmValues) as Record<string, unknown>;
+
+        // Verify uninstaller configuration is included
+        expect(parsedValues.uninstall).toBeDefined();
+        expect((parsedValues.uninstall as Record<string, unknown>).force).toBe(true);
+        expect((parsedValues.uninstall as Record<string, unknown>).serviceAccount).toBeDefined();
+        done();
+      });
+    });
+
+    it("should not include uninstaller config when RBAC is disabled", (done) => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        enableUninstallerRbac: false,
+      });
+
+      // Get the Helm values output
+      component.helmValuesOutput.apply((helmValues) => {
+        const parsedValues = JSON.parse(helmValues) as Record<string, unknown>;
+
+        // Verify uninstaller configuration is not included
+        expect(parsedValues.uninstall).toBeUndefined();
+        done();
+      });
+    });
+
+    it("should include environment-specific storage configuration", (done) => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        environment: "stg" as Environment,
+      });
+
+      // Get the Helm values output
+      component.helmValuesOutput.apply((helmValues) => {
+        const parsedValues = JSON.parse(helmValues) as Record<string, unknown>;
+
+        // Verify staging-specific configurations are included
+        expect(parsedValues.defaultSettings).toBeDefined();
+        done();
+      });
+    });
+  });
+
+  describe("S3 Backup Integration", () => {
+    it("should work with S3 backup configuration and all automation features", async () => {
+      const component = new LonghornComponent("test-longhorn", {
+        ...testArgs,
+        backupTarget: "s3://test-bucket@us-east-1/",
+        s3BackupConfig: {
+          bucket: "test-bucket",
+          region: "us-east-1",
+          accessKeyId: "test-access-key",
+          secretAccessKey: "test-secret-key",
+        },
+        enableDiskProvisioning: true,
+        enableVolumeCleanup: true,
+      });
+
+      // Verify all features work together
+      expect(component.backupSecret).toBeDefined();
+      expect(component.uninstallerRbac).toBeDefined();
+      expect(component.diskProvisioning).toBeDefined();
+      expect(component.volumeCleanup).toBeDefined();
     });
   });
 });

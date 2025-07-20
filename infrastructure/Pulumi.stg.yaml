@@ -26,3 +26,15 @@ config:
     secure: v1:QntgVodqMzNIK3L6:Qp/i7XHSdSUc62015GzT0RNJLyct9GbO9ugfzdglOSbj/E2KzKc7aUz50dss9VQksdGQd/aqoak=
   rzp-infra:longhornPassword:
     secure: v1:5Wu9HDQWIeuvSZ8W:MgEOhLx747bPByXn3IuH4BD4l4sV2ZHNpU5ZvbH8E7nOBfjn
+  rzp-infra:infisical-db-password:
+    secure: v1:ovWVqpJB72ZQ8rzY:qn3+dptsZ8tfQ59OVRkHXtQMBuiZD3TrXln5KPFG7ITFO+D/8xVFuxhAKhvFfN7h
+  rzp-infra:infisical-redis-password:
+    secure: v1:adaIo/qu/STjchPS:RG85u98TASdr4yjZxZv+6J3c+pmWZsmw5c66UnEP+huHcWTEhXPHu+FHhWqCTdq0
+  rzp-infra:infisical-auth-secret:
+    secure: v1:hBjKXWaDkXUA0gVG:oSivo832jyNfpgPk6dQyfrPQ++5HX+qo05g4dpXOJBwmzrikz/acpss0GJZws+mp
+  rzp-infra:infisical-encryption-key:
+    secure: v1:DkTe3vz7H/TD3SBA:vFQTO0NxeYI6dXW8WfQkN5vjZvZPzYB4n8xAaACBdpvrYOuioNP3kKBwy8s39dgx
+  rzp-infra:infisical-admin-password:
+    secure: v1:KxNbmMdXmKWP/Jd+:SPg6wbSv+3KQ4T49ElniDopVGYVk+4G6tetd35ZWdezRIHWg3hvCYA==
+  rzp-infra:masterCount: "2"
+  rzp-infra:workerCount: "2"

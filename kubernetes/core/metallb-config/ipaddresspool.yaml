@@ -1,0 +1,25 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default-pool
+  namespace: metallb-system
+  labels:
+    app.kubernetes.io/name: metallb
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/component: ip-pool
+spec:
+  addresses:
+  - 10.10.0.200-10.10.0.201
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: default-advertisement
+  namespace: metallb-system
+  labels:
+    app.kubernetes.io/name: metallb
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/component: l2-advertisement
+spec:
+  ipAddressPools:
+  - default-pool

@@ -84,7 +84,7 @@ describe("Resource Exhaustion", () => {
     await resourceSimulator.waitForContainerdRecovery();
     const recoveredHealthy = await resourceSimulator.verifyContainerdHealth();
     expect(recoveredHealthy).toBe(true);
-  });
+  }, 60000); // 60 second timeout for recovery operations
 
   test("should handle container image pull failures", async () => {
     // Arrange

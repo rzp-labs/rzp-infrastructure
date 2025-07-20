@@ -21,6 +21,9 @@ void pulumi.runtime.setMocks({
 // Extend Jest timeout for infrastructure operations
 jest.setTimeout(30000);
 
+// Ensure fake timers are available for tests that need them
+jest.useFakeTimers();
+
 // Mock environment variables for testing
 process.env.PULUMI_TEST_MODE = "true";
 

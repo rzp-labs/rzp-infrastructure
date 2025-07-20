@@ -120,7 +120,11 @@ export class KubeConfig {
     // Mock implementation - no actual file loading needed
   }
 
-  makeApiClient<T>(apiClass: new () => T): T {
+  makeApiClient<T>(apiClass: { new (): T }): T {
+    // Handle CustomObjectsApi separately as it's not a simple class instance
+    if ((apiClass as any).name === "CustomObjectsApi") {
+      return new CustomObjectsApi() as any;
+    }
     return new apiClass();
   }
 }
@@ -285,6 +289,32 @@ export class CoreV1Api {
         { metadata: { name: "etcd-0" } },
       ],
     };
+  }
+}
+
+export class CustomObjectsApi {
+  async createNamespacedCustomObject(request: {
+    group: string;
+    version: string;
+    namespace: string;
+    plural: string;
+    body: { metadata: IObjectMeta };
+  }): Promise<{ metadata: IObjectMeta }> {
+    void request.group; // Mock implementation
+    void request.version;
+    void request.plural;
+    return { metadata: { name: request.body.metadata.name, namespace: request.namespace } };
+  }
+
+  async deleteNamespacedCustomObject(request: {
+    group: string;
+    version: string;
+    namespace: string;
+    plural: string;
+    name: string;
+  }): Promise<Record<string, never>> {
+    void request; // Mock implementation
+    return {};
   }
 }
 

@@ -10,7 +10,7 @@ This monorepo implements a comprehensive homelab infrastructure that spans from 
 
 - **Unified Infrastructure Control**: Single Pulumi program manages Proxmox VMs, k3s Kubernetes, and all applications
 - **Strict GitOps Workflow**: Harness CI/CD enforces all changes through Git with approval gates
-- **Centralized Secret Management**: Infisical serves as single source of truth with ESO for runtime injection
+- **Centralized Secret Management**: Infisical serves as single source of truth with native Kubernetes Operator for runtime injection
 - **Purpose-Driven Taxonomy**: Services organized by operational intent within a hierarchical configuration
 - **Comprehensive Observability**: Vector → OpenObserve pipeline with Netdata real-time metrics
 
@@ -109,7 +109,7 @@ The unified Pulumi program manages infrastructure in layers:
 │   │   ├── namespaces/
 │   │   ├── metallb/
 │   │   ├── cert-manager/
-│   │   ├── external-secrets/
+│   │   ├── infisical-secrets/
 │   │   ├── longhorn/
 │   │   └── traefik/
 │   ├── platform/
@@ -265,7 +265,7 @@ graph LR
     E -->|Generate| I[kubernetes/ manifests]
     I -->|GitOps| J[ArgoCD]
     J -->|Deploy| K[Applications]
-    L[External Secrets Operator] -->|Runtime Secrets| K
+    L[Infisical Kubernetes Operator] -->|Runtime Secrets| K
 ```
 
 ## Technology Stack
@@ -274,7 +274,7 @@ graph LR
 - **Kubernetes**: Talos Linux for immutable control plane
 - **IaC**: Pulumi (Python) managing entire stack
 - **GitOps**: Harness Git + CI/CD + ArgoCD
-- **Secrets**: Infisical + External Secrets Operator
+- **Secrets**: Infisical + Native Kubernetes Operator
 - **Observability**: Vector + OpenObserve + Netdata
 - **Storage**: Longhorn + NFS + MinIO
 
@@ -284,7 +284,7 @@ Infisical provides centralized secret management with multiple injection points:
 
 1. **CI/CD Secrets**: Harness fetches infrastructure tokens from Infisical
 2. **Pulumi Runtime**: Secrets injected as environment variables
-3. **Kubernetes Runtime**: External Secrets Operator creates K8s secrets
+3. **Kubernetes Runtime**: Infisical Kubernetes Operator creates K8s secrets with auto-reload and auto-restart capabilities
 4. **Zero Application Knowledge**: Apps consume standard K8s secrets
 
 This multi-layer approach ensures secrets are never committed to Git while maintaining operational simplicity.

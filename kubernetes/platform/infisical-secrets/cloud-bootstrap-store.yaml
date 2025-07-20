@@ -1,0 +1,135 @@
+# Infisical Cloud Authentication Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: infisical-cloud-universal-auth
+  namespace: infisical-secrets-system
+type: Opaque
+stringData:
+  clientId: "INFISICAL_CLOUD_CLIENT_ID_PLACEHOLDER"
+  clientSecret: "INFISICAL_CLOUD_CLIENT_SECRET_PLACEHOLDER"
+---
+# Global Infisical Configuration for Cloud Bootstrap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: infisical-config
+  namespace: infisical-secrets-system
+data:
+  # Infisical Cloud API endpoint
+  hostAPI: "https://app.infisical.com"
+  # Default project for bootstrap secrets
+  projectId: "4668a113-ac3d-4cee-911e-8b3bafec27f0"
+  # Default environment
+  environment: "prd"
+---
+# Bootstrap secret: Cloudflare API Token
+apiVersion: secrets.infisical.com/v1alpha1
+kind: InfisicalSecret
+metadata:
+  name: cloudflare-api-token-bootstrap
+  namespace: cert-manager
+  annotations:
+    secrets.infisical.com/auto-reload: "true"
+spec:
+  # Infisical connection settings
+  hostAPI: "https://app.infisical.com"
+  projectId: "4668a113-ac3d-4cee-911e-8b3bafec27f0"
+  environment: "prd"
+  
+  # Authentication
+  authentication:
+    universalAuth:
+      secretsScope:
+        projectSlug: "rzp-infra"
+        environment: "prd"
+      credentialsRef:
+        secretName: infisical-cloud-universal-auth
+        secretNamespace: infisical-secrets-system
+  
+  # Target Kubernetes secret
+  managedSecretReference:
+    secretName: cloudflare-api-token
+    secretNamespace: cert-manager
+    creationPolicy: "Owner"
+  
+  # Secret mappings
+  secrets:
+    - secretPath: "/cloudflare-api-token"
+      secretKey: "api-token"
+---
+# Bootstrap secret: Self-hosted Infisical Database Credentials
+apiVersion: secrets.infisical.com/v1alpha1
+kind: InfisicalSecret
+metadata:
+  name: infisical-self-hosted-credentials
+  namespace: infisical
+  annotations:
+    secrets.infisical.com/auto-reload: "true"
+spec:
+  # Infisical connection settings
+  hostAPI: "https://app.infisical.com"
+  projectId: "4668a113-ac3d-4cee-911e-8b3bafec27f0"
+  environment: "prd"
+  
+  # Authentication
+  authentication:
+    universalAuth:
+      secretsScope:
+        projectSlug: "rzp-infra"
+        environment: "prd"
+      credentialsRef:
+        secretName: infisical-cloud-universal-auth
+        secretNamespace: infisical-secrets-system
+  
+  # Target Kubernetes secret
+  managedSecretReference:
+    secretName: infisical-db-credentials
+    secretNamespace: infisical
+    creationPolicy: "Owner"
+  
+  # Secret mappings with templating
+  secrets:
+    - secretPath: "/infisical-db-password"
+      secretKey: "db-password"
+    - secretPath: "/infisical-redis-password"
+      secretKey: "redis-password"
+---
+# Bootstrap secret: Self-hosted Infisical Application Secrets
+apiVersion: secrets.infisical.com/v1alpha1
+kind: InfisicalSecret
+metadata:
+  name: infisical-self-hosted-app-secrets
+  namespace: infisical
+  annotations:
+    secrets.infisical.com/auto-reload: "true"
+spec:
+  # Infisical connection settings
+  hostAPI: "https://app.infisical.com"
+  projectId: "4668a113-ac3d-4cee-911e-8b3bafec27f0"
+  environment: "prd"
+  
+  # Authentication
+  authentication:
+    universalAuth:
+      secretsScope:
+        projectSlug: "rzp-infra"
+        environment: "prd"
+      credentialsRef:
+        secretName: infisical-cloud-universal-auth
+        secretNamespace: infisical-secrets-system
+  
+  # Target Kubernetes secret
+  managedSecretReference:
+    secretName: infisical-secrets
+    secretNamespace: infisical
+    creationPolicy: "Owner"
+  
+  # Secret mappings
+  secrets:
+    - secretPath: "/infisical-auth-secret"
+      secretKey: "auth-secret"
+    - secretPath: "/infisical-encryption-key"
+      secretKey: "encryption-key"
+    - secretPath: "/infisical-admin-password"
+      secretKey: "admin-password"

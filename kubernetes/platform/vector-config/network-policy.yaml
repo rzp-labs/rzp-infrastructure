@@ -1,0 +1,57 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vector-network-policy
+  namespace: observability
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vector
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow ingress from Prometheus for metrics scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8686
+  # Allow ingress from other Vector instances for clustering
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: vector
+    ports:
+    - protocol: TCP
+      port: 8686
+  egress:
+  # Allow egress to OpenObserve
+  - to:
+    - podSelector:
+        matchLabels:
+          app: openobserve
+    ports:
+    - protocol: TCP
+      port: 5080
+  # Allow egress to Kubernetes API for logs/metrics
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 6443
+  # Allow egress to DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow egress to kubelet for metrics
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 10250
+    - protocol: TCP
+      port: 10255

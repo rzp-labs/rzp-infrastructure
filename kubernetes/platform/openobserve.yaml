@@ -1,0 +1,110 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openobserve-postgres
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    app.kubernetes.io/name: openobserve-postgres
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: postgresql
+    targetRevision: 15.5.32
+    helm:
+      values: |
+        global:
+          postgresql:
+            auth:
+              username: "openobserve"
+              database: "openobserve"
+              existingSecret: "openobserve-db-credentials"
+              secretKeys:
+                userPasswordKey: "db-password"
+                adminPasswordKey: "postgres-password"
+
+        architecture: standalone
+
+        primary:
+          persistence:
+            enabled: true
+            storageClass: "longhorn"
+            size: 10Gi
+
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+
+          podSecurityContext:
+            enabled: true
+            fsGroup: 1001
+
+          containerSecurityContext:
+            enabled: true
+            runAsUser: 1001
+            runAsNonRoot: true
+
+          initdb:
+            scripts:
+              init.sql: |
+                CREATE DATABASE openobserve;
+                GRANT ALL PRIVILEGES ON DATABASE openobserve TO openobserve;
+
+        metrics:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openobserve-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  labels:
+    app.kubernetes.io/name: openobserve-app
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+    targetRevision: HEAD
+    path: kubernetes/platform/openobserve-config
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m

@@ -14,6 +14,7 @@ export interface ITraefikArgs {
   readonly chartVersion: string;
   readonly environment: "dev" | "stg" | "prd";
   readonly httpsPort?: number; // Optional HTTPS port, defaults to 8443
+  readonly dependencyTriggerUrn?: pulumi.Input<string>;
 }
 
 export class TraefikComponent extends pulumi.ComponentResource {
@@ -54,6 +55,11 @@ export class TraefikComponent extends pulumi.ComponentResource {
         enabled: true,
         replicas: 1,
       },
+      // Add a dependency annotation to trigger rollouts when the trigger ConfigMap changes
+      podAnnotations:
+        args.dependencyTriggerUrn != null
+          ? { "pulumi.com/dependency-trigger-urn": args.dependencyTriggerUrn }
+          : undefined,
       // Service - LoadBalancer for external access
       service: {
         enabled: true,

@@ -73,13 +73,13 @@ export class PulumiTunnelProvisioner {
     // Test stack should inherit configs from current project
 
     // Deploy the tunnel infrastructure
-    await stack.up({ onOutput: console.log });
+    await stack.up();
 
     return {
       localPort: this.config.localPort,
       destroy: async () => {
         if (this.stack) {
-          await this.stack.destroy({ onOutput: console.log });
+          await this.stack.destroy();
           await this.stack.workspace.removeStack(this.config.stackName);
         }
       },
@@ -92,7 +92,7 @@ export class PulumiTunnelProvisioner {
    */
   async destroy(): Promise<void> {
     if (this.stack) {
-      await this.stack.destroy({ onOutput: console.log });
+      await this.stack.destroy();
       await this.stack.workspace.removeStack(this.config.stackName);
       this.stack = undefined;
     }

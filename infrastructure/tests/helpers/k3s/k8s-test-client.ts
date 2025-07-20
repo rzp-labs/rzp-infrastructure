@@ -38,7 +38,6 @@ export class K8sTestClient implements IK8sTestClient {
     } catch (error) {
       // Don't throw error - let tests handle unavailable cluster gracefully
       this.isConnected = false;
-      throw new Error(`K8s cluster not accessible: ${error}`);
     }
   }
 
@@ -58,6 +57,13 @@ export class K8sTestClient implements IK8sTestClient {
       throw new Error("K8s cluster not available. Check cluster connectivity.");
     }
     return this.k8sAppsApi;
+  }
+
+  getCustomObjectsApi(): k8s.CustomObjectsApi {
+    if (!this.isConnected) {
+      throw new Error("K8s cluster not available. Check cluster connectivity.");
+    }
+    return this.kc.makeApiClient(k8s.CustomObjectsApi);
   }
 
   cleanup(): void {

@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-services
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+  labels:
+    app.kubernetes.io/name: platform-services
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+    targetRevision: HEAD
+    path: kubernetes/platform
+    directory:
+      recurse: true
+      include: "{*.yaml,namespaces/*.yaml}"
+      exclude: "platform-services.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+  ignoreDifferences:
+  - group: "*"
+    kind: Secret
+    name: "*"
+    jsonPointers:
+    - /data
+  - group: "*"
+    kind: ConfigMap
+    name: "*"
+    jsonPointers:
+    - /data

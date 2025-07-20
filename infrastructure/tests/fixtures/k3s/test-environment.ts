@@ -14,28 +14,25 @@ export class TestEnvironment {
   private clusterAvailable = false;
 
   async setup(): Promise<void> {
-    try {
-      // Initialize K8s client
-      this.k8sClient = new K8sTestClient();
-      await this.k8sClient.initialize();
-      this.clusterAvailable = this.k8sClient.isClusterAvailable();
+    // Initialize K8s client
+    this.k8sClient = new K8sTestClient();
+    await this.k8sClient.initialize();
+    this.clusterAvailable = this.k8sClient.isClusterAvailable();
 
-      if (this.clusterAvailable) {
-        // Initialize managers only if cluster is available
-        this.namespaceManager = new TestNamespaceManager(this.k8sClient.getCoreApi());
-        this.resourceManager = new TestResourceManager(this.k8sClient.getCoreApi(), this.k8sClient.getAppsApi());
+    if (this.clusterAvailable) {
+      // Initialize managers only if cluster is available
+      this.namespaceManager = new TestNamespaceManager(this.k8sClient.getCoreApi());
+      this.resourceManager = new TestResourceManager(
+        this.k8sClient.getCoreApi(),
+        this.k8sClient.getAppsApi(),
+        this.k8sClient.getCustomObjectsApi(),
+      );
 
-        // Create test namespace
-        await this.namespaceManager.createTestNamespace();
-      }
-
-      this.isInitialized = true;
-    } catch (error) {
-      // Set cluster as unavailable but don't fail setup
-      this.clusterAvailable = false;
-      this.isInitialized = true;
-      console.warn(`Test environment setup with limited functionality: ${error}`);
+      // Create test namespace
+      await this.namespaceManager.createTestNamespace();
     }
+
+    this.isInitialized = true;
   }
 
   async teardown(): Promise<void> {
@@ -84,9 +81,6 @@ export class TestEnvironment {
     if (!this.isInitialized || !this.k8sClient) {
       throw new Error("Test environment not initialized. Call setup() first.");
     }
-    if (!this.clusterAvailable) {
-      throw new Error("K8s cluster not available. Integration tests require cluster access.");
-    }
     return this.k8sClient;
   }
 
@@ -94,18 +88,12 @@ export class TestEnvironment {
     if (!this.isInitialized || !this.namespaceManager) {
       throw new Error("Test environment not initialized. Call setup() first.");
     }
-    if (!this.clusterAvailable) {
-      throw new Error("K8s cluster not available. Integration tests require cluster access.");
-    }
     return this.namespaceManager;
   }
 
   getResourceManager(): TestResourceManager {
     if (!this.isInitialized || !this.resourceManager) {
       throw new Error("Test environment not initialized. Call setup() first.");
-    }
-    if (!this.clusterAvailable) {
-      throw new Error("K8s cluster not available. Integration tests require cluster access.");
     }
     return this.resourceManager;
   }

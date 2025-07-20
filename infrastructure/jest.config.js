@@ -1,11 +1,17 @@
 /** @type {import('jest').Config} */
 module.exports = {
+  injectGlobals: true,
   preset: "ts-jest",
   testEnvironment: "node",
   roots: ["<rootDir>/tests"],
   testMatch: ["**/__tests__/**/*.test.ts", "**/?(*.)+(spec|test).ts"],
   transform: {
-    "^.+\\.ts$": "ts-jest",
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        useESM: false,
+      },
+    ],
   },
   collectCoverageFrom: ["components/**/*.ts", "shared/**/*.ts", "!**/*.d.ts"],
   setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],

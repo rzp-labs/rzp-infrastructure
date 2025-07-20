@@ -155,6 +155,35 @@ function getFirewallCommands(): string {
   - [ sh, -c, "systemctl disable --now ufw || true" ]`;
 }
 
+/**
+ * Generate disk setup configuration for the 60GB data disk
+ */
+function getDiskSetup(): string {
+  return `disk_setup:
+  /dev/sdb:
+    table_type: gpt
+    layout: true
+    overwrite: true
+
+fs_setup:
+  - label: longhorn-data
+    filesystem: ext4
+    device: /dev/sdb1
+    overwrite: true
+
+mounts:
+  - [ "/dev/sdb1", "/var/lib/longhorn", "ext4", "defaults,noatime", "0", "2" ]
+
+bootcmd:
+  # Create longhorn directory with proper permissions
+  - [ mkdir, -p, /var/lib/longhorn ]
+  - [ chown, -R, root:root, /var/lib/longhorn ]
+  - [ chmod, 755, /var/lib/longhorn ]`;
+}
+
+/**
+ * Generate data disk validation and mounting commands
+ */
 function getRunCommands(): string {
   return `runcmd:
 ${getSystemServiceCommands()}
@@ -162,7 +191,8 @@ ${getKernelModuleCommands()}
 ${getNetworkingCommands()}
 ${getSwapDisableCommands()}
 ${getDnsCommands()}
-${getFirewallCommands()}`;
+${getFirewallCommands()}
+${getDataDiskCommands()}`;
 }
 
 /**
@@ -177,8 +207,21 @@ ${getAptSources()}
 
 ${getPackages()}
 
+${getDiskSetup()}
+
 ${getSystemFiles()}
 
 ${getRunCommands()}
 `;
+}
+
+/**
+ * Generate data disk validation and mounting commands
+ */
+function getDataDiskCommands(): string {
+  return `
+  # Verify data disk is properly mounted and accessible
+  - [ sh, -c, "mount | grep -q '/var/lib/longhorn' || (echo 'ERROR: Data disk not mounted' && exit 1)" ]
+  - [ sh, -c, "df -h /var/lib/longhorn | grep -q 'sdb1' || (echo 'ERROR: Data disk not accessible' && exit 1)" ]
+  - [ sh, -c, "test -d /var/lib/longhorn && echo 'SUCCESS: Longhorn data directory ready'" ]`;
 }

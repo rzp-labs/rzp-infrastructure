@@ -1,9 +1,12 @@
 import type * as k8s from "@kubernetes/client-node";
 
 interface ITestResource {
-  type: "pod" | "service" | "deployment" | "configmap" | "secret";
+  type: "pod" | "service" | "deployment" | "configmap" | "secret" | "customresource";
   name: string;
   namespace: string;
+  group?: string; // For custom resources
+  version?: string; // For custom resources
+  plural?: string; // For custom resources
 }
 
 /**
@@ -15,6 +18,7 @@ export class TestResourceManager {
   constructor(
     private readonly k8sApi: k8s.CoreV1Api,
     private readonly appsApi: k8s.AppsV1Api,
+    private readonly customObjectsApi: k8s.CustomObjectsApi,
   ) {}
 
   async createTestPod(namespace: string, name: string, spec: k8s.V1Pod["spec"]): Promise<k8s.V1Pod> {
@@ -149,7 +153,7 @@ export class TestResourceManager {
     // Cleanup in reverse order (deployments first, then services, then pods)
     const resourcesByType = this.groupResourcesByType();
 
-    for (const type of ["deployment", "service", "pod", "configmap", "secret"]) {
+    for (const type of ["customresource", "deployment", "service", "pod", "configmap", "secret"]) {
       const resources = resourcesByType[type] ?? [];
 
       for (const resource of resources.reverse()) {
@@ -169,12 +173,44 @@ export class TestResourceManager {
     }
   }
 
+  async createTestCustomResource(
+    namespace: string,
+    name: string,
+    group: string,
+    version: string,
+    plural: string,
+    spec: Record<string, unknown>,
+  ): Promise<any> {
+    const customResource = await this.customObjectsApi.createNamespacedCustomObject({
+      group,
+      version,
+      namespace,
+      plural,
+      body: {
+        apiVersion: `${group}/${version}`,
+        kind: plural.charAt(0).toUpperCase() + plural.slice(1, -1), // Simple singularization
+        metadata: { name },
+        spec,
+      },
+    });
+
+    this.trackResource("customresource", name, namespace, group, version, plural);
+    return customResource;
+  }
+
   getCreatedResources(): readonly ITestResource[] {
     return [...this.createdResources];
   }
 
-  private trackResource(type: ITestResource["type"], name: string, namespace: string): void {
-    this.createdResources.push({ type, name, namespace });
+  private trackResource(
+    type: ITestResource["type"],
+    name: string,
+    namespace: string,
+    group?: string,
+    version?: string,
+    plural?: string,
+  ): void {
+    this.createdResources.push({ type, name, namespace, group, version, plural });
   }
 
   private groupResourcesByType(): Record<string, ITestResource[]> {
@@ -219,6 +255,17 @@ export class TestResourceManager {
           name: resource.name,
           namespace: resource.namespace,
         });
+        break;
+      case "customresource":
+        if (resource.group && resource.version && resource.plural) {
+          await this.customObjectsApi.deleteNamespacedCustomObject({
+            group: resource.group,
+            version: resource.version,
+            namespace: resource.namespace,
+            plural: resource.plural,
+            name: resource.name,
+          });
+        }
         break;
       default:
         throw new Error(`Unknown resource type: ${resource.type}`);

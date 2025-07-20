@@ -1,0 +1,286 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zitadel-postgres
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    app.kubernetes.io/name: zitadel-postgres
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: postgresql
+    targetRevision: 15.5.32
+    helm:
+      values: |
+        global:
+          postgresql:
+            auth:
+              username: "zitadel"
+              database: "zitadel"
+              existingSecret: "zitadel-db-credentials"
+              secretKeys:
+                userPasswordKey: "db-password"
+                adminPasswordKey: "postgres-password"
+
+        architecture: standalone
+
+        primary:
+          persistence:
+            enabled: true
+            storageClass: "longhorn"
+            size: 5Gi
+
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+
+          podSecurityContext:
+            enabled: true
+            fsGroup: 1001
+
+          containerSecurityContext:
+            enabled: true
+            runAsUser: 1001
+            runAsNonRoot: true
+
+          initdb:
+            scripts:
+              init.sql: |
+                CREATE DATABASE zitadel;
+                GRANT ALL PRIVILEGES ON DATABASE zitadel TO zitadel;
+
+        metrics:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: zitadel
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zitadel-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  labels:
+    app.kubernetes.io/name: zitadel-app
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+  source:
+    repoURL: https://charts.zitadel.com
+    chart: zitadel
+    targetRevision: 8.5.1
+    helm:
+      values: |
+        zitadel:
+          # Use external database
+          configmapConfig:
+            Database:
+              Postgres:
+                Host: zitadel-postgres-postgresql
+                Port: 5432
+                Database: zitadel
+                MaxOpenConns: 20
+                MaxIdleConns: 10
+                MaxConnLifetime: 30m
+                MaxConnIdleTime: 5m
+                User:
+                  Username: zitadel
+                  SSL:
+                    Mode: disable
+                Admin:
+                  Username: postgres
+                  SSL:
+                    Mode: disable
+            ExternalDomain: zitadel.stg.rzp.one
+            ExternalPort: 443
+            ExternalSecure: true
+            TLS:
+              Enabled: false  # TLS handled by Traefik
+            LogLevel: info
+            LogFormat: text
+
+        # Secret configuration
+        secretConfig:
+          Database:
+            Postgres:
+              User:
+                Password:
+                  valueFrom:
+                    secretKeyRef:
+                      name: zitadel-db-credentials
+                      key: db-password
+              Admin:
+                Password:
+                  valueFrom:
+                    secretKeyRef:
+                      name: zitadel-db-credentials
+                      key: postgres-password
+          DefaultInstance:
+            MasterKey:
+              valueFrom:
+                secretKeyRef:
+                  name: zitadel-app-secrets
+                  key: master-key
+
+        # Service configuration
+        service:
+          type: ClusterIP
+          port: 8080
+          protocol: http2
+          annotations: {}
+
+        # Ingress configuration
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: "letsencrypt-staging"
+            traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+            traefik.ingress.kubernetes.io/router.tls: "true"
+          hosts:
+            - host: zitadel.stg.rzp.one
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: zitadel-tls
+              hosts:
+                - zitadel.stg.rzp.one
+
+        # Resource configuration
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+
+        # Replica configuration
+        replicaCount: 2
+
+        # Pod security context
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          fsGroup: 1000
+
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+
+        # Readiness and liveness probes
+        readinessProbe:
+          httpGet:
+            path: /debug/ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        livenessProbe:
+          httpGet:
+            path: /debug/healthz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+
+        # Environment-specific configuration
+        env:
+          - name: ZITADEL_LOG_LEVEL
+            value: "info"
+          - name: ZITADEL_LOG_FORMAT
+            value: "text"
+
+        # Additional volumes for writable paths
+        extraVolumes:
+          - name: tmp
+            emptyDir: {}
+          - name: cache
+            emptyDir: {}
+
+        extraVolumeMounts:
+          - name: tmp
+            mountPath: /tmp
+          - name: cache
+            mountPath: /home/zitadel/.cache
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: zitadel
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zitadel-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+  labels:
+    app.kubernetes.io/name: zitadel-config
+    app.kubernetes.io/component: platform
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+    targetRevision: HEAD
+    path: kubernetes/platform/zitadel-config
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: zitadel
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

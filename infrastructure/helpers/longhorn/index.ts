@@ -1,8 +1,7 @@
 export { createUninstallerRbac } from "./uninstaller-rbac";
 export type { IUninstallerRbacConfig, IUninstallerRbacResources } from "./uninstaller-rbac";
 
-export { createCrdManagement, createDeletingConfirmationFlagJob } from "./crd-management";
-export type { ICrdManagementConfig, ICrdManagementResources } from "./crd-management";
+export { createDeletingConfirmationFlagJob } from "./crd-management";
 
 export {
   createPrerequisiteValidation,
@@ -20,3 +19,6 @@ export {
 } from "./deployment-monitoring";
 export type { IDeploymentStatus, IDeploymentMonitoringConfig } from "./deployment-monitoring";
 export { DeploymentPhase, DeploymentErrorType } from "./deployment-monitoring";
+
+export { createDiskProvisioningJob } from "./disk-provisioning";
+export type { IDiskProvisioningConfig, IDiskProvisioningResources } from "./disk-provisioning";

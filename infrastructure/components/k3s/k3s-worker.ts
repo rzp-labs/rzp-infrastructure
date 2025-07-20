@@ -39,13 +39,13 @@ export class K3sWorker extends pulumi.ComponentResource {
     };
 
     // Create VM health check
-    this.vmHealthCheck = createVmHealthCheck(`${name}-vm`, healthConfig, { parent: this });
+    this.vmHealthCheck = createVmHealthCheck(name, healthConfig, { parent: this });
 
     // Install K3s agent after VM is healthy
     const installCommand = this.createInstallCommand(args);
 
     // Create K3s health check after installation
-    this.k3sHealthCheck = createK3sHealthCheck(`${name}-k3s`, healthConfig, {
+    this.k3sHealthCheck = createK3sHealthCheck(name, healthConfig, {
       parent: this,
       dependsOn: [installCommand],
     });
@@ -69,7 +69,10 @@ export class K3sWorker extends pulumi.ComponentResource {
         create: installScript,
         delete: K3S_INSTALLATION.UNINSTALL_AGENT_CMD,
       },
-      { parent: this, dependsOn: [this.vmHealthCheck] },
+      {
+        parent: this,
+        dependsOn: [this.vmHealthCheck],
+      },
     );
   }
 

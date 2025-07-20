@@ -5,21 +5,25 @@ This document describes the enhanced Longhorn configuration for the staging envi
 ## Enhanced Features
 
 ### 1. Uninstaller RBAC Management
+
 - **enableUninstallerRbac**: `true` - Creates dedicated ServiceAccount, ClusterRole, and ClusterRoleBinding for uninstaller operations
 - **uninstallerTimeoutSeconds**: `900` (15 minutes) - Appropriate timeout for staging environment operations
 
 ### 2. Prerequisite Validation
+
 - **validatePrerequisites**: `true` - Validates system requirements before deployment
 - Checks for open-iscsi installation on all nodes
 - Validates required kernel modules and system packages
 
 ### 3. Deployment Monitoring
+
 - **enableDeploymentMonitoring**: `true` - Enables comprehensive deployment status tracking
 - **deploymentTimeoutSeconds**: `2400` (40 minutes) - Extended timeout for staging environment
 - **maxRetries**: `5` - Increased retry count for staging testing
 - **enableStatusTracking**: `true` - Enables persistent status tracking via ConfigMaps
 
 ### 4. Error Handling and Recovery
+
 - Enhanced retry mechanisms with exponential backoff
 - Comprehensive error detection and reporting
 - Automatic cleanup on deployment failures

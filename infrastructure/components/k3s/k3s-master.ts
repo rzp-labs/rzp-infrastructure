@@ -11,6 +11,7 @@ export interface IK3sMasterArgs {
   readonly sshPrivateKey: pulumi.Input<string>;
   readonly isFirstMaster?: boolean;
   readonly serverEndpoint?: string;
+  readonly token?: pulumi.Input<string>;
 }
 
 export interface IK3sMasterResult {
@@ -106,18 +107,36 @@ export class K3sMaster extends pulumi.ComponentResource {
     };
   }
 
-  private buildInstallScript(args: IK3sMasterArgs): string {
+  private buildInstallScript(args: IK3sMasterArgs): pulumi.Output<string> {
     const isFirstMaster = args.isFirstMaster ?? true;
 
     const k3sInstall = isFirstMaster
       ? `curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | sh -s - server ${K3S_INSTALLATION.SERVER_FLAGS}`
-      : `curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | sh -s - server --server ${args.serverEndpoint} ${K3S_INSTALLATION.ADDITIONAL_SERVER_FLAGS}`;
+      : pulumi.interpolate`curl -sfL ${K3S_INSTALLATION.DOWNLOAD_URL} | K3S_TOKEN=${args.token} sh -s - server --server ${args.serverEndpoint} ${K3S_INSTALLATION.ADDITIONAL_SERVER_FLAGS}`;
 
-    // Install K3s (cloud-init completion is handled by VM health check)
-    return `
-      echo "Installing K3s server..."
+    // Install K3s and Helm for GitOps operations
+    return pulumi.interpolate`
+      echo "Waiting for cloud-init to complete..."
+      cloud-init status --wait
+      echo "Cloud-init completed, installing K3s server..."
       ${k3sInstall}
       echo "K3s server installation completed"
+
+      # Install Helm for GitOps operations
+      echo "Installing Helm..."
+      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      chmod 700 get_helm.sh
+      ./get_helm.sh
+      rm get_helm.sh
+      echo "Helm installation completed"
+
+      # Set up kubeconfig for admin operations
+      mkdir -p /home/${args.sshUsername}/.kube
+      cp /etc/rancher/k3s/k3s.yaml /home/${args.sshUsername}/.kube/config
+      chown ${args.sshUsername}:${args.sshUsername} /home/${args.sshUsername}/.kube/config
+      chmod 600 /home/${args.sshUsername}/.kube/config
+
+      echo "k3s, Helm, and kubeconfig setup completed"
     `;
   }
 }
