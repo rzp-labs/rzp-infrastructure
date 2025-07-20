@@ -131,25 +131,54 @@ export class K3sMaster extends pulumi.ComponentResource {
       echo "Helm installation completed"
 
       # Set up kubeconfig for admin operations
+      echo "Setting up kubeconfig for user ${args.sshUsername}..."
       mkdir -p /home/${args.sshUsername}/.kube
-      cp /etc/rancher/k3s/k3s.yaml /home/${args.sshUsername}/.kube/config
+      
+      # Wait for K3s kubeconfig to be created
+      until [ -f /etc/rancher/k3s/k3s.yaml ]; do
+        echo "Waiting for K3s kubeconfig to be created..."
+        sleep 2
+      done
+      
+      # Copy and configure kubeconfig (requires sudo for root-owned file)
+      sudo cp /etc/rancher/k3s/k3s.yaml /home/${args.sshUsername}/.kube/config
+      
       # Fix server endpoint in kubeconfig for remote access
       sed -i 's/127.0.0.1:6443/${args.node.ip4}:6443/g' /home/${args.sshUsername}/.kube/config
-      chown ${args.sshUsername}:${args.sshUsername} /home/${args.sshUsername}/.kube/config
-      chmod 600 /home/${args.sshUsername}/.kube/config
+      sudo chown ${args.sshUsername}:${args.sshUsername} /home/${args.sshUsername}/.kube/config
+      sudo chmod 600 /home/${args.sshUsername}/.kube/config
+      
+      echo "Kubeconfig setup completed"
 
       # Label node for Longhorn disk discovery (first master only)
       if [ "${args.isFirstMaster ?? true}" = "true" ]; then
         echo "Configuring Longhorn disk discovery labels..."
         export KUBECONFIG=/home/${args.sshUsername}/.kube/config
-        # Wait for API server to be ready
+        
+        # Verify kubeconfig is accessible
+        if [ ! -f "$KUBECONFIG" ]; then
+          echo "ERROR: Kubeconfig not found at $KUBECONFIG"
+          exit 1
+        fi
+        
+        # Wait for API server to be ready with timeout
+        echo "Waiting for Kubernetes API server to be ready..."
+        TIMEOUT=300  # 5 minutes timeout
+        ELAPSED=0
         until kubectl get nodes > /dev/null 2>&1; do
-          echo "Waiting for Kubernetes API server..."
+          if [ $ELAPSED -ge $TIMEOUT ]; then
+            echo "ERROR: Timeout waiting for Kubernetes API server"
+            exit 1
+          fi
+          echo "Waiting for Kubernetes API server... (${ELAPSED}s/${TIMEOUT}s)"
           sleep 5
+          ELAPSED=$((ELAPSED + 5))
         done
+        
         # Label all nodes for Longhorn disk discovery
+        echo "Applying Longhorn disk discovery labels..."
         kubectl label nodes --all node.longhorn.io/create-default-disk=true --overwrite
-        echo "Longhorn disk discovery labels applied"
+        echo "Longhorn disk discovery labels applied successfully"
       fi
 
       echo "k3s, Helm, and kubeconfig setup completed"
