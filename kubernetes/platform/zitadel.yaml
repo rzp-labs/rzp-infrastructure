@@ -159,7 +159,7 @@ spec:
           enabled: true
           className: traefik
           annotations:
-            cert-manager.io/cluster-issuer: "cloudflare-issuer"
+            cert-manager.io/cluster-issuer: "letsencrypt-staging"
             traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
             traefik.ingress.kubernetes.io/router.tls: "true"
             traefik.ingress.kubernetes.io/router.middlewares: "zitadel-default-headers@kubernetescrd"

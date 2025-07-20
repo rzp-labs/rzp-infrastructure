@@ -6,7 +6,7 @@ metadata:
   namespace: traefik
   annotations:
     argocd.argoproj.io/sync-wave: "20"  # After Zitadel auth is ready
-    cert-manager.io/cluster-issuer: "cloudflare-issuer"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
 spec:
   entryPoints:
     - websecure
