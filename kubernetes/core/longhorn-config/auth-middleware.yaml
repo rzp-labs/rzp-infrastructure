@@ -1,0 +1,41 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: zitadel-auth
+  namespace: longhorn-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  forwardAuth:
+    address: "http://zitadel-auth-proxy.zitadel.svc.cluster.local:4181/api/verify"
+    authResponseHeaders:
+    - "Remote-User"
+    - "Remote-Name"
+    - "Remote-Email"
+    - "Remote-Groups"
+    trustForwardHeader: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: longhorn-storageclass
+  namespace: longhorn-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "18"
+data:
+  storageclass.yaml: |
+    apiVersion: storage.k8s.io/v1
+    kind: StorageClass
+    metadata:
+      name: longhorn
+      annotations:
+        storageclass.kubernetes.io/is-default-class: "true"
+    provisioner: driver.longhorn.io
+    allowVolumeExpansion: true
+    reclaimPolicy: Delete
+    volumeBindingMode: Immediate
+    parameters:
+      numberOfReplicas: "2"
+      staleReplicaTimeout: "2880"
+      fromBackup: ""
+      fsType: "ext4"
