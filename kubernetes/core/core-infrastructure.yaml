@@ -43,3 +43,9 @@ spec:
     name: "*"
     jsonPointers:
     - /data
+  - group: "cert-manager.io"
+    kind: ClusterIssuer
+    name: "*"
+    jsonPointers:
+    - /spec
+    - /status
