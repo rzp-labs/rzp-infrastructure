@@ -14,9 +14,7 @@ metadata:
     # cert-manager for TLS certificates
     cert-manager.io/cluster-issuer: cloudflare-issuer
 
-    # ArgoCD specific annotations for gRPC-Web support
-    # ArgoCD specific Traefik annotations for gRPC-Web support
-    traefik.ingress.kubernetes.io/service.serversscheme: h2c
+    # ArgoCD runs in insecure mode (plain HTTP) with TLS termination at Traefik
 spec:
   ingressClassName: traefik
   tls:
