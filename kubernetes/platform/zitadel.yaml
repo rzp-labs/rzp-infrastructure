@@ -107,61 +107,16 @@ spec:
           # Use external database
           masterkeySecretName: zitadel-app-secrets
           
-        # Enable initialization jobs with PostgreSQL configuration
+        # Enable initialization jobs (use default configuration)
         initJob:
           enabled: true
-          extraEnv:
-            - name: ZITADEL_DATABASE_POSTGRES_HOST
-              value: zitadel-postgres-postgresql
-            - name: ZITADEL_DATABASE_POSTGRES_PORT
-              value: "5432"
-            - name: ZITADEL_DATABASE_POSTGRES_DATABASE
-              value: zitadel
-            - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
-              value: zitadel
-            - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
-              value: disable
-            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME
-              value: postgres
-            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
-              value: disable
-            - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: zitadel-db-credentials
-                  key: zitadel-db-password
-            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: zitadel-db-credentials
-                  key: zitadel-postgres-password
         setupJob:
           enabled: true
-          extraEnv:
-            - name: ZITADEL_DATABASE_POSTGRES_HOST
-              value: zitadel-postgres-postgresql
-            - name: ZITADEL_DATABASE_POSTGRES_PORT
-              value: "5432"
-            - name: ZITADEL_DATABASE_POSTGRES_DATABASE
-              value: zitadel
-            - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
-              value: zitadel
-            - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
-              value: disable
-            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME
-              value: postgres
-            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
-              value: disable
-            - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: zitadel-db-credentials
-                  key: zitadel-db-password
-            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: zitadel-db-credentials
-                  key: zitadel-postgres-password
+              admin:
+                username: postgres
+                ssl:
+                  mode: disable
+          
           configmapConfig:
             Database:
               Postgres:
