@@ -16,30 +16,6 @@ spec:
     path: kubernetes/core
     directory:
       recurse: true
-      include: "{*.yaml,namespaces/*.yaml}"
-      exclude: "core-infrastructure.yaml,*-config.yaml,metallb.yaml,cert-manager.yaml,traefik.yaml,longhorn.yaml,infisical-secrets-operator.yaml,core-infisical-secrets.yaml,longhorn-config/**,infisical-secrets/**,metallb-config/**,cert-manager-config/**"
-  destination:
-    server: https://kubernetes.default.svc
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - ServerSideApply=true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 5m
-  ignoreDifferences:
-  - group: "*"
-    kind: Secret
-    name: "*"
-    jsonPointers:
-    - /data
-  - group: "*"
-    kind: ConfigMap
-    name: "*"
+      include: "namespaces/*.yaml"
     jsonPointers:
     - /data
