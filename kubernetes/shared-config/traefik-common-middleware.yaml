@@ -7,7 +7,7 @@ metadata:
   name: default-headers
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "10"  # Early deployment
+    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
 spec:
   headers:
     frameDeny: true
@@ -25,7 +25,7 @@ metadata:
   name: default-headers
   namespace: longhorn-system
   annotations:
-    argocd.argoproj.io/sync-wave: "10"  # Early deployment
+    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
 spec:
   headers:
     frameDeny: true
@@ -43,7 +43,7 @@ metadata:
   name: default-headers
   namespace: observability
   annotations:
-    argocd.argoproj.io/sync-wave: "10"  # Early deployment
+    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
 spec:
   headers:
     frameDeny: true
@@ -61,7 +61,7 @@ metadata:
   name: default-headers
   namespace: zitadel
   annotations:
-    argocd.argoproj.io/sync-wave: "10"  # Early deployment
+    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
 spec:
   headers:
     frameDeny: true
@@ -79,7 +79,7 @@ metadata:
   name: default-headers
   namespace: traefik
   annotations:
-    argocd.argoproj.io/sync-wave: "10"  # Early deployment
+    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
 spec:
   headers:
     frameDeny: true
