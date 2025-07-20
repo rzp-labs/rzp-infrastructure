@@ -228,6 +228,14 @@ spec:
   - kind: Secret
     jsonPointers:
     - /data
+  - group: apps
+    kind: DaemonSet
+    jsonPointers:
+    - /metadata/annotations/deprecated.daemonset.template.generation
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /metadata/annotations/deployment.kubernetes.io~1revision
 
 ---
 apiVersion: argoproj.io/v1alpha1
