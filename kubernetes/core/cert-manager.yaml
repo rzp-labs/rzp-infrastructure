@@ -85,7 +85,7 @@ metadata:
   name: cert-manager-config
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "4" # After cert-manager and external-secrets
+    argocd.argoproj.io/sync-wave: "4" # After cert-manager and infisical secrets
   labels:
     app.kubernetes.io/name: cert-manager-config
     app.kubernetes.io/component: platform
