@@ -23,8 +23,8 @@ spec:
               database: "zitadel"
               existingSecret: "zitadel-db-credentials"
               secretKeys:
-                userPasswordKey: "db-password"
-                adminPasswordKey: "postgres-password"
+                userPasswordKey: "zitadel-db-password"
+                adminPasswordKey: "zitadel-postgres-password"
 
         architecture: standalone
 
@@ -140,13 +140,13 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: zitadel-db-credentials
-                      key: db-password
+                      key: zitadel-db-password
               Admin:
                 Password:
                   valueFrom:
                     secretKeyRef:
                       name: zitadel-db-credentials
-                      key: postgres-password
+                      key: zitadel-postgres-password
           DefaultInstance:
             MasterKey:
               valueFrom:

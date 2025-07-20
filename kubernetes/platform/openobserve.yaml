@@ -23,8 +23,8 @@ spec:
               database: "openobserve"
               existingSecret: "openobserve-db-credentials"
               secretKeys:
-                userPasswordKey: "db-password"
-                adminPasswordKey: "postgres-password"
+                userPasswordKey: "openobserve-db-password"
+                adminPasswordKey: "openobserve-postgres-password"
 
         architecture: standalone
 
