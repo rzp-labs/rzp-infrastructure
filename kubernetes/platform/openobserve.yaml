@@ -58,9 +58,7 @@ spec:
                 GRANT ALL PRIVILEGES ON DATABASE openobserve TO openobserve;
 
         metrics:
-          enabled: true
-          serviceMonitor:
-            enabled: true
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
