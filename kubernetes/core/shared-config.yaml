@@ -30,3 +30,9 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
+  ignoreDifferences:
+  - group: traefik.io
+    kind: Middleware
+    jsonPointers:
+    - /metadata/annotations
+    - /status
