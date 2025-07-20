@@ -160,18 +160,11 @@ spec:
               cpu: 200m
               memory: 256Mi
 
-        # Ingress configuration with modern security
+        # Ingress configuration - TEMPORARILY DISABLED to break circular dependency
+        # Traefik needs Longhorn storage, Longhorn needs Traefik ingress = deadlock
+        # Will re-enable after both services are operational
         ingress:
-          enabled: true
-          ingressClassName: "traefik"
-          host: longhorn.stg.rzp.one
-          tls: true
-          tlsSecret: longhorn-tls
-          annotations:
-            cert-manager.io/cluster-issuer: "letsencrypt-staging"
-            traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-            traefik.ingress.kubernetes.io/router.tls: "true"
-            traefik.ingress.kubernetes.io/router.middlewares: "zitadel-auth@kubernetescrd"
+          enabled: false  # TEMP: Disabled to break circular dependency with Traefik
 
         # Enhanced preUpgradeChecker (built-in automation in 1.9.0)
         preUpgradeChecker:
