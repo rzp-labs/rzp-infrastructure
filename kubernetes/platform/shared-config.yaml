@@ -14,8 +14,6 @@ spec:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
     path: kubernetes/shared-config
-    directory:
-      recurse: false
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
@@ -31,6 +29,11 @@ spec:
         factor: 2
         maxDuration: 3m
   ignoreDifferences:
+  - group: argoproj.io
+    kind: Application
+    name: shared-config
+    jsonPointers:
+    - /spec/source/directory/recurse
   - group: traefik.io
     kind: Middleware
     jsonPointers:
