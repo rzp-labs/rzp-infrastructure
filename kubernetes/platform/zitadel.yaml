@@ -25,6 +25,7 @@ spec:
               secretKeys:
                 userPasswordKey: "zitadel-db-password"
                 adminPasswordKey: "zitadel-postgres-password"
+                replicationPasswordKey: "zitadel-postgres-replication-password"
 
         architecture: replication
 
