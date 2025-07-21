@@ -47,7 +47,7 @@ spec:
         runAsNonRoot: true
       containers:
       - name: openobserve
-        image: public.ecr.aws/zinclabs/openobserve:v0.10.9
+        image: public.ecr.aws/zinclabs/openobserve:v0.14.7
         ports:
         - containerPort: 5080
           name: http
