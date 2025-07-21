@@ -61,7 +61,7 @@ spec:
       serviceAccountName: harness
       containers:
       - name: harness
-        image: harness/harness:v3.2.0
+        image: harness/gitness:latest
         ports:
         - containerPort: 3000
           name: http
