@@ -261,6 +261,10 @@ spec:
               secretKeyRef:
                 name: openobserve-secrets
                 key: openobserve-root-password
+          - name: VECTOR_SELF_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
 
         # Node selector and tolerations
         nodeSelector: {}
