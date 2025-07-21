@@ -31,7 +31,7 @@ metadata:
     app: openobserve
 spec:
   serviceName: openobserve
-  replicas: 2
+  replicas: 0
   selector:
     matchLabels:
       app: openobserve
@@ -121,7 +121,7 @@ spec:
       storageClassName: "longhorn"
       resources:
         requests:
-          storage: 50Gi
+          storage: 20Gi
 ---
 apiVersion: v1
 kind: Service
