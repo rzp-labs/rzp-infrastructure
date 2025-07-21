@@ -4,7 +4,7 @@ metadata:
   name: traefik
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "5"  # After Longhorn
+    argocd.argoproj.io/sync-wave: "5" # After Longhorn
   labels:
     app.kubernetes.io/name: traefik
     app.kubernetes.io/component: platform
@@ -30,7 +30,6 @@ spec:
           type: LoadBalancer
           spec:
             loadBalancerIP: "10.10.0.200"
-            allocateLoadBalancerNodePorts: false
 
         # Ports - homelab standard matching staging environment
         ports:
@@ -88,6 +87,29 @@ spec:
           enabled: true
           size: 1Gi
           storageClass: "longhorn"
+
+        # Security-hardened LoadBalancer service
+        extraObjects:
+          - apiVersion: v1
+            kind: Service
+            metadata:
+              name: traefik-secure
+              namespace: traefik
+              labels:
+                app.kubernetes.io/name: traefik
+                app.kubernetes.io/instance: traefik-traefik
+            spec:
+              type: LoadBalancer
+              loadBalancerIP: "10.10.0.200"
+              allocateLoadBalancerNodePorts: false
+              selector:
+                app.kubernetes.io/name: traefik
+                app.kubernetes.io/instance: traefik-traefik
+              ports:
+                - name: websecure
+                  port: 443
+                  protocol: TCP
+                  targetPort: websecure
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
@@ -115,7 +137,6 @@ spec:
     jsonPointers:
     - /webhooks/0/clientConfig/caBundle
     - /webhooks/1/clientConfig/caBundle
-
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -123,7 +144,7 @@ metadata:
   name: traefik-config
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "6"  # After Traefik main application
+    argocd.argoproj.io/sync-wave: "6" # After Traefik main application
   labels:
     app.kubernetes.io/name: traefik-config
     app.kubernetes.io/component: platform
