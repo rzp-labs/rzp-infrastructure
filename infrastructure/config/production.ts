@@ -17,12 +17,14 @@ function getK3sClusterConfig(): IK3sClusterConfig {
   // Production masters get 4GB, workers get 8GB
   const productionMasterResources = {
     ...vmResources,
-    memory: vmResources.memory * 2, // 4GB for masters
+    cores: vmResources.cores * 2, // 4 cores for masters
+    memory: vmResources.memory * 8, // 16GB for masters
   };
 
   const productionWorkerResources = {
     ...vmResources,
-    memory: vmResources.memory * 4, // 8GB for workers
+    cores: vmResources.cores * 2, // 4 cores for workers
+    memory: vmResources.memory * 8, // 16GB for workers
   };
 
   const vmidBase = cfg.getNumber("vmidBase") ?? 220;

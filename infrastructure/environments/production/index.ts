@@ -1,197 +1,130 @@
 /**
- * Production environment deployment with proper provider architecture
+ * Staging environment deployment with proper provider architecture
  */
-
+import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 import * as k8s from "@pulumi/kubernetes";
-import * as pulumi from "@pulumi/pulumi";
 
 import * as Components from "../../components";
 import { getProductionConfig } from "../../config/production";
 import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
-// Get production configuration
+// Get staging configuration
 const config = getProductionConfig();
 
-// Get Cloudflare configuration directly
-const cloudflareConfig = new pulumi.Config("cloudflare");
-
-const domain = cloudflareConfig.require("domain");
-const email = cloudflareConfig.require("email");
-const apiToken = cloudflareConfig.requireSecret("apiToken");
-
-// =============================================================================
-// INFRASTRUCTURE DEPLOYMENT
-// =============================================================================
+export const proxmoxProvider = new proxmoxve.Provider("proxmox", {
+  endpoint: config.proxmox.endpoint,
+  username: config.proxmox.username,
+  password: config.proxmox.password,
+  insecure: config.proxmox.insecure,
+  ssh: config.proxmox.ssh,
+});
 
 // Deploy K3s cluster infrastructure (VMs only)
-export const cluster = new Components.K3sCluster("prd-k3s", {
-  config,
-});
+export const cluster = new Components.K3sCluster(
+  "prd-k3s",
+  {
+    config,
+  },
+  { provider: proxmoxProvider },
+);
 
-// Install K3s master
-export const masterInstall = new Components.K3sMaster("k3s-master", {
-  node: cluster.masters.map((m) => m.config)[0],
-  sshUsername: config.proxmox.ssh!.username!,
-  sshPrivateKey: config.proxmox.ssh!.privateKey!,
-  isFirstMaster: true,
-});
+// Install K3s masters with dynamic addition pattern
+// First master (always present, creates the cluster)
+export const firstMaster = new Components.K3sMaster(
+  "prd-k3s-master",
+  {
+    node: cluster.masters[0].config,
+    sshUsername: config.proxmox.ssh!.username!,
+    sshPrivateKey: config.proxmox.ssh!.privateKey!,
+    isFirstMaster: true,
+  },
+  {
+    parent: cluster.masters[0], // Make K3sMaster a child of its VM
+  },
+);
 
 // Retrieve K3s credentials
 export const credentials = new Components.K3sCredentials(
-  "k3s-credentials",
+  "prd-k3s-credentials",
   {
-    masterNode: cluster.masters.map((m) => m.config)[0],
+    masterNode: cluster.masters[0].config,
     sshUsername: config.proxmox.ssh!.username!,
     sshPrivateKey: config.proxmox.ssh!.privateKey!,
   },
   {
-    dependsOn: [masterInstall],
+    parent: cluster.masters[0], // Make credentials a child of the first master VM
+    dependsOn: [firstMaster],
   },
 );
+
+// Additional masters (only when masterCount > 1)
+export const additionalMasters = cluster.masters.slice(1).map(
+  (master, index) =>
+    new Components.K3sMaster(
+      `prd-k3s-master-${index + 1}`,
+      {
+        node: master.config,
+        sshUsername: config.proxmox.ssh!.username!,
+        sshPrivateKey: config.proxmox.ssh!.privateKey!,
+        isFirstMaster: false,
+        serverEndpoint: `https://${cluster.masters[0].config.ip4}:6443`,
+        token: credentials.result.token,
+      },
+      {
+        parent: master, // Make K3sMaster a child of its VM
+        dependsOn: [firstMaster, credentials],
+      },
+    ),
+);
+
+// All masters for dependency management
+export const allMasters = [firstMaster, ...additionalMasters];
 
 // Install K3s workers
 export const workerInstalls = cluster.workers.map(
   (worker, index) =>
     new Components.K3sWorker(
-      `k3s-worker-${index}`,
+      `prd-k3s-worker-${index}`,
       {
         node: worker.config,
         sshUsername: config.proxmox.ssh!.username!,
         sshPrivateKey: config.proxmox.ssh!.privateKey!,
         token: credentials.result.token,
-        masterEndpoint: cluster.masters.map((m) => m.config)[0].ip4,
+        masterEndpoint: cluster.masters[0].config.ip4,
       },
       {
+        parent: worker, // Make K3sWorker a child of its VM
         dependsOn: [credentials],
       },
     ),
 );
 
 // Kubernetes provider for all K8s resources (created after components are ready)
-const productionK8sProvider = new k8s.Provider(
-  "prd-k8s",
+const prdK8sProvider = new k8s.Provider(
+  "prd-k8s-provider",
   { kubeconfig: credentials.result.kubeconfig },
   {
-    dependsOn: [masterInstall.k3sHealthCheck, ...workerInstalls],
+    dependsOn: [firstMaster.k3sHealthCheck, ...additionalMasters.map((m) => m.k3sHealthCheck), ...workerInstalls],
   },
 );
 
 // =============================================================================
-// BOOTSTRAP PHASE: Direct Pulumi Deployment
+// BOOTSTRAP PHASE: ArgoCD Deployment
 // =============================================================================
 
-// 1. Deploy MetalLB for LoadBalancer support
-export const metallbBootstrap = new Components.MetalLBComponent(
-  "prd-metallb-bootstrap",
-  {
-    namespace: "metallb-system",
-    chartVersion: "0.15.2",
-    environment: "prd",
-    ipRange: "10.10.0.202-10.10.0.205",
-  },
-  {
-    dependsOn: workerInstalls,
-    provider: productionK8sProvider,
-  },
-);
-
-// 2. Deploy Traefik for ingress controller
-export const traefikBootstrap = new Components.TraefikComponent(
-  "prd-traefik-bootstrap",
-  {
-    namespace: "traefik",
-    chartVersion: "36.3.0",
-    environment: "prd",
-    httpsPort: 8443, // Production uses 8443 for router forwarding
-  },
-  {
-    dependsOn: [metallbBootstrap],
-    provider: productionK8sProvider,
-  },
-);
-
-// 3. Deploy cert-manager for TLS certificates
-export const certManagerBootstrap = new Components.CertManagerComponent(
-  "prd-cert-manager-bootstrap",
-  {
-    namespace: "cert-manager",
-    chartVersion: "v1.16.1",
-    environment: "prd",
-    cloudflareApiToken: apiToken,
-    email: email,
-  },
-  {
-    dependsOn: [traefikBootstrap],
-    provider: productionK8sProvider,
-  },
-);
-
-// 4. Deploy ArgoCD for GitOps
+// 5. Deploy ArgoCD for GitOps
 export const argoCd = new Components.ArgoCdComponent(
-  "prd-argocd",
+  "argocd",
   {
     namespace: "argocd",
     chartVersion: "5.51.6",
     environment: "prd",
-    domain: `argocd.${domain}`, // Clean domain without prefix for production
+    domain: `argocd.rzp.one`,
   },
   {
-    dependsOn: [certManagerBootstrap.clusterIssuer],
-    provider: productionK8sProvider,
-  },
-);
-
-// =============================================================================
-// GITOPS PHASE: ArgoCD Applications Using Same Components
-// =============================================================================
-
-// Now deploy ArgoCD applications that use the same components with identical configs
-// This completes the bootstrap-to-GitOps transition pattern
-
-// MetalLB ArgoCD Application - using direct CustomResource approach
-export const metallbApp = new k8s.apiextensions.CustomResource(
-  "prd-metallb-app",
-  {
-    apiVersion: "argoproj.io/v1alpha1",
-    kind: "Application",
-    metadata: {
-      name: "metallb",
-      namespace: "argocd",
-      labels: {
-        "app.kubernetes.io/name": "metallb",
-        "app.kubernetes.io/managed-by": "pulumi",
-        "app.kubernetes.io/component": "argocd-application",
-      },
-    },
-    spec: {
-      project: "default",
-      sources: [
-        {
-          repoUrl: "https://metallb.github.io/metallb",
-          chart: "metallb",
-          targetRevision: "0.15.2",
-          helm: {
-            values: metallbBootstrap.helmValuesOutput,
-          },
-        },
-      ],
-      destination: {
-        server: "https://kubernetes.default.svc",
-        namespace: "metallb-system",
-      },
-      syncPolicy: {
-        automated: {
-          prune: true,
-          selfHeal: true,
-        },
-        syncOptions: ["CreateNamespace=true"],
-      },
-    },
-  },
-  {
-    dependsOn: [argoCd.chart],
-    provider: productionK8sProvider,
+    dependsOn: [prdK8sProvider],
+    provider: prdK8sProvider,
   },
 );
 
@@ -203,7 +136,6 @@ export const masterIps = cluster.masterIps;
 export const workerIps = cluster.workerIps;
 export const allNodes = cluster.allNodes;
 export const kubeconfig = credentials.result.kubeconfig;
-export const argoCdUrl = argoCd.ingress.spec.rules[0].host.apply((host) => `https://${host}`);
 
 // Utility function for role determination
 export const getVmRoleFromId = (vmId: number): IK3sNodeConfig["role"] => {
