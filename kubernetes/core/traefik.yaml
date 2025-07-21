@@ -79,6 +79,7 @@ spec:
         # Global security settings
         additionalArguments:
           - "--global.checknewversion=false"
+          - "--providers.kubernetesingress.ingressendpoint.publishedservice=traefik/traefik-secure"
 
         # Persistence for configuration and certificates
         persistence:
