@@ -19,60 +19,6 @@ spec:
     stsPreload: true
     stsSeconds: 31536000
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: traefik
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: longhorn-system
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: observability
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: traefik
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: longhorn-system
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: observability
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -132,6 +78,24 @@ kind: Middleware
 metadata:
   name: default-headers
   namespace: traefik
+  annotations:
+    argocd.argoproj.io/sync-wave: '11'
+spec:
+  headers:
+    frameDeny: true
+    sslRedirect: true
+    browserXssFilter: true
+    contentTypeNosniff: true
+    forceSTSHeader: true
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 31536000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: default-headers
+  namespace: harness
   annotations:
     argocd.argoproj.io/sync-wave: '11'
 spec:
