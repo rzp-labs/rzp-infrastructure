@@ -24,12 +24,10 @@ spec:
           enabled: true
           replicas: 1
 
-        # Service - LoadBalancer for external access with specific IP
+        # Service - disabled in favor of security-hardened extraObjects service
         service:
           enabled: true
-          type: LoadBalancer
-          spec:
-            loadBalancerIP: "10.10.0.200"
+          type: ClusterIP
 
         # Ports - homelab standard matching staging environment
         ports:
