@@ -4,7 +4,7 @@ metadata:
   name: longhorn
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "4"  # Core storage infrastructure
+    argocd.argoproj.io/sync-wave: "4" # Core storage infrastructure
   labels:
     app.kubernetes.io/name: longhorn
     app.kubernetes.io/component: platform
@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://charts.longhorn.io
     chart: longhorn
-    targetRevision: 1.9.0  # Latest stable version
+    targetRevision: 1.9.0 # Latest stable version
     helm:
       values: |
         # Storage configuration optimized for modern Longhorn
@@ -38,29 +38,29 @@ spec:
           backupTarget: ""
           backupTargetCredentialSecret: ""
           allowRecurringJobWhileVolumeDetached: true
-          
+
           # Disk and node management (automated by modern Longhorn)
           createDefaultDiskLabeledNodes: true
           defaultDataPath: "/var/lib/longhorn"
           defaultDataLocality: "best-effort"
-          
+
           # Replica management (enhanced in 1.9.0)
           replicaSoftAntiAffinity: true
           replicaAutoBalance: "best-effort"
           replicaZoneSoftAntiAffinity: true
           replicaReplenishmentWaitInterval: 600
           concurrentReplicaRebuildPerNodeLimit: 5
-          
+
           # Storage optimization
           storageOverProvisioningPercentage: 100
           storageMinimalAvailablePercentage: 25
           defaultReplicaCount: 2
-          
+
           # Performance and resource management
           guaranteedEngineCPU: 0.25
           guaranteedEngineManagerCPU: 0.25
           guaranteedReplicaManagerCPU: 0.25
-          
+
           # Monitoring and maintenance (improved automation)
           upgradeChecker: false  # Disabled for homelab
           autoSalvage: true
@@ -68,7 +68,7 @@ spec:
           autoCleanupSystemGeneratedSnapshot: true
           disableSchedulingOnCordonedNode: true
           allowNodeDrainWithLastHealthyReplica: false
-          
+
           # Advanced settings for 1.9.0
           nodeDownPodDeletionPolicy: "delete-both-statefulset-and-deployment-pod"
           disableRevisionCounter: true
@@ -77,15 +77,15 @@ spec:
           backingImageCleanupWaitInterval: 60
           backingImageRecoveryWaitInterval: 300
           systemManagedPodsImagePullPolicy: "if-not-present"
-          
+
           # Storage class and backup settings
           defaultLonghornStaticStorageClass: "longhorn"
           backupstorePollInterval: 300
-          
+
           # Filesystem and volume settings
           mkfsExt4Parameters: ""
           disableReplicaRebuild: false
-          
+
           # Taints and node selection
           taintToleration: ""
           systemManagedComponentsNodeSelector: ""
@@ -188,10 +188,10 @@ spec:
         # Modern backup and restore settings
         backupSettings:
           backupCompressionMethod: lz4
-          
+
         # Volume attachment recovery (enhanced in 1.9.0)
         volumeAttachmentRecoveryPolicy: wait
-        
+
         # Support bundle management
         supportBundleManager:
           image:
@@ -207,7 +207,7 @@ spec:
       selfHeal: true
     syncOptions:
     - ServerSideApply=true
-    - CreateNamespace=true  # Let ArgoCD create the namespace
+    - CreateNamespace=true # Let ArgoCD create the namespace
     retry:
       limit: 5
       backoff:
@@ -221,7 +221,7 @@ spec:
     - /webhooks/0/clientConfig/caBundle
     - /webhooks/1/clientConfig/caBundle
   - group: admissionregistration.k8s.io
-    kind: MutatingWebhookConfiguration  
+    kind: MutatingWebhookConfiguration
     jsonPointers:
     - /webhooks/0/clientConfig/caBundle
     - /webhooks/1/clientConfig/caBundle
@@ -246,4 +246,3 @@ spec:
     - /spec/template/spec/containers/2/resources
     - /spec/template/spec/initContainers/0/resources
     - /spec/template/spec/initContainers/1/resources
-

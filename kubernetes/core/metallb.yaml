@@ -87,6 +87,12 @@ spec:
     kind: DaemonSet
     jsonPointers:
     - /metadata/annotations/deprecated.daemonset.template.generation
+    - /spec/template/spec/containers/0/resources
+    - /spec/template/spec/containers/1/resources
+    - /spec/template/spec/containers/2/resources
+    - /spec/template/spec/initContainers/0/resources
+    - /spec/template/spec/initContainers/1/resources
+    - /spec/template/spec/initContainers/2/resources
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
