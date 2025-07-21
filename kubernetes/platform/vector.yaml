@@ -305,6 +305,11 @@ spec:
     kind: Deployment
     jsonPointers:
     - /metadata/annotations/deployment.kubernetes.io~1revision
+  - group: apps
+    kind: StatefulSet
+    jsonPointers:
+    - /spec/volumeClaimTemplates/0/apiVersion
+    - /spec/volumeClaimTemplates/0/kind
   - group: ""
     kind: Secret
     name: "*"
