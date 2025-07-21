@@ -11,7 +11,7 @@ metadata:
 spec:
   project: default
   sources:
-  - repoURL: https://github.com/stephen-hqxu/rzp-infra.git
+  - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
     path: kubernetes/config/longhorn
   - 
