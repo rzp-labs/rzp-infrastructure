@@ -4,7 +4,7 @@ metadata:
   name: openobserve-config
   namespace: observability
 data:
-  ZO_LOCAL_MODE: "false"
+  ZO_LOCAL_MODE: "true"
   ZO_LOCAL_MODE_STORAGE: "disk"
   ZO_HTTP_PORT: "5080"
   ZO_HTTP_ADDR: "0.0.0.0"
