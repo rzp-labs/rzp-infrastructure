@@ -79,8 +79,8 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
-        - name: docker-sock
-          mountPath: /var/run/docker.sock
+        - name: containerd-sock
+          mountPath: /var/run/containerd/containerd.sock
         resources:
           requests:
             cpu: "250m"
@@ -104,9 +104,9 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: harness-data
-      - name: docker-sock
+      - name: containerd-sock
         hostPath:
-          path: /var/run/docker.sock
+          path: /var/run/containerd/containerd.sock
           type: Socket
       securityContext:
         fsGroup: 1000
