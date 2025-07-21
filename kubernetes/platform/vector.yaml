@@ -86,7 +86,7 @@ spec:
                 # Parse JSON logs if possible
                 if is_string(.message) {
                   parsed = parse_json(.message) ?? {}
-                  . = merge(., parsed)
+                  . = merge(., parsed) ?? .
                 }
 
                 # Add standard fields
@@ -154,7 +154,7 @@ spec:
                 timeout_secs: 5
               buffer:
                 type: "disk"
-                max_size: 268435456  # 256MB
+                max_size: 268435488  # 256MB + 32 bytes (minimum required)
                 when_full: "block"
               request:
                 retry_attempts: 3
