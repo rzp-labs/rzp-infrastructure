@@ -26,7 +26,10 @@ spec:
                 userPasswordKey: "zitadel-db-password"
                 adminPasswordKey: "zitadel-postgres-password"
 
-        architecture: standalone
+        architecture: replication
+
+        readReplicas:
+          replicaCount: 1
 
         primary:
           persistence:
@@ -184,6 +187,18 @@ spec:
 
         # Replica configuration
         replicaCount: 2
+
+        # Anti-affinity for HA across nodes
+        affinity:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - zitadel
+              topologyKey: kubernetes.io/hostname
 
         # Pod security context
         podSecurityContext:

@@ -23,6 +23,9 @@ spec:
         deployment:
           enabled: true
           replicas: 1
+          # Use Recreate strategy to avoid RWO volume conflicts
+          strategy:
+            type: Recreate
 
         # Service - disabled in favor of security-hardened extraObjects service
         service:

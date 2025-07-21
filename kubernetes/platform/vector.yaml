@@ -271,16 +271,14 @@ spec:
         tolerations: []
         affinity:
           podAntiAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                    - vector
-                topologyKey: kubernetes.io/hostname
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - vector
+              topologyKey: kubernetes.io/hostname
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
