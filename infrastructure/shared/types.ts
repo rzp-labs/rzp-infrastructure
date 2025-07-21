@@ -142,16 +142,6 @@ export interface IClusterOutput {
   readonly workers: readonly INodeInfo[];
 }
 
-export interface ICloudflareDNSConfig {
-  zoneId: string;
-  environment: string;
-  loadBalancerIP?: string;
-  services: Array<{
-    name: string;
-    subdomain?: string;
-  }>;
-}
-
 /**
  * Shared environment type used across all components
  */

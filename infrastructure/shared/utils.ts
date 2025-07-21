@@ -7,8 +7,8 @@ import type { IVmHealthCheckConfig } from "../helpers/health/vm-health-check";
 import type { IK3sNodeConfig } from "./types";
 
 // Re-export health check utilities from dedicated modules
-export { createVmHealthCheck, type IVmHealthCheckConfig } from "../helpers/health/vm-health-check";
 export { createK3sHealthCheck, type IK3sHealthCheckConfig } from "../helpers/health/k3s-health-check";
+export { createVmHealthCheck, type IVmHealthCheckConfig } from "../helpers/health/vm-health-check";
 
 // For backward compatibility, alias the interfaces
 export type IHealthCheckConfig = IVmHealthCheckConfig;
@@ -127,45 +127,4 @@ export function createNamespaceMetadata(namespaceName: string, appName: string, 
       ...extraLabels,
     },
   };
-}
-
-/**
- * Ingress utilities
- */
-
-/**
- * Standard Traefik ingress configuration for the staging environment
- */
-export function createTraefikIngressConfig(environment: "dev" | "stg" | "prd", enableTls = true, isInternal = false) {
-  return {
-    ingressClassName: `${environment}-traefik-chart`, // Fixed: dynamic environment
-    annotations: createTraefikIngressAnnotations(environment, enableTls, isInternal),
-  };
-}
-
-/**
- * Standard Traefik ingress annotations
- */
-export function createTraefikIngressAnnotations(
-  environment: "dev" | "stg" | "prd",
-  enableTls = true,
-  isInternal = false,
-) {
-  const baseAnnotations: Record<string, string> = {
-    "traefik.ingress.kubernetes.io/router.entrypoints": enableTls ? "websecure" : "web",
-  };
-
-  if (isInternal) {
-    baseAnnotations["traefik.ingress.kubernetes.io/router.middlewares"] = "internal-only@file";
-  }
-
-  if (enableTls) {
-    return {
-      ...baseAnnotations,
-      "traefik.ingress.kubernetes.io/router.tls": "true",
-      "cert-manager.io/cluster-issuer": `${environment}-cert-manager-letsencrypt-issuer`, // Fixed: dynamic environment
-    };
-  }
-
-  return baseAnnotations;
 }
