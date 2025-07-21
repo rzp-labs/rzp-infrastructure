@@ -34,22 +34,6 @@
       ],
       "env": {}
     },
-    "conport": {
-      "type": "stdio",
-      "command": "/Users/stephen/Projects/MCP/context-portal/.venv/bin/python",
-      "args": [
-        "-m",
-        "context_portal_mcp.main",
-        "--mode",
-        "stdio",
-        "--workspace_id",
-        "/Users/stephen/Projects/rzp-infra",
-        "--log-file",
-        "./logs/conport.log",
-        "--log-level",
-        "INFO"
-      ]
-    },
     "repomix": {
       "type": "stdio",
       "command": "npx",
