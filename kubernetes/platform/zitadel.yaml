@@ -27,10 +27,7 @@ spec:
                 adminPasswordKey: "zitadel-postgres-password"
                 replicationPasswordKey: "zitadel-postgres-replication-password"
 
-        architecture: replication
-
-        readReplicas:
-          replicaCount: 1
+        architecture: standalone
 
         primary:
           persistence:
