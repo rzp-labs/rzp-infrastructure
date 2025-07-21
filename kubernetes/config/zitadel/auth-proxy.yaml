@@ -1,39 +1,4 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: zitadel-auth-proxy-config
-  namespace: zitadel
-type: Opaque
-stringData:
-  config.yaml: |
-    # Traefik Forward Auth configuration for Zitadel OIDC
-    host: "0.0.0.0"
-    port: 4181
-    
-    # OIDC Configuration
-    providers:
-      oidc:
-        issuer: "https://zitadel.stg.rzp.one"
-        client_id: "{{ .ZITADEL_AUTH_PROXY_CLIENT_ID }}"
-        client_secret: "{{ .ZITADEL_AUTH_PROXY_CLIENT_SECRET }}"
-        redirect_uri: "https://auth.stg.rzp.one/_oauth"
-    
-    # Authentication settings
-    auth_host: "auth.stg.rzp.one"
-    cookie_domain: ".stg.rzp.one"
-    insecure_cookie: false
-    
-    # Session settings
-    lifetime: 86400  # 24 hours
-    
-    # Allowed domains/users
-    domains:
-      - "rzp.one"
-    
-    # Default action
-    default_action: "auth"
-    default_provider: "oidc"
----
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -57,8 +22,6 @@ spec:
         ports:
         - containerPort: 4181
         env:
-        - name: CONFIG_FILE
-          value: "/config/config.yaml"
         - name: LOG_LEVEL
           value: "info"
         - name: AUTH_HOST
@@ -88,12 +51,9 @@ spec:
           value: "auth"
         - name: DEFAULT_PROVIDER
           value: "oidc"
-        - name: DOMAINS
+        - name: DOMAIN
           value: "rzp.one"
-        volumeMounts:
-        - name: config
-          mountPath: /config
-          readOnly: true
+
         resources:
           requests:
             cpu: 50m
@@ -121,10 +81,7 @@ spec:
           readOnlyRootFilesystem: true
           runAsNonRoot: true
           runAsUser: 65532
-      volumes:
-      - name: config
-        secret:
-          secretName: zitadel-auth-proxy-config
+
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
