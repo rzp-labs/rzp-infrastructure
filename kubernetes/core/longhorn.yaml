@@ -10,7 +10,11 @@ metadata:
     app.kubernetes.io/component: platform
 spec:
   project: default
-  source:
+  sources:
+  - repoURL: https://github.com/stephen-hqxu/rzp-infra.git
+    targetRevision: HEAD
+    path: kubernetes/config/longhorn
+  - 
     repoURL: https://charts.longhorn.io
     chart: longhorn
     targetRevision: 1.9.0 # Latest stable version
