@@ -68,10 +68,10 @@ spec:
             cpu: "300m"
             memory: "256Mi"
 
-        # Dashboard disabled - using protected version in /config/traefik/
+        # Dashboard enabled - no auth needed on internal network
         ingressRoute:
           dashboard:
-            enabled: false
+            enabled: true
 
         # Disable built-in ACME (cert-manager handles certificates)
         certificatesResolvers: {}
