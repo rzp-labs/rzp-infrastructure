@@ -31,7 +31,7 @@ metadata:
     app: openobserve
 spec:
   serviceName: openobserve
-  replicas: 2
+  replicas: 0
   selector:
     matchLabels:
       app: openobserve
