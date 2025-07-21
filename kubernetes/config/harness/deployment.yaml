@@ -106,7 +106,7 @@ spec:
           claimName: harness-data
       - name: containerd-sock
         hostPath:
-          path: /var/run/containerd/containerd.sock
+          path: /run/k3s/containerd/containerd.sock
           type: Socket
       securityContext:
         fsGroup: 1000
