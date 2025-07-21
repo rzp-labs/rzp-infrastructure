@@ -30,6 +30,7 @@ spec:
           type: LoadBalancer
           spec:
             loadBalancerIP: "10.10.0.200"
+            allocateLoadBalancerNodePorts: false
 
         # Ports - homelab standard matching staging environment
         ports:
