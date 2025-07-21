@@ -7,7 +7,7 @@ metadata:
   name: default-headers
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
+    argocd.argoproj.io/sync-wave: '11'
 spec:
   headers:
     frameDeny: true
@@ -19,8 +19,6 @@ spec:
     stsPreload: true
     stsSeconds: 31536000
 ---
-# Basic authentication for staging environment dashboards
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -75,17 +73,16 @@ spec:
   basicAuth:
     secret: basic-auth-credentials
 ---
-# Longhorn Dashboard Ingress
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: longhorn-dashboard
   namespace: longhorn-system
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
-    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: "longhorn-system-default-headers@kubernetescrd,longhorn-system-basic-auth@kubernetescrd"
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: longhorn-system-default-headers@kubernetescrd,longhorn-system-basic-auth@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
@@ -110,7 +107,7 @@ metadata:
   name: default-headers
   namespace: longhorn-system
   annotations:
-    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
+    argocd.argoproj.io/sync-wave: '11'
 spec:
   headers:
     frameDeny: true
@@ -121,91 +118,6 @@ spec:
     stsIncludeSubdomains: true
     stsPreload: true
     stsSeconds: 31536000
----
-# Basic authentication for staging environment dashboards
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: traefik
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: longhorn-system
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: observability
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: traefik
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: longhorn-system
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: observability
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-# Longhorn Dashboard Ingress
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: longhorn-dashboard
-  namespace: longhorn-system
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
-    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: "longhorn-system-default-headers@kubernetescrd,longhorn-system-basic-auth@kubernetescrd"
-spec:
-  ingressClassName: traefik
-  tls:
-  - hosts:
-    - longhorn.stg.rzp.one
-    secretName: longhorn-dashboard-tls
-  rules:
-  - host: longhorn.stg.rzp.one
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: longhorn-frontend
-            port:
-              number: 80
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -213,7 +125,7 @@ metadata:
   name: default-headers
   namespace: observability
   annotations:
-    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
+    argocd.argoproj.io/sync-wave: '11'
 spec:
   headers:
     frameDeny: true
@@ -224,91 +136,6 @@ spec:
     stsIncludeSubdomains: true
     stsPreload: true
     stsSeconds: 31536000
----
-# Basic authentication for staging environment dashboards
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: traefik
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: longhorn-system
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: observability
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: traefik
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: longhorn-system
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: observability
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-# Longhorn Dashboard Ingress
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: longhorn-dashboard
-  namespace: longhorn-system
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
-    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: "longhorn-system-default-headers@kubernetescrd,longhorn-system-basic-auth@kubernetescrd"
-spec:
-  ingressClassName: traefik
-  tls:
-  - hosts:
-    - longhorn.stg.rzp.one
-    secretName: longhorn-dashboard-tls
-  rules:
-  - host: longhorn.stg.rzp.one
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: longhorn-frontend
-            port:
-              number: 80
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -316,7 +143,7 @@ metadata:
   name: default-headers
   namespace: zitadel
   annotations:
-    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
+    argocd.argoproj.io/sync-wave: '11'
 spec:
   headers:
     frameDeny: true
@@ -327,91 +154,6 @@ spec:
     stsIncludeSubdomains: true
     stsPreload: true
     stsSeconds: 31536000
----
-# Basic authentication for staging environment dashboards
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: traefik
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: longhorn-system
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: observability
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: traefik
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: longhorn-system
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: observability
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-# Longhorn Dashboard Ingress
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: longhorn-dashboard
-  namespace: longhorn-system
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
-    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: "longhorn-system-default-headers@kubernetescrd,longhorn-system-basic-auth@kubernetescrd"
-spec:
-  ingressClassName: traefik
-  tls:
-  - hosts:
-    - longhorn.stg.rzp.one
-    secretName: longhorn-dashboard-tls
-  rules:
-  - host: longhorn.stg.rzp.one
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: longhorn-frontend
-            port:
-              number: 80
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -419,7 +161,7 @@ metadata:
   name: default-headers
   namespace: traefik
   annotations:
-    argocd.argoproj.io/sync-wave: "11"  # After namespaces, before services
+    argocd.argoproj.io/sync-wave: '11'
 spec:
   headers:
     frameDeny: true
@@ -430,88 +172,3 @@ spec:
     stsIncludeSubdomains: true
     stsPreload: true
     stsSeconds: 31536000
----
-# Basic authentication for staging environment dashboards
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: traefik
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: longhorn-system
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-credentials
-  namespace: observability
-type: Opaque
-data:
-  users: YWRtaW46JGFwcjEkSDZsdkgzVi4kQnBWOVJrZ29ZUm4zR1ZLdHZJazlOMC4=
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: traefik
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: longhorn-system
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: basic-auth
-  namespace: observability
-spec:
-  basicAuth:
-    secret: basic-auth-credentials
----
-# Longhorn Dashboard Ingress
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: longhorn-dashboard
-  namespace: longhorn-system
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
-    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: "longhorn-system-default-headers@kubernetescrd,longhorn-system-basic-auth@kubernetescrd"
-spec:
-  ingressClassName: traefik
-  tls:
-  - hosts:
-    - longhorn.stg.rzp.one
-    secretName: longhorn-dashboard-tls
-  rules:
-  - host: longhorn.stg.rzp.one
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: longhorn-frontend
-            port:
-              number: 80
