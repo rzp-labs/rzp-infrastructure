@@ -36,24 +36,9 @@ spec:
           targetPort: 19999
           annotations: {}
 
-        # Ingress configuration
+        # Ingress disabled - using Netdata Cloud for access
         ingress:
-          enabled: true
-          className: traefik
-          annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-staging
-            traefik.ingress.kubernetes.io/router.entrypoints: websecure
-            traefik.ingress.kubernetes.io/router.tls: 'true'
-            traefik.ingress.kubernetes.io/router.middlewares: netdata-default-headers@kubernetescrd
-          hosts:
-            - host: netdata.stg.rzp.one
-              paths:
-                - path: /
-                  pathType: Prefix
-          tls:
-            - secretName: netdata-tls
-              hosts:
-                - netdata.stg.rzp.one
+          enabled: false
 
         # Resource configuration
         resources:
@@ -94,10 +79,6 @@ spec:
                 secretKeyRef:
                   name: netdata-secrets
                   key: netdata-claim-room
-
-        # Persistence for metrics storage (temporarily disabled due to Longhorn issues)
-        persistence:
-          enabled: false
 
         # Host monitoring capabilities
         hostNetwork: false
