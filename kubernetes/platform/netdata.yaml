@@ -19,8 +19,12 @@ spec:
         # Netdata configuration for homelab monitoring
         image:
           repository: netdata/netdata
-          tag: v2.6.0
+          tag: stable
           pullPolicy: Always
+
+        # Restarter for automatic updates
+        restarter:
+          enabled: true
 
         # Replica configuration - single instance for homelab
         replicaCount: 1
@@ -78,22 +82,19 @@ spec:
         # Parent configuration for Netdata Cloud integration
         parent:
           enabled: true
-          env:
-            - name: NETDATA_CLAIM_TOKEN
+          claiming:
+            enabled: true
+            token:
               valueFrom:
                 secretKeyRef:
                   name: netdata-secrets
                   key: netdata-claim-token
-            - name: NETDATA_CLAIM_ROOMS
+            rooms:
               valueFrom:
                 secretKeyRef:
                   name: netdata-secrets
                   key: netdata-claim-room
-            - name: NETDATA_CLAIM_URL
-              value: "https://app.netdata.cloud"
-            - name: DO_NOT_TRACK
-              value: "1"
-          
+
         # Persistence for metrics storage
         persistence:
           enabled: true
@@ -115,9 +116,9 @@ spec:
 
         # Node selector and tolerations
         nodeSelector: {}
-        tolerations: 
+        tolerations:
           - operator: Exists
-        
+
         affinity: {}
 
         # Netdata configuration
@@ -169,11 +170,19 @@ spec:
 
         # Child configuration for distributed monitoring
         child:
-          enabled: false
-
-        # Parent configuration
-        parent:
-          enabled: false
+          enabled: true
+          claiming:
+            enabled: true
+            token:
+              valueFrom:
+                secretKeyRef:
+                  name: netdata-secrets
+                  key: netdata-claim-token
+            rooms:
+              valueFrom:
+                secretKeyRef:
+                  name: netdata-secrets
+                  key: netdata-claim-room
 
         # k8s-state-metrics integration
         k8sState:
