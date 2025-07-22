@@ -75,20 +75,24 @@ spec:
           runAsGroup: 201
           runAsNonRoot: true
 
-        # Environment variables for Netdata Cloud integration
-        env:
-          - name: NETDATA_CLAIM_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: netdata-secrets
-                key: netdata-claim-token
-          - name: NETDATA_CLAIM_ROOMS
-            valueFrom:
-              secretKeyRef:
-                name: netdata-secrets
-                key: netdata-claim-room
-          - name: NETDATA_CLAIM_URL
-            value: "https://app.netdata.cloud"
+        # Parent configuration for Netdata Cloud integration
+        parent:
+          enabled: true
+          env:
+            - name: NETDATA_CLAIM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: netdata-secrets
+                  key: netdata-claim-token
+            - name: NETDATA_CLAIM_ROOMS
+              valueFrom:
+                secretKeyRef:
+                  name: netdata-secrets
+                  key: netdata-claim-room
+            - name: NETDATA_CLAIM_URL
+              value: "https://app.netdata.cloud"
+            - name: DO_NOT_TRACK
+              value: "1"
           
         # Persistence for metrics storage
         persistence:
