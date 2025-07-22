@@ -67,6 +67,12 @@ spec:
         # Parent configuration for Netdata Cloud integration
         parent:
           enabled: true
+          persistence:
+            enabled: false
+          database:
+            persistence: false
+          alarms:
+            persistence: false
           claiming:
             enabled: true
             token:
@@ -148,6 +154,8 @@ spec:
         # Child configuration for distributed monitoring
         child:
           enabled: true
+          persistence:
+            enabled: false
           claiming:
             enabled: true
             token:
@@ -164,6 +172,8 @@ spec:
         # k8s-state-metrics integration
         k8sState:
           enabled: true
+          persistence:
+            enabled: false
 
         # Enable various collectors
         collectors:
