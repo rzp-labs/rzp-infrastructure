@@ -156,6 +156,17 @@ spec:
           enabled: true
           persistence:
             enabled: false
+          # Disable web server on children - they only stream to parent
+          configs:
+            netdata:
+              data: |
+                [db]
+                  db = ram
+                  retention = 3600
+                [health]
+                  enabled = no
+                [web]
+                  mode = none
           claiming:
             enabled: true
             token:
