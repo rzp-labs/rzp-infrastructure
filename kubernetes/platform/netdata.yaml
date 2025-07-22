@@ -95,13 +95,9 @@ spec:
                   name: netdata-secrets
                   key: netdata-claim-room
 
-        # Persistence for metrics storage
+        # Persistence for metrics storage (temporarily disabled due to Longhorn issues)
         persistence:
-          enabled: true
-          storageClass: "longhorn"
-          size: "2Gi"
-          accessModes:
-            - ReadWriteOnce
+          enabled: false
 
         # Host monitoring capabilities
         hostNetwork: false
