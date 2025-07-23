@@ -1,207 +1,30 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: longhorn
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "4" # Core storage infrastructure
   labels:
     app.kubernetes.io/name: longhorn
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/component: infrastructure
+    app.kubernetes.io/part-of: core
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
 spec:
   project: default
   sources:
-  - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
-    targetRevision: HEAD
-    path: kubernetes/config/longhorn
-  - 
-    repoURL: https://charts.longhorn.io
-    chart: longhorn
-    targetRevision: 1.9.0 # Latest stable version
-    helm:
-      values: |
-        # Storage configuration optimized for modern Longhorn
-        persistence:
-          defaultClass: true
-          defaultClassReplicaCount: 2
-          defaultDataLocality: best-effort
-          reclaimPolicy: Delete
-          volumeBindingMode: WaitForFirstConsumer
-
-        # CSI driver configuration
-        csi:
-          kubeletRootDir: /var/lib/kubelet
-          attacherReplicaCount: 1
-          provisionerReplicaCount: 1
-          resizerReplicaCount: 1
-          snapshotterReplicaCount: 1
-
-        # Modern default settings leveraging Longhorn 1.9.0 capabilities
-        defaultSettings:
-          # Backup and recovery
-          backupTarget: ""
-          backupTargetCredentialSecret: ""
-          allowRecurringJobWhileVolumeDetached: true
-
-          # Disk and node management (automated by modern Longhorn)
-          createDefaultDiskLabeledNodes: true
-          defaultDataPath: "/var/lib/longhorn"
-          defaultDataLocality: "best-effort"
-
-          # Replica management (enhanced in 1.9.0)
-          replicaSoftAntiAffinity: true
-          replicaAutoBalance: "best-effort"
-          replicaZoneSoftAntiAffinity: true
-          replicaReplenishmentWaitInterval: 600
-          concurrentReplicaRebuildPerNodeLimit: 5
-
-          # Storage optimization
-          storageOverProvisioningPercentage: 100
-          storageMinimalAvailablePercentage: 25
-          defaultReplicaCount: 2
-
-          # Performance and resource management
-          guaranteedEngineCPU: 0.25
-          guaranteedEngineManagerCPU: 0.25
-          guaranteedReplicaManagerCPU: 0.25
-
-          # Monitoring and maintenance (improved automation)
-          upgradeChecker: false  # Disabled for homelab
-          autoSalvage: true
-          autoDeletePodWhenVolumeDetachedUnexpectedly: true
-          autoCleanupSystemGeneratedSnapshot: true
-          disableSchedulingOnCordonedNode: true
-          allowNodeDrainWithLastHealthyReplica: false
-
-          # Advanced settings for 1.9.0
-          nodeDownPodDeletionPolicy: "delete-both-statefulset-and-deployment-pod"
-          disableRevisionCounter: true
-          allowVolumeCreationWithDegradedAvailability: true
-          concurrentAutomaticEngineUpgradePerNodeLimit: 0
-          backingImageCleanupWaitInterval: 60
-          backingImageRecoveryWaitInterval: 300
-          systemManagedPodsImagePullPolicy: "if-not-present"
-
-          # Storage class and backup settings
-          defaultLonghornStaticStorageClass: "longhorn"
-          backupstorePollInterval: 300
-
-          # Filesystem and volume settings
-          mkfsExt4Parameters: ""
-          disableReplicaRebuild: false
-
-          # Taints and node selection
-          taintToleration: ""
-          systemManagedComponentsNodeSelector: ""
-          priorityClass: ""
-
-        # Component resource management (production-ready)
-        longhornManager:
-          priorityClass: ""
-          tolerations: []
-          nodeSelector: {}
-          resources:
-            requests:
-              cpu: 250m
-              memory: 512Mi
-            limits:
-              cpu: 500m
-              memory: 1Gi
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 65534
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
-
-        longhornDriver:
-          priorityClass: ""
-          tolerations: []
-          nodeSelector: {}
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 65534
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
-
-        longhornUI:
-          replicas: 2
-          priorityClass: ""
-          tolerations: []
-          nodeSelector: {}
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 65534
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
-
-        # Instance Manager configuration (optimized for 1.9.0)
-        longhornInstanceManager:
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
-
-        # Ingress configuration - TEMPORARILY DISABLED to break circular dependency
-        # Traefik needs Longhorn storage, Longhorn needs Traefik ingress = deadlock
-        # Will re-enable after both services are operational
-        ingress:
-          enabled: false  # TEMP: Disabled to break circular dependency with Traefik
-
-        # Enhanced preUpgradeChecker (built-in automation in 1.9.0)
-        preUpgradeChecker:
-          jobEnabled: true
-          upgradeVersionCheck: true
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
-
-        # Enable modern monitoring capabilities
-        serviceMonitor:
-          enabled: false  # Disabled for homelab setup
-
-        # Engine image management
-        engineReplicaTimeout: 8
-
-        # Modern backup and restore settings
-        backupSettings:
-          backupCompressionMethod: lz4
-
-        # Volume attachment recovery (enhanced in 1.9.0)
-        volumeAttachmentRecoveryPolicy: wait
-
-        # Support bundle management
-        supportBundleManager:
-          image:
-            repository: longhornio/support-bundle-kit
-            tag: v0.0.41
-
+    - repoURL: https://charts.longhorn.io
+      chart: longhorn
+      targetRevision: 1.9.0
+      helm:
+        valueFiles:
+          - $values/kubernetes/config/longhorn/longhorn-values.yaml
+    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+      targetRevision: HEAD
+      ref: values
+    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+      targetRevision: HEAD
+      path: kubernetes/config/longhorn
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system
@@ -210,8 +33,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
-    - CreateNamespace=true # Let ArgoCD create the namespace
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
@@ -219,34 +41,35 @@ spec:
         factor: 2
         maxDuration: 5m
   ignoreDifferences:
-  - group: admissionregistration.k8s.io
-    kind: ValidatingWebhookConfiguration
-    jsonPointers:
-    - /webhooks/0/clientConfig/caBundle
-    - /webhooks/1/clientConfig/caBundle
-  - group: admissionregistration.k8s.io
-    kind: MutatingWebhookConfiguration
-    jsonPointers:
-    - /webhooks/0/clientConfig/caBundle
-    - /webhooks/1/clientConfig/caBundle
-  - kind: Secret
-    jsonPointers:
-    - /data
-  - group: apps
-    kind: DaemonSet
-    jsonPointers:
-    - /metadata/annotations/deprecated.daemonset.template.generation
-    - /spec/template/spec/containers/0/resources
-    - /spec/template/spec/containers/1/resources
-    - /spec/template/spec/containers/2/resources
-    - /spec/template/spec/initContainers/0/resources
-    - /spec/template/spec/initContainers/1/resources
-  - group: apps
-    kind: Deployment
-    jsonPointers:
-    - /metadata/annotations/deployment.kubernetes.io~1revision
-    - /spec/template/spec/containers/0/resources
-    - /spec/template/spec/containers/1/resources
-    - /spec/template/spec/containers/2/resources
-    - /spec/template/spec/initContainers/0/resources
-    - /spec/template/spec/initContainers/1/resources
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
+        - /webhooks/1/clientConfig/caBundle
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
+        - /webhooks/1/clientConfig/caBundle
+    - group: ""
+    - kind: Secret
+      jsonPointers:
+        - /data
+    - group: apps
+      kind: DaemonSet
+      jsonPointers:
+        - /metadata/annotations/deprecated.daemonset.template.generation
+        - /spec/template/spec/containers/0/resources
+        - /spec/template/spec/containers/1/resources
+        - /spec/template/spec/containers/2/resources
+        - /spec/template/spec/initContainers/0/resources
+        - /spec/template/spec/initContainers/1/resources
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /metadata/annotations/deployment.kubernetes.io~1revision
+        - /spec/template/spec/containers/0/resources
+        - /spec/template/spec/containers/1/resources
+        - /spec/template/spec/containers/2/resources
+        - /spec/template/spec/initContainers/0/resources
+        - /spec/template/spec/initContainers/1/resources

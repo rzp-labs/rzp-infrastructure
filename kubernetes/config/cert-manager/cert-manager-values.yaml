@@ -1,0 +1,47 @@
+# Always install CRDs
+installCRDs: true
+
+# Global configuration
+global:
+  logLevel: 2
+  leaderElection:
+    namespace: cert-manager
+
+# Startup API check configuration - disable for faster deployment
+startupapicheck:
+  enabled: false
+  timeout: "5m"
+
+# Controller resources - production ready
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+# Webhook resources
+webhook:
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"
+  timeoutSeconds: 30
+
+# CA Injector resources
+cainjector:
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"
+
+# Disable Prometheus for homelab
+prometheus:
+  enabled: false

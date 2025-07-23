@@ -1,68 +1,27 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: cert-manager
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"  # After External Secrets
   labels:
     app.kubernetes.io/name: cert-manager
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/component: infrastructure
+    app.kubernetes.io/part-of: core
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   project: default
-  source:
-    repoURL: https://charts.jetstack.io
-    chart: cert-manager
-    targetRevision: v1.16.1
-    helm:
-      values: |
-        # Always install CRDs
-        installCRDs: true
-
-        # Global configuration
-        global:
-          logLevel: 2
-          leaderElection:
-            namespace: cert-manager
-
-        # Startup API check configuration - disable for faster deployment
-        startupapicheck:
-          enabled: false
-          timeout: "5m"
-
-        # Controller resources - production ready
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
-          limits:
-            cpu: "200m"
-            memory: "256Mi"
-
-        # Webhook resources
-        webhook:
-          resources:
-            requests:
-              cpu: "50m"
-              memory: "64Mi"
-            limits:
-              cpu: "100m"
-              memory: "128Mi"
-          timeoutSeconds: 30
-
-        # CA Injector resources
-        cainjector:
-          resources:
-            requests:
-              cpu: "50m"
-              memory: "64Mi"
-            limits:
-              cpu: "100m"
-              memory: "128Mi"
-
-        # Disable Prometheus for homelab
-        prometheus:
-          enabled: false
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.16.1
+      helm:
+        valueFiles:
+          - $values/kubernetes/config/cert-manager/cert-manager-values.yaml
+    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
@@ -71,7 +30,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
@@ -79,16 +38,16 @@ spec:
         factor: 2
         maxDuration: 3m
   ignoreDifferences:
-  - group: admissionregistration.k8s.io
-    kind: ValidatingWebhookConfiguration
-    jsonPointers:
-    - /webhooks/0/clientConfig/caBundle
-    - /webhooks/1/clientConfig/caBundle
-  - group: admissionregistration.k8s.io
-    kind: MutatingWebhookConfiguration
-    jsonPointers:
-    - /webhooks/0/clientConfig/caBundle
-    - /webhooks/1/clientConfig/caBundle
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
+        - /webhooks/1/clientConfig/caBundle
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
+        - /webhooks/1/clientConfig/caBundle
 
 ---
 apiVersion: argoproj.io/v1alpha1
@@ -96,17 +55,20 @@ kind: Application
 metadata:
   name: cert-manager-config
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "3" # After cert-manager
   labels:
     app.kubernetes.io/name: cert-manager-config
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/component: infrastructure
+    app.kubernetes.io/part-of: core
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   project: default
   source:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
     path: kubernetes/config/cert-manager
+    directory:
+      exclude: "cert-manager-values.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
@@ -115,4 +77,10 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

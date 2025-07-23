@@ -1,66 +1,27 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: metallb
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
   labels:
     app.kubernetes.io/name: metallb
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/component: infrastructure
+    app.kubernetes.io/part-of: core
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: default
-  source:
-    repoURL: https://metallb.github.io/metallb
-    chart: metallb
-    targetRevision: 0.15.2
-    helm:
-      values: |
-        # Controller - single replica with security hardening
-        controller:
-          enabled: true
-          image:
-            tag: v0.15.2
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "200m"
-              memory: "256Mi"
-
-        # Speaker - with control plane tolerations and security
-        speaker:
-          enabled: true
-          image:
-            tag: v0.15.2
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "200m"
-              memory: "256Mi"
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-            - key: "node-role.kubernetes.io/master"
-              operator: "Exists"
-              effect: "NoSchedule"
-
-        # Webhook - minimal resources with security
-        webhook:
-          enabled: true
-          image:
-            tag: v0.15.2
-          resources:
-            requests:
-              cpu: "50m"
-              memory: "64Mi"
-            limits:
-              cpu: "100m"
-              memory: "128Mi"
+  sources:
+    - repoURL: https://metallb.github.io/metallb
+      chart: metallb
+      targetRevision: 0.15.2
+      helm:
+        valueFiles:
+          - $values/kubernetes/config/metallb/metallb-values.yaml
+    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: metallb-system
@@ -69,7 +30,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
@@ -77,39 +38,43 @@ spec:
         factor: 2
         maxDuration: 3m
   ignoreDifferences:
-  - group: admissionregistration.k8s.io
-    kind: ValidatingWebhookConfiguration
-    name: metallb-webhook-configuration
-    jsonPointers:
-    - /webhooks/0/clientConfig/caBundle
-    - /webhooks/1/clientConfig/caBundle
-  - group: apps
-    kind: DaemonSet
-    jsonPointers:
-    - /metadata/annotations/deprecated.daemonset.template.generation
-    - /spec/template/spec/containers/0/resources
-    - /spec/template/spec/containers/1/resources
-    - /spec/template/spec/containers/2/resources
-    - /spec/template/spec/initContainers/0/resources
-    - /spec/template/spec/initContainers/1/resources
-    - /spec/template/spec/initContainers/2/resources
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: metallb-webhook-configuration
+      jsonPointers:
+        - /webhooks/0/clientConfig/caBundle
+        - /webhooks/1/clientConfig/caBundle
+    - group: apps
+      kind: DaemonSet
+      jsonPointers:
+        - /metadata/annotations/deprecated.daemonset.template.generation
+        - /spec/template/spec/containers/0/resources
+        - /spec/template/spec/containers/1/resources
+        - /spec/template/spec/containers/2/resources
+        - /spec/template/spec/initContainers/0/resources
+        - /spec/template/spec/initContainers/1/resources
+        - /spec/template/spec/initContainers/2/resources
+
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: metallb-config
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
   labels:
     app.kubernetes.io/name: metallb-config
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/component: infrastructure
+    app.kubernetes.io/part-of: core
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
   source:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
     path: kubernetes/config/metallb
+    directory:
+      exclude: "metallb-values.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: metallb-system
@@ -118,4 +83,10 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

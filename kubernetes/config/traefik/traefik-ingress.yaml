@@ -1,0 +1,23 @@
+# Traefik Dashboard IngressRoute
+# Exposes the Traefik dashboard with proper DNS and TLS using Traefik's native routing
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`traefik.stg.rzp.one`)
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService
+      middlewares:
+        - name: default-headers
+  tls:
+    secretName: traefik-dashboard-tls
