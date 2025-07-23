@@ -18,6 +18,11 @@ spec:
     helm:
       values: |
         # Configuration managed in kubernetes/config/netdata/netdata-values.yaml
+        
+        # Ingress disabled - using Netdata Cloud for access
+        ingress:
+          enabled: false
+        
         parent:
           enabled: true
           persistence:
