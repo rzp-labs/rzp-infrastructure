@@ -1,0 +1,114 @@
+# Example: App of Apps Pattern for Centralized Sync Wave Management
+# This would replace individual ArgoCD Applications with a single master application
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-master
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: platform-master
+    app.kubernetes.io/component: gitops
+    app.kubernetes.io/part-of: platform-services
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+    targetRevision: HEAD
+    path: kubernetes/app-of-apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+# kubernetes/app-of-apps/core-services.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: default
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.13.2
+      helm:
+        valueFiles:
+          - $values/kubernetes/config/cert-manager/cert-manager-values.yaml
+    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+
+---
+# kubernetes/app-of-apps/platform-services.yaml  
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vector-agent
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "11"
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.vector.dev
+      chart: vector
+      targetRevision: 0.34.0
+      helm:
+        valueFiles:
+          - $values/kubernetes/config/vector/vector-agent-values.yaml
+    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vector-agent
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vector-aggregator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "12"
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.vector.dev
+      chart: vector
+      targetRevision: 0.34.0
+      helm:
+        valueFiles:
+          - $values/kubernetes/config/vector/vector-values.yaml
+    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+
+# ... (continue for all applications)
+
+# Benefits of App of Apps:
+# ✅ All sync waves in one place
+# ✅ Centralized application management  
+# ✅ Single source of truth for deployment order
+# ✅ Easier to visualize dependencies
+# ✅ Bulk operations (sync all, delete all)
+
+# Trade-offs:
+# ❌ More complex initial setup
+# ❌ Single point of failure
+# ❌ Harder to manage individual applications
+# ❌ Requires restructuring existing setup
