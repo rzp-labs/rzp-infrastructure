@@ -1,0 +1,43 @@
+global:
+  postgresql:
+    auth:
+      username: "openobserve"
+      database: "openobserve"
+      existingSecret: "openobserve-db-credentials"
+      secretKeys:
+        userPasswordKey: "openobserve-db-password"
+        adminPasswordKey: "openobserve-postgres-password"
+
+architecture: standalone
+
+primary:
+  persistence:
+    enabled: true
+    storageClass: "longhorn"
+    size: 10Gi
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+
+  initdb:
+    scripts:
+      init.sql: |
+        CREATE DATABASE openobserve;
+        GRANT ALL PRIVILEGES ON DATABASE openobserve TO openobserve;
+
+metrics:
+  enabled: false

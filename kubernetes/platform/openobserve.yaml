@@ -1,64 +1,29 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: openobserve-postgres
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "12"
   labels:
     app.kubernetes.io/name: openobserve-postgres
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: platform-services
+  annotations:
+    argocd.argoproj.io/sync-wave: "12"
 spec:
   project: default
-  source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: postgresql
-    targetRevision: 15.5.32
-    helm:
-      values: |
-        global:
-          postgresql:
-            auth:
-              username: "openobserve"
-              database: "openobserve"
-              existingSecret: "openobserve-db-credentials"
-              secretKeys:
-                userPasswordKey: "openobserve-db-password"
-                adminPasswordKey: "openobserve-postgres-password"
-
-        architecture: standalone
-
-        primary:
-          persistence:
-            enabled: true
-            storageClass: "longhorn"
-            size: 10Gi
-
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              cpu: 1000m
-              memory: 2Gi
-
-          podSecurityContext:
-            enabled: true
-            fsGroup: 1001
-
-          containerSecurityContext:
-            enabled: true
-            runAsUser: 1001
-            runAsNonRoot: true
-
-          initdb:
-            scripts:
-              init.sql: |
-                CREATE DATABASE openobserve;
-                GRANT ALL PRIVILEGES ON DATABASE openobserve TO openobserve;
-
-        metrics:
-          enabled: false
+  sources:
+    # PostgreSQL Helm chart
+    - repoURL: https://charts.bitnami.com/bitnami
+      chart: postgresql
+      targetRevision: 15.5.32
+      helm:
+        valueFiles:
+          - $values/kubernetes/config/openobserve/openobserve-postgres-values.yaml
+    # Values file from Git
+    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
@@ -67,7 +32,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
@@ -75,32 +40,36 @@ spec:
         factor: 2
         maxDuration: 3m
   ignoreDifferences:
-  - group: apps
-    kind: StatefulSet
-    jsonPointers:
-    - /metadata/annotations/deployment.kubernetes.io~1revision
-  - group: ""
-    kind: Secret
-    name: "*"
-    jsonPointers:
-    - /data
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /metadata/annotations/deployment.kubernetes.io~1revision
+    - group: ""
+      kind: Secret
+      name: "*"
+      jsonPointers:
+        - /data
+
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: openobserve-app
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "15"
   labels:
     app.kubernetes.io/name: openobserve-app
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/component: observability
+    app.kubernetes.io/part-of: platform-services
+  annotations:
+    argocd.argoproj.io/sync-wave: "15"
 spec:
   project: default
   source:
     repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
     targetRevision: HEAD
     path: kubernetes/config/openobserve
+    directory:
+      exclude: "*-values.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
@@ -109,7 +78,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
@@ -117,8 +86,8 @@ spec:
         factor: 2
         maxDuration: 5m
   ignoreDifferences:
-  - group: apps
-    kind: StatefulSet
-    jsonPointers:
-    - /spec/volumeClaimTemplates/0/apiVersion
-    - /spec/volumeClaimTemplates/0/kind
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates/0/apiVersion
+        - /spec/volumeClaimTemplates/0/kind
