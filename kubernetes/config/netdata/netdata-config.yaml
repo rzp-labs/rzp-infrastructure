@@ -1,0 +1,125 @@
+# Netdata Helm Chart Complete Configuration Reference
+# This file serves as documentation for all available Netdata Helm chart options
+# The actual deployment uses minimal config in kubernetes/platform/netdata.yaml
+
+# Base image configuration
+image:
+  repository: netdata/netdata
+  tag: stable
+  pullPolicy: Always
+
+# Restarter for automatic updates
+restarter:
+  enabled: true
+
+# Replica configuration
+replicaCount: 1
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 19999
+  targetPort: 19999
+  annotations: {}
+
+# Ingress disabled - using Netdata Cloud for access
+ingress:
+  enabled: false
+
+# Resource limits and requests
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Security contexts
+securityContext:
+  capabilities:
+    add:
+    - SYS_PTRACE
+    - SYS_ADMIN
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+
+podSecurityContext:
+  runAsUser: 201
+  runAsGroup: 201
+  runAsNonRoot: true
+
+# RBAC permissions for Kubernetes monitoring
+rbac:
+  create: true
+  pspEnabled: false
+  clusterRole: true
+  rules:
+  - apiGroups: [ "" ]
+    resources: [ "nodes", "nodes/proxy", "nodes/metrics", "services", "endpoints", "pods", "namespaces" ]
+    verbs: [ "get", "list", "watch" ]
+  - apiGroups: [ "apps" ]
+    resources: [ "deployments", "replicasets", "daemonsets", "statefulsets" ]
+    verbs: [ "get", "list", "watch" ]
+  - apiGroups: [ "extensions" ]
+    resources: [ "deployments", "replicasets", "daemonsets" ]
+    verbs: [ "get", "list", "watch" ]
+
+serviceAccount:
+  create: true
+  annotations: {}
+
+# Node selection and scheduling
+nodeSelector: {}
+tolerations:
+- operator: Exists
+affinity: {}
+hostNetwork: false
+
+# Advanced netdata.conf configuration
+configmap:
+  enabled: true
+  data:
+    netdata.conf: |
+      [global]
+          hostname = netdata-k3s
+          history = 3600
+          error log = stderr
+          access log = none
+          debug log = none
+
+      [web]
+          mode = static-threaded
+          listen backlog = 4096
+          default port = 19999
+          bind to = 0.0.0.0:19999
+          disconnect idle clients after seconds = 60
+          timeout for first request = 60
+          accept a streaming request every seconds = 0
+          respect do not track policy = no
+          x-frame-options response header =
+          allow connections from = localhost *
+          allow dashboard from = localhost *
+          allow badges from = *
+          allow streaming from = *
+          allow netdata.conf from = localhost fd* 10.* 192.168.* 172.*
+          allow management from = localhost
+          enable gzip compression = yes
+          gzip compression strategy = default
+          gzip compression level = 6
+
+      [plugins]
+          cgroups = yes
+          proc = yes
+          diskspace = yes
+          tc = no
+          idlejitter = yes
+          enable running new plugins = yes
+          check for new plugins every = 60
+          python.d = yes
+          charts.d = yes
+          go.d = yes
+          node.d = yes
+          apps = yes
+          statsd = yes

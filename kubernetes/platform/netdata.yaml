@@ -17,55 +17,7 @@ spec:
     targetRevision: 3.7.141
     helm:
       values: |
-        # Netdata configuration for homelab monitoring
-        image:
-          repository: netdata/netdata
-          tag: stable
-          pullPolicy: Always
-
-        # Restarter for automatic updates
-        restarter:
-          enabled: true
-
-        # Replica configuration - single instance for homelab
-        replicaCount: 1
-
-        # Service configuration
-        service:
-          type: ClusterIP
-          port: 19999
-          targetPort: 19999
-          annotations: {}
-
-        # Ingress disabled - using Netdata Cloud for access
-        ingress:
-          enabled: false
-
-        # Resource configuration
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-
-        # Security context
-        securityContext:
-          capabilities:
-            add:
-              - SYS_PTRACE
-              - SYS_ADMIN
-            drop:
-              - ALL
-          readOnlyRootFilesystem: false
-
-        podSecurityContext:
-          runAsUser: 201
-          runAsGroup: 201
-          runAsNonRoot: true
-
-        # Parent configuration for Netdata Cloud integration
+        # Configuration managed in kubernetes/config/netdata/netdata-values.yaml
         parent:
           enabled: true
           persistence:
@@ -75,7 +27,6 @@ spec:
           alarms:
             persistence: false
           env:
-            NETDATA_EXTRA_DEB_PACKAGES: "curl"
             NETDATA_CLAIM_TOKEN:
               valueFrom:
                 secretKeyRef:
@@ -86,96 +37,11 @@ spec:
                 secretKeyRef:
                   name: netdata-secrets
                   key: netdata-claim-room
-          configs:
-            kubelet:
-              enabled: true
-            kubeproxy:
-              enabled: true
 
-        # Host monitoring capabilities
-        hostNetwork: false
-
-        # RBAC permissions for Kubernetes monitoring
-        rbac:
-          create: true
-          pspEnabled: false
-          clusterRole: true
-          # Additional permissions for namespace discovery
-          rules:
-            - apiGroups: [""]
-              resources: ["nodes", "nodes/proxy", "nodes/metrics", "services", "endpoints", "pods", "namespaces"]
-              verbs: ["get", "list", "watch"]
-            - apiGroups: ["apps"]
-              resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
-              verbs: ["get", "list", "watch"]
-            - apiGroups: ["extensions"]
-              resources: ["deployments", "replicasets", "daemonsets"]
-              verbs: ["get", "list", "watch"]
-
-        serviceAccount:
-          create: true
-          annotations: {}
-
-        # Node selector and tolerations
-        nodeSelector: {}
-        tolerations:
-          - operator: Exists
-
-        affinity: {}
-
-        # Netdata configuration
-        configmap:
-          enabled: true
-          data:
-            netdata.conf: |
-              [global]
-                  hostname = netdata-k3s
-                  history = 3600
-                  error log = stderr
-                  access log = none
-                  debug log = none
-
-              [web]
-                  mode = static-threaded
-                  listen backlog = 4096
-                  default port = 19999
-                  bind to = 0.0.0.0:19999
-                  disconnect idle clients after seconds = 60
-                  timeout for first request = 60
-                  accept a streaming request every seconds = 0
-                  respect do not track policy = no
-                  x-frame-options response header =
-                  allow connections from = localhost *
-                  allow dashboard from = localhost *
-                  allow badges from = *
-                  allow streaming from = *
-                  allow netdata.conf from = localhost fd* 10.* 192.168.* 172.*
-                  allow management from = localhost
-                  enable gzip compression = yes
-                  gzip compression strategy = default
-                  gzip compression level = 6
-
-              [plugins]
-                  cgroups = yes
-                  proc = yes
-                  diskspace = yes
-                  tc = no
-                  idlejitter = yes
-                  enable running new plugins = yes
-                  check for new plugins every = 60
-                  python.d = yes
-                  charts.d = yes
-                  go.d = yes
-                  node.d = yes
-                  apps = yes
-                  statsd = yes
-
-        # Child configuration for distributed monitoring
         child:
           enabled: true
           persistence:
             enabled: false
-          # Disable web server on children - they only stream to parent
           env:
             NETDATA_CLAIM_TOKEN:
               valueFrom:
@@ -198,38 +64,14 @@ spec:
                 [web]
                   mode = none
 
-        # k8s-state-metrics integration
         k8sState:
           enabled: true
           persistence:
             enabled: false
 
-        # Enable various collectors
-        collectors:
-          kubelet:
-            enabled: true
-          kubeProxy:
-            enabled: true
-          systemd:
-            enabled: true
-          kubernetes:
-            enabled: true
-            # Kubernetes API monitoring configuration
-            config: |
-              [kubernetes]
-                enabled = yes
-                update every = 1
-                priority = 140000
-
-              [kubernetes_apiserver]
-                enabled = yes
-                url = https://kubernetes.default.svc.cluster.local:443
-
-              [kubernetes_kubelet]
-                enabled = yes
-
-              [kubernetes_kube_proxy]
-                enabled = yes
+        rbac:
+          create: true
+          clusterRole: true
 
   destination:
     server: https://kubernetes.default.svc
