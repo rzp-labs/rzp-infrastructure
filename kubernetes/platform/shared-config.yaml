@@ -1,3 +1,4 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -21,7 +22,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
@@ -29,13 +30,13 @@ spec:
         factor: 2
         maxDuration: 3m
   ignoreDifferences:
-  - group: argoproj.io
-    kind: Application
-    name: shared-config
-    jsonPointers:
-    - /spec/source/directory/recurse
-  - group: traefik.io
-    kind: Middleware
-    jsonPointers:
-    - /metadata/annotations
-    - /status
+    - group: argoproj.io
+      kind: Application
+      name: shared-config
+      jsonPointers:
+        - /spec/source/directory/recurse
+    - group: traefik.io
+      kind: Middleware
+      jsonPointers:
+        - /metadata/annotations
+        - /status

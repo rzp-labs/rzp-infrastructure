@@ -1,3 +1,4 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -25,7 +26,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
@@ -34,39 +35,39 @@ spec:
         maxDuration: 5m
   ignoreDifferences:
   # External Secrets Operator drift
-  - group: external-secrets.io
-    kind: SecretStore
-    name: "*"
-    jsonPointers:
-    - /status
-  - group: external-secrets.io
-    kind: ExternalSecret
-    name: "*"
-    jsonPointers:
-    - /status
+    - group: external-secrets.io
+      kind: SecretStore
+      name: "*"
+      jsonPointers:
+        - /status
+    - group: external-secrets.io
+      kind: ExternalSecret
+      name: "*"
+      jsonPointers:
+        - /status
   # Standard K8s-managed secret and configmap data
-  - group: ""
-    kind: Secret
-    name: "*"
-    jsonPointers:
-    - /data
-  - group: ""
-    kind: ConfigMap
-    name: "*"
-    jsonPointers:
-    - /data
+    - group: ""
+      kind: Secret
+      name: "*"
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: ConfigMap
+      name: "*"
+      jsonPointers:
+        - /data
   # StatefulSet and Deployment annotations
-  - group: apps
-    kind: StatefulSet
-    jsonPointers:
-    - /metadata/annotations/deployment.kubernetes.io~1revision
-  - group: apps
-    kind: Deployment
-    jsonPointers:
-    - /metadata/annotations/deployment.kubernetes.io~1revision
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /metadata/annotations/deployment.kubernetes.io~1revision
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /metadata/annotations/deployment.kubernetes.io~1revision
   # Ingress annotations that may be added by controllers
-  - group: networking.k8s.io
-    kind: Ingress
-    name: "*"
-    jsonPointers:
-    - /metadata/annotations/ingress.kubernetes.io~1ssl-redirect
+    - group: networking.k8s.io
+      kind: Ingress
+      name: "*"
+      jsonPointers:
+        - /metadata/annotations/ingress.kubernetes.io~1ssl-redirect

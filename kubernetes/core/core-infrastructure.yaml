@@ -1,13 +1,15 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: core-infrastructure
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
   labels:
     app.kubernetes.io/name: core-infrastructure
     app.kubernetes.io/component: infrastructure
+    app.kubernetes.io/part-of: core
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   source:
@@ -17,7 +19,7 @@ spec:
     directory:
       recurse: true
       include: "{*.yaml,namespaces/*.yaml}"
-      exclude: "core-infrastructure.yaml,README.md"
+      exclude: "core-infrastructure.yaml"
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
@@ -25,7 +27,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
