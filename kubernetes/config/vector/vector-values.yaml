@@ -68,17 +68,13 @@ monitoring:
     enabled: true
     additionalLabels:
       release: prometheus
-# Environment variables for secrets
+# Environment variables for secrets (VECTOR_SELF_* vars are automatically provided)
 env:
   - name: OPENOBSERVE_PASSWORD
     valueFrom:
       secretKeyRef:
         name: openobserve-secrets
         key: openobserve-root-password
-  - name: VECTOR_SELF_NODE_NAME
-    valueFrom:
-      fieldRef:
-        fieldPath: spec.nodeName
 # Node selector and tolerations
 nodeSelector: {}
 tolerations: []
