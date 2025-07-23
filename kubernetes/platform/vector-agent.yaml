@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: observability
     app.kubernetes.io/part-of: platform-services
   annotations:
-    argocd.argoproj.io/sync-wave: "11"  # Deploy before aggregator
+    argocd.argoproj.io/sync-wave: "11" # Deploy before aggregator
 spec:
   project: default
   sources:
@@ -24,7 +24,7 @@ spec:
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: vector-agent  # Separate namespace for agents
+    namespace: vector-agent # Separate namespace for agents
   syncPolicy:
     automated:
       prune: true

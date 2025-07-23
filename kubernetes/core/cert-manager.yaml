@@ -48,7 +48,6 @@ spec:
       jsonPointers:
         - /webhooks/0/clientConfig/caBundle
         - /webhooks/1/clientConfig/caBundle
-
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application

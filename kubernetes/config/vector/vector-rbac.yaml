@@ -8,7 +8,6 @@ metadata:
     app.kubernetes.io/name: vector-agent
     app.kubernetes.io/component: observability
     app.kubernetes.io/part-of: platform-services
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -19,27 +18,26 @@ metadata:
     app.kubernetes.io/component: observability
     app.kubernetes.io/part-of: platform-services
 rules:
-# Essential for log collection
+  # Essential for log collection
   - apiGroups: [""]
     resources: ["pods", "pods/log"]
     verbs: ["get", "list", "watch"]
-# Node-level metrics and info
+    # Node-level metrics and info
   - apiGroups: [""]
     resources: ["nodes", "nodes/metrics", "nodes/proxy"]
     verbs: ["get", "list", "watch"]
-# Namespace context for logs
+    # Namespace context for logs
   - apiGroups: [""]
     resources: ["namespaces"]
     verbs: ["get", "list", "watch"]
-# Service discovery for enrichment
+    # Service discovery for enrichment
   - apiGroups: [""]
     resources: ["services", "endpoints"]
     verbs: ["get", "list", "watch"]
-# Workload metadata for log enrichment
+    # Workload metadata for log enrichment
   - apiGroups: ["apps"]
     resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
     verbs: ["get", "list", "watch"]
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -57,7 +55,6 @@ subjects:
   - kind: ServiceAccount
     name: vector-agent
     namespace: vector-agent
-
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -68,7 +65,6 @@ metadata:
     app.kubernetes.io/name: vector-aggregator
     app.kubernetes.io/component: observability
     app.kubernetes.io/part-of: platform-services
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -79,11 +75,10 @@ metadata:
     app.kubernetes.io/component: observability
     app.kubernetes.io/part-of: platform-services
 rules:
-# Only needs basic namespace discovery for routing
+  # Only needs basic namespace discovery for routing
   - apiGroups: [""]
     resources: ["namespaces"]
     verbs: ["get", "list", "watch"]
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

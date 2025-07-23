@@ -1,3 +1,4 @@
+---
 global:
   postgresql:
     auth:
@@ -8,15 +9,12 @@ global:
         userPasswordKey: "zitadel-db-password"
         adminPasswordKey: "zitadel-postgres-password"
         replicationPasswordKey: "zitadel-postgres-replication-password"
-
 architecture: standalone
-
 primary:
   persistence:
     enabled: true
     storageClass: "longhorn"
     size: 5Gi
-
   resources:
     requests:
       cpu: 250m
@@ -24,11 +22,9 @@ primary:
     limits:
       cpu: 500m
       memory: 1Gi
-
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
@@ -39,6 +35,5 @@ primary:
     capabilities:
       drop:
         - ALL
-
 metrics:
   enabled: false

@@ -1,3 +1,4 @@
+---
 # Storage configuration optimized for modern Longhorn
 persistence:
   defaultClass: true
@@ -5,7 +6,6 @@ persistence:
   defaultDataLocality: best-effort
   reclaimPolicy: Delete
   volumeBindingMode: WaitForFirstConsumer
-
 # CSI driver configuration
 csi:
   kubeletRootDir: /var/lib/kubelet
@@ -13,44 +13,37 @@ csi:
   provisionerReplicaCount: 1
   resizerReplicaCount: 1
   snapshotterReplicaCount: 1
-
 # Modern default settings leveraging Longhorn 1.9.0 capabilities
 defaultSettings:
   # Backup and recovery
   backupTarget: ""
   backupTargetCredentialSecret: ""
   allowRecurringJobWhileVolumeDetached: true
-
   # Disk and node management (automated by modern Longhorn)
   createDefaultDiskLabeledNodes: true
   defaultDataPath: "/var/lib/longhorn"
   defaultDataLocality: "best-effort"
-
   # Replica management (enhanced in 1.9.0)
   replicaSoftAntiAffinity: true
   replicaAutoBalance: "best-effort"
   replicaZoneSoftAntiAffinity: true
   replicaReplenishmentWaitInterval: 600
   concurrentReplicaRebuildPerNodeLimit: 5
-
   # Storage optimization
   storageOverProvisioningPercentage: 100
   storageMinimalAvailablePercentage: 25
   defaultReplicaCount: 2
-
   # Performance and resource management
   guaranteedEngineCPU: 0.25
   guaranteedEngineManagerCPU: 0.25
   guaranteedReplicaManagerCPU: 0.25
-
   # Monitoring and maintenance (improved automation)
-  upgradeChecker: false  # Disabled for homelab
+  upgradeChecker: false # Disabled for homelab
   autoSalvage: true
   autoDeletePodWhenVolumeDetachedUnexpectedly: true
   autoCleanupSystemGeneratedSnapshot: true
   disableSchedulingOnCordonedNode: true
   allowNodeDrainWithLastHealthyReplica: false
-
   # Advanced settings for 1.9.0
   nodeDownPodDeletionPolicy: "delete-both-statefulset-and-deployment-pod"
   disableRevisionCounter: true
@@ -59,20 +52,16 @@ defaultSettings:
   backingImageCleanupWaitInterval: 60
   backingImageRecoveryWaitInterval: 300
   systemManagedPodsImagePullPolicy: "if-not-present"
-
   # Storage class and backup settings
   defaultLonghornStaticStorageClass: "longhorn"
   backupstorePollInterval: 300
-
   # Filesystem and volume settings
   mkfsExt4Parameters: ""
   disableReplicaRebuild: false
-
   # Taints and node selection
   taintToleration: ""
   systemManagedComponentsNodeSelector: ""
   priorityClass: ""
-
 # Component resource management (production-ready)
 longhornManager:
   priorityClass: ""
@@ -92,7 +81,6 @@ longhornManager:
     readOnlyRootFilesystem: true
     capabilities:
       drop: ["ALL"]
-
 longhornDriver:
   priorityClass: ""
   tolerations: []
@@ -111,7 +99,6 @@ longhornDriver:
     readOnlyRootFilesystem: true
     capabilities:
       drop: ["ALL"]
-
 longhornUI:
   replicas: 2
   priorityClass: ""
@@ -131,7 +118,6 @@ longhornUI:
     readOnlyRootFilesystem: true
     capabilities:
       drop: ["ALL"]
-
 # Service configuration
 service:
   ui:
@@ -140,11 +126,10 @@ service:
   manager:
     type: ClusterIP
     nodePort: null
-
-# Ingress configuration (handled separately)
+---
+# Longhorn configuration (handled separately)
 ingress:
   enabled: false
-
 # Instance Manager configuration (optimized for 1.9.0)
 longhornInstanceManager:
   resources:
@@ -154,7 +139,6 @@ longhornInstanceManager:
     limits:
       cpu: 200m
       memory: 256Mi
-
 # Enhanced preUpgradeChecker (built-in automation in 1.9.0)
 preUpgradeChecker:
   jobEnabled: true
@@ -166,21 +150,16 @@ preUpgradeChecker:
     limits:
       cpu: 100m
       memory: 128Mi
-
 # Enable modern monitoring capabilities
 serviceMonitor:
-  enabled: false  # Disabled for homelab setup
-
+  enabled: false # Disabled for homelab setup
 # Engine image management
 engineReplicaTimeout: 8
-
 # Modern backup and restore settings
 backupSettings:
   backupCompressionMethod: lz4
-
 # Volume attachment recovery (enhanced in 1.9.0)
 volumeAttachmentRecoveryPolicy: wait
-
 # Support bundle management
 supportBundleManager:
   image:

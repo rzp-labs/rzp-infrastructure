@@ -7,15 +7,15 @@ metadata:
   name: zitadel-auth
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "16"  # After Zitadel is deployed
+    argocd.argoproj.io/sync-wave: "16" # After Zitadel is deployed
 spec:
   forwardAuth:
     address: "http://zitadel-auth-proxy.zitadel.svc.cluster.local:4181/api/verify"
     authResponseHeaders:
-    - "Remote-User"
-    - "Remote-Name"
-    - "Remote-Email"
-    - "Remote-Groups"
+      - "Remote-User"
+      - "Remote-Name"
+      - "Remote-Email"
+      - "Remote-Groups"
     trustForwardHeader: true
 ---
 apiVersion: traefik.io/v1alpha1
@@ -24,15 +24,15 @@ metadata:
   name: zitadel-auth
   namespace: longhorn-system
   annotations:
-    argocd.argoproj.io/sync-wave: "16"  # After Zitadel is deployed
+    argocd.argoproj.io/sync-wave: "16" # After Zitadel is deployed
 spec:
   forwardAuth:
     address: "http://zitadel-auth-proxy.zitadel.svc.cluster.local:4181/api/verify"
     authResponseHeaders:
-    - "Remote-User"
-    - "Remote-Name"
-    - "Remote-Email"
-    - "Remote-Groups"
+      - "Remote-User"
+      - "Remote-Name"
+      - "Remote-Email"
+      - "Remote-Groups"
     trustForwardHeader: true
 ---
 apiVersion: traefik.io/v1alpha1
@@ -41,15 +41,15 @@ metadata:
   name: zitadel-auth
   namespace: observability
   annotations:
-    argocd.argoproj.io/sync-wave: "16"  # After Zitadel is deployed
+    argocd.argoproj.io/sync-wave: "16" # After Zitadel is deployed
 spec:
   forwardAuth:
     address: "http://zitadel-auth-proxy.zitadel.svc.cluster.local:4181/api/verify"
     authResponseHeaders:
-    - "Remote-User"
-    - "Remote-Name"
-    - "Remote-Email"
-    - "Remote-Groups"
+      - "Remote-User"
+      - "Remote-Name"
+      - "Remote-Email"
+      - "Remote-Groups"
     trustForwardHeader: true
 ---
 apiVersion: traefik.io/v1alpha1
@@ -58,13 +58,13 @@ metadata:
   name: zitadel-auth
   namespace: traefik
   annotations:
-    argocd.argoproj.io/sync-wave: "16"  # After Zitadel is deployed
+    argocd.argoproj.io/sync-wave: "16" # After Zitadel is deployed
 spec:
   forwardAuth:
     address: "http://zitadel-auth-proxy.zitadel.svc.cluster.local:4181/api/verify"
     authResponseHeaders:
-    - "Remote-User"
-    - "Remote-Name"
-    - "Remote-Email"
-    - "Remote-Groups"
+      - "Remote-User"
+      - "Remote-Name"
+      - "Remote-Email"
+      - "Remote-Groups"
     trustForwardHeader: true

@@ -8,7 +8,6 @@ metadata:
     app.kubernetes.io/name: svc-netdata
     app.kubernetes.io/component: platform
     app.kubernetes.io/part-of: platform-services
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -19,47 +18,46 @@ metadata:
     app.kubernetes.io/component: platform
     app.kubernetes.io/part-of: platform-services
   rules:
-  # Core Kubernetes resources for monitoring
+    # Core Kubernetes resources for monitoring
     - apiGroups: [""]
       resources: ["nodes", "nodes/proxy", "nodes/metrics"]
       verbs: ["get", "list", "watch"]
-  # Pod monitoring and metrics collection
+      # Pod monitoring and metrics collection
     - apiGroups: [""]
       resources: ["pods", "pods/log"]
       verbs: ["get", "list", "watch"]
-  # Service discovery and network monitoring
+      # Service discovery and network monitoring
     - apiGroups: [""]
       resources: ["services", "endpoints"]
       verbs: ["get", "list", "watch"]
-  # Namespace discovery for proper categorization
+      # Namespace discovery for proper categorization
     - apiGroups: [""]
       resources: ["namespaces"]
       verbs: ["get", "list", "watch"]
-  # Application workload monitoring
+      # Application workload monitoring
     - apiGroups: ["apps"]
       resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
       verbs: ["get", "list", "watch"]
-  # Legacy extensions API support
+      # Legacy extensions API support
     - apiGroups: ["extensions"]
       resources: ["deployments", "replicasets", "daemonsets"]
       verbs: ["get", "list", "watch"]
-  # Storage monitoring
+      # Storage monitoring
     - apiGroups: [""]
       resources: ["persistentvolumes", "persistentvolumeclaims"]
       verbs: ["get", "list", "watch"]
-  # Network policy and ingress monitoring
+      # Network policy and ingress monitoring
     - apiGroups: ["networking.k8s.io"]
       resources: ["ingresses", "networkpolicies"]
       verbs: ["get", "list", "watch"]
-  # Metrics API access
+      # Metrics API access
     - apiGroups: ["metrics.k8s.io"]
       resources: ["nodes", "pods"]
       verbs: ["get", "list"]
-  # Custom resource monitoring
+      # Custom resource monitoring
     - apiGroups: ["apiextensions.k8s.io"]
       resources: ["customresourcedefinitions"]
       verbs: ["get", "list", "watch"]
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

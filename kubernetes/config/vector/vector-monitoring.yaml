@@ -9,12 +9,12 @@ metadata:
     app.kubernetes.io/component: metrics
 spec:
   ports:
-  - name: metrics
-    port: 8686
-    targetPort: 8686
-    protocol: TCP
-  selector:
-    app.kubernetes.io/name: vector
+    - name: metrics
+      port: 8686
+      targetPort: 8686
+      protocol: TCP
+      selector:
+      app.kubernetes.io/name: vector
 # ServiceMonitor disabled - requires Prometheus Operator CRDs
 # ---
 # apiVersion: monitoring.coreos.com/v1

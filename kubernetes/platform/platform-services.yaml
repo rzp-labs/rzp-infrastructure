@@ -5,7 +5,7 @@ metadata:
   name: platform-services
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "10"  # After core CRDs are installed and ready
+    argocd.argoproj.io/sync-wave: "10" # After core CRDs are installed and ready
   labels:
     app.kubernetes.io/name: platform-services
     app.kubernetes.io/component: platform
@@ -34,7 +34,7 @@ spec:
         factor: 2
         maxDuration: 5m
   ignoreDifferences:
-  # External Secrets Operator drift
+    # External Secrets Operator drift
     - group: external-secrets.io
       kind: SecretStore
       name: "*"
@@ -45,7 +45,7 @@ spec:
       name: "*"
       jsonPointers:
         - /status
-  # Standard K8s-managed secret and configmap data
+        # Standard K8s-managed secret and configmap data
     - group: ""
       kind: Secret
       name: "*"
@@ -56,7 +56,7 @@ spec:
       name: "*"
       jsonPointers:
         - /data
-  # StatefulSet and Deployment annotations
+        # StatefulSet and Deployment annotations
     - group: apps
       kind: StatefulSet
       jsonPointers:
@@ -65,7 +65,7 @@ spec:
       kind: Deployment
       jsonPointers:
         - /metadata/annotations/deployment.kubernetes.io~1revision
-  # Ingress annotations that may be added by controllers
+        # Ingress annotations that may be added by controllers
     - group: networking.k8s.io
       kind: Ingress
       name: "*"

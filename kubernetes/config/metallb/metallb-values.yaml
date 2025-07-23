@@ -1,3 +1,4 @@
+---
 # Controller - single replica with security hardening
 controller:
   enabled: true
@@ -10,7 +11,6 @@ controller:
     limits:
       cpu: "200m"
       memory: "256Mi"
-
 # Speaker - with control plane tolerations and security
 speaker:
   enabled: true
@@ -30,7 +30,6 @@ speaker:
     - key: "node-role.kubernetes.io/master"
       operator: "Exists"
       effect: "NoSchedule"
-
 # Webhook - minimal resources with security
 webhook:
   enabled: true

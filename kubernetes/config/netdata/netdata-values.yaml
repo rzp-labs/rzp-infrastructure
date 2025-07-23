@@ -18,7 +18,6 @@ parent:
         secretKeyRef:
           name: netdata-secrets
           key: netdata-claim-room
-
 child:
   enabled: true
   persistence:
@@ -44,19 +43,15 @@ child:
           enabled = no
         [web]
           mode = none
-
 k8sState:
   enabled: true
   persistence:
     enabled: false
-
 rbac:
   create: false
-
 serviceAccount:
   create: false
   name: svc-netdata
-
 # Ingress disabled - using Netdata Cloud for access
 ingress:
   enabled: false

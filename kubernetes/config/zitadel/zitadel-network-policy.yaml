@@ -1,3 +1,4 @@
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -8,44 +9,44 @@ spec:
     matchLabels:
       app.kubernetes.io/name: zitadel
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  # Allow ingress from Traefik
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: traefik
-    ports:
-    - protocol: TCP
-      port: 8080
-  # Allow ingress from applications that need authentication
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          app.kubernetes.io/part-of: applications
-    ports:
-    - protocol: TCP
-      port: 8080
+    # Allow ingress from Traefik
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: traefik
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow ingress from applications that need authentication
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: applications
+      ports:
+        - protocol: TCP
+          port: 8080
   egress:
-  # Allow egress to PostgreSQL
-  - to:
-    - podSelector:
-        matchLabels:
-          app.kubernetes.io/name: postgresql
-    ports:
-    - protocol: TCP
-      port: 5432
-  # Allow egress to DNS
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
-  # Allow egress to HTTPS for external services
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 443
+    # Allow egress to PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow egress to DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow egress to HTTPS for external services
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -57,13 +58,13 @@ spec:
     matchLabels:
       app.kubernetes.io/name: postgresql
   policyTypes:
-  - Ingress
+    - Ingress
   ingress:
-  # Allow ingress from Zitadel app
-  - from:
-    - podSelector:
-        matchLabels:
-          app.kubernetes.io/name: zitadel
-    ports:
-    - protocol: TCP
-      port: 5432
+    # Allow ingress from Zitadel app
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: zitadel
+      ports:
+        - protocol: TCP
+          port: 5432

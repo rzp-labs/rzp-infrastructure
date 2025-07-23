@@ -1,6 +1,6 @@
+---
 # Example: App of Apps Pattern for Centralized Sync Wave Management
 # This would replace individual ArgoCD Applications with a single master application
-
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -23,7 +23,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
-
 ---
 # kubernetes/app-of-apps/core-services.yaml
 apiVersion: argoproj.io/v1alpha1
@@ -48,7 +47,6 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
-
 ---
 # kubernetes/app-of-apps/platform-services.yaml  
 apiVersion: argoproj.io/v1alpha1
@@ -73,7 +71,6 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: vector-agent
-
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -102,7 +99,7 @@ spec:
 
 # Benefits of App of Apps:
 # ✅ All sync waves in one place
-# ✅ Centralized application management  
+# ✅ Centralized application management
 # ✅ Single source of truth for deployment order
 # ✅ Easier to visualize dependencies
 # ✅ Bulk operations (sync all, delete all)

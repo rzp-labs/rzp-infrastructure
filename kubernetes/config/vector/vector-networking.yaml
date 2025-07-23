@@ -18,18 +18,18 @@ spec:
   ingress:
     # Allow ingress from other Vector instances for clustering
     - from:
-      - podSelector:
-          matchLabels:
-            app.kubernetes.io/name: vector
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vector
       ports:
         - protocol: TCP
           port: 8686
   egress:
     # Allow egress to OpenObserve for logs and metrics
     - to:
-      - podSelector:
-          matchLabels:
-            app.kubernetes.io/name: openobserve
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: openobserve
       ports:
         - protocol: TCP
           port: 5080

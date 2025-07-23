@@ -1,6 +1,6 @@
+---
 # Install CRDs for Middleware, IngressRoute, etc.
 installCRDs: true
-
 # Deployment - single replica for homelab (matching Pulumi)
 deployment:
   enabled: true
@@ -8,42 +8,37 @@ deployment:
   # Use Recreate strategy to avoid RWO volume conflicts
   strategy:
     type: Recreate
-
 # Service - disabled in favor of security-hardened extraObjects service
 service:
   enabled: true
   type: ClusterIP
-
 # Ports - homelab standard matching staging environment
 ports:
   web:
     port: 8000
     expose:
-      default: false  # HTTP disabled for security
+      default: false # HTTP disabled for security
     redirections:
       entryPoint:
         to: websecure
         scheme: https
         permanent: true
   websecure:
-    port: 443  # Matching staging environment
+    port: 443 # Matching staging environment
     expose:
       default: true
     exposedPort: 443
     tls:
       enabled: true
-
 # Ingress class - default for cluster
 ingressClass:
   enabled: true
   isDefaultClass: true
-
 # Security and redirect configuration
 globalArguments:
   - "--global.sendanonymoususage=false"
   - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
   - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-
 # Production-ready resource limits (matching Pulumi)
 resources:
   requests:
@@ -52,26 +47,21 @@ resources:
   limits:
     cpu: "300m"
     memory: "256Mi"
-
 # Dashboard enabled - no auth needed on internal network
 ingressRoute:
   dashboard:
     enabled: true
-
 # Disable built-in ACME (cert-manager handles certificates)
 certificatesResolvers: {}
-
 # Global security settings
 additionalArguments:
   - "--global.checknewversion=false"
   - "--providers.kubernetesingress.ingressendpoint.publishedservice=traefik/traefik-secure"
-
 # Persistence for configuration and certificates
 persistence:
   enabled: true
   size: 1Gi
   storageClass: "longhorn"
-
 # Security-hardened LoadBalancer service
 extraObjects:
   - apiVersion: v1
