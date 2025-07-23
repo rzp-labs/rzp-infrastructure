@@ -1,0 +1,269 @@
+---
+# Vector configuration
+role: "Aggregator"
+
+# Replica count
+replicaCount: 2
+
+# Resource limits
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+# RBAC permissions for Kubernetes logs/metrics
+rbac:
+  create: true
+
+# Service account configuration
+serviceAccount:
+  create: true
+  annotations: {}
+
+# Security context
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Service configuration
+service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    - name: api
+      port: 8686
+      protocol: TCP
+    - name: vector-logs
+      port: 6000
+      protocol: TCP
+    - name: vector-host-metrics
+      port: 6001
+      protocol: TCP
+    - name: vector-internal-metrics
+      port: 6002
+      protocol: TCP
+
+# Persistence for buffering
+persistence:
+  enabled: true
+  storageClassName: "longhorn"
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Monitoring
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: prometheus
+
+# Environment variables for secrets
+env:
+  - name: OPENOBSERVE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: openobserve-secrets
+        key: openobserve-root-password
+  - name: VECTOR_SELF_NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+
+# Node selector and tolerations
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: In
+          values:
+          - vector
+      topologyKey: kubernetes.io/hostname
+
+# Custom Vector configuration
+customConfig:
+  data_dir: /vector-data-dir
+
+  # API configuration
+  api:
+    enabled: true
+    address: "0.0.0.0:8686"
+    playground: true
+
+  # Sources - receive data from Vector Agents
+  sources:
+    # Receive logs from Vector Agents
+    vector_agent_logs:
+      type: vector
+      address: "0.0.0.0:6000"
+      shutdown_timeout_secs: 30
+
+    # Receive host metrics from Vector Agents
+    vector_agent_host_metrics:
+      type: vector
+      address: "0.0.0.0:6001"
+      shutdown_timeout_secs: 30
+
+    # Receive internal metrics from Vector Agents
+    vector_agent_internal_metrics:
+      type: vector
+      address: "0.0.0.0:6002"
+      shutdown_timeout_secs: 30
+
+    # Aggregator's own internal metrics
+    aggregator_internal_metrics:
+      type: internal_metrics
+
+  # Transforms - process and enrich data from agents
+  transforms:
+    # Parse and enrich logs from agents
+    logs_processed:
+      type: remap
+      inputs: ["vector_agent_logs"]
+      source: |
+        # Parse JSON logs if possible
+        if exists(.message) {
+          parsed, err = parse_json(.message)
+          if err == null {
+            . = merge(., parsed)
+          }
+        }
+
+        # Add cluster information
+        .cluster = "stg"
+        .environment = "staging"
+        .source_type = "kubernetes_logs"
+
+        # Normalize log level
+        if exists(.level) {
+          .log_level = .level
+        } else if exists(.severity) {
+          .log_level = .severity
+        } else {
+          .log_level = "info"
+        }
+
+        # Normalize log level
+        .log_level = downcase(string!(.log_level))
+
+    # Process host metrics from agents
+    host_metrics_processed:
+      type: remap
+      inputs: ["vector_agent_host_metrics"]
+      source: |
+        .cluster = "stg"
+        .environment = "staging"
+        .source_type = "host_metrics"
+
+    # Process agent internal metrics
+    agent_metrics_processed:
+      type: remap
+      inputs: ["vector_agent_internal_metrics"]
+      source: |
+        .cluster = "stg"
+        .environment = "staging"
+        .source_type = "vector_agent_internal"
+
+    # Process aggregator internal metrics
+    aggregator_metrics_processed:
+      type: remap
+      inputs: ["aggregator_internal_metrics"]
+      source: |
+        .cluster = "stg"
+        .environment = "staging"
+        .source_type = "vector_aggregator_internal"
+
+  # Sinks - send processed data to OpenObserve
+  sinks:
+    # Send processed logs to OpenObserve
+    openobserve_logs:
+      type: http
+      inputs: ["logs_processed"]
+      uri: "http://openobserve.observability.svc.cluster.local:5080/api/default/default/_json"
+      method: "post"
+      auth:
+        strategy: "basic"
+        user: "admin@rzp.one"
+        password: "${OPENOBSERVE_PASSWORD}"
+      encoding:
+        codec: "json"
+      compression: "gzip"
+      batch:
+        max_bytes: 1048576
+        timeout_secs: 5
+
+    # Send processed host metrics to OpenObserve (for correlation with logs)
+    # Note: Netdata handles real-time host monitoring
+    openobserve_host_metrics:
+      type: http
+      inputs: ["host_metrics_processed"]
+      uri: "http://openobserve.observability.svc.cluster.local:5080/api/default/host_metrics/_json"
+      method: "post"
+      auth:
+        strategy: "basic"
+        user: "admin@rzp.one"
+        password: "${OPENOBSERVE_PASSWORD}"
+      encoding:
+        codec: "json"
+      compression: "gzip"
+      batch:
+        max_bytes: 1048576
+        timeout_secs: 10
+
+    # Send agent metrics to OpenObserve
+    openobserve_agent_metrics:
+      type: http
+      inputs: ["agent_metrics_processed"]
+      uri: "http://openobserve.observability.svc.cluster.local:5080/api/default/vector_agent/_json"
+      method: "post"
+      auth:
+        strategy: "basic"
+        user: "admin@rzp.one"
+        password: "${OPENOBSERVE_PASSWORD}"
+      encoding:
+        codec: "json"
+      compression: "gzip"
+      batch:
+        max_bytes: 1048576
+        timeout_secs: 10
+
+    # Send aggregator metrics to OpenObserve
+    openobserve_aggregator_metrics:
+      type: http
+      inputs: ["aggregator_metrics_processed"]
+      uri: "http://openobserve.observability.svc.cluster.local:5080/api/default/vector_aggregator/_json"
+      method: "post"
+      auth:
+        strategy: "basic"
+        user: "admin@rzp.one"
+        password: "${OPENOBSERVE_PASSWORD}"
+      encoding:
+        codec: "json"
+      compression: "gzip"
+      batch:
+        max_bytes: 1048576
+        timeout_secs: 10
