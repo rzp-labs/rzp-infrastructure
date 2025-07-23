@@ -32,7 +32,7 @@ insert_final_newline = false
 # YAML files - common for AI model configs and CI/CD
 [*.{yml,yaml}]
 indent_size = 2
-trim_trailing_whitespace = true
+trim_trailing_whitespace = false
 
 # TOML files - Python packaging and configuration
 [*.toml]
@@ -70,7 +70,7 @@ indent_size = 2
 # Kubernetes manifests
 [*.{k8s.yaml,k8s.yml}]
 indent_size = 2
-trim_trailing_whitespace = true
+trim_trailing_whitespace = false
 
 # Makefile
 [Makefile]
