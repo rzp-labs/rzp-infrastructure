@@ -1,12 +1,12 @@
+---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: cert-manager
   labels:
-    name: cert-manager
     app.kubernetes.io/name: cert-manager
-    app.kubernetes.io/component: platform
-    app.kubernetes.io/part-of: core-platform
+    app.kubernetes.io/component: infrastructure
+    app.kubernetes.io/part-of: core
     cert-manager.io/disable-validation: "true"
   annotations:
     argocd.argoproj.io/sync-wave: "0"
