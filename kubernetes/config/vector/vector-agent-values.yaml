@@ -1,0 +1,217 @@
+---
+# Vector Agent configuration - runs as DaemonSet on every node
+role: "Agent"
+
+# DaemonSet configuration
+daemonset:
+  enabled: true
+
+# Resource limits for agents (lighter than aggregator)
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# RBAC permissions for node-level access
+rbac:
+  create: true
+
+# Service account configuration
+serviceAccount:
+  create: true
+  name: vector-agent
+  annotations: {}
+
+# Security context - needs privileged access for log collection
+podSecurityContext:
+  runAsUser: 0  # Root required for log file access
+  runAsGroup: 0
+  fsGroup: 0
+  runAsNonRoot: false
+
+securityContext:
+  allowPrivilegeEscalation: true
+  capabilities:
+    add:
+      - SYS_PTRACE  # Required for process metrics
+    drop: []
+  readOnlyRootFilesystem: false
+  runAsNonRoot: false
+  runAsUser: 0
+
+# Host network and PID for comprehensive monitoring
+hostNetwork: true
+hostPID: true
+
+# Tolerations to run on all nodes including control plane
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+  - key: "node-role.kubernetes.io/master"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+# Node selector (run on all nodes)
+nodeSelector: {}
+
+# Volume mounts for log collection
+volumeMounts:
+  - name: var-log
+    mountPath: /var/log
+    readOnly: true
+  - name: var-lib-docker-containers
+    mountPath: /var/lib/docker/containers
+    readOnly: true
+  - name: proc
+    mountPath: /host/proc
+    readOnly: true
+  - name: sys
+    mountPath: /host/sys
+    readOnly: true
+
+volumes:
+  - name: var-log
+    hostPath:
+      path: /var/log
+  - name: var-lib-docker-containers
+    hostPath:
+      path: /var/lib/docker/containers
+  - name: proc
+    hostPath:
+      path: /proc
+  - name: sys
+    hostPath:
+      path: /sys
+
+# Environment variables
+env:
+  - name: VECTOR_SELF_NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: VECTOR_SELF_POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: VECTOR_SELF_POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+
+# Custom Vector configuration for Agent
+customConfig:
+  data_dir: /vector-data-dir
+
+  # API configuration (disabled for agents)
+  api:
+    enabled: false
+
+  # Sources - collect logs and metrics from the node
+  sources:
+    # Kubernetes logs from all pods on this node
+    kubernetes_logs:
+      type: kubernetes_logs
+      pod_annotation_fields:
+        container_image: "kubernetes.container_image"
+        container_name: "kubernetes.container_name"
+        pod_name: "kubernetes.pod_name"
+        pod_namespace: "kubernetes.pod_namespace"
+        pod_node_name: "kubernetes.pod_node_name"
+        pod_uid: "kubernetes.pod_uid"
+      namespace_annotation_fields:
+        namespace_labels: "kubernetes.namespace_labels"
+
+    # Host metrics from this node
+    host_metrics:
+      type: host_metrics
+      collectors:
+        - cpu
+        - disk
+        - filesystem
+        - load
+        - host
+        - memory
+        - network
+      filesystem:
+        devices:
+          excludes: ["binfmt_misc"]
+        filesystems:
+          excludes: ["binfmt_misc"]
+        mountpoints:
+          excludes: ["*/proc/sys/fs/binfmt_misc"]
+
+    # Vector internal metrics
+    internal_metrics:
+      type: internal_metrics
+
+  # Transforms - minimal processing on agent
+  transforms:
+    # Add node information to logs
+    kubernetes_logs_enriched:
+      type: remap
+      inputs: ["kubernetes_logs"]
+      source: |
+        .node_name = "${VECTOR_SELF_NODE_NAME}"
+        .agent_pod = "${VECTOR_SELF_POD_NAME}"
+        .timestamp = now()
+
+    # Add node information to host metrics
+    host_metrics_enriched:
+      type: remap
+      inputs: ["host_metrics"]
+      source: |
+        .node_name = "${VECTOR_SELF_NODE_NAME}"
+        .agent_pod = "${VECTOR_SELF_POD_NAME}"
+        .timestamp = now()
+
+    # Add node information to internal metrics
+    internal_metrics_enriched:
+      type: remap
+      inputs: ["internal_metrics"]
+      source: |
+        .node_name = "${VECTOR_SELF_NODE_NAME}"
+        .agent_pod = "${VECTOR_SELF_POD_NAME}"
+        .timestamp = now()
+
+  # Sinks - forward to Vector Aggregator
+  sinks:
+    # Forward logs to aggregator
+    vector_aggregator_logs:
+      type: vector
+      inputs: ["kubernetes_logs_enriched"]
+      address: "vector.observability.svc.cluster.local:6000"
+      compression: true
+
+    # Forward host metrics to aggregator
+    vector_aggregator_host_metrics:
+      type: vector
+      inputs: ["host_metrics_enriched"]
+      address: "vector.observability.svc.cluster.local:6001"
+      compression: true
+
+    # Forward internal metrics to aggregator
+    vector_aggregator_internal_metrics:
+      type: vector
+      inputs: ["internal_metrics_enriched"]
+      address: "vector.observability.svc.cluster.local:6002"
+      compression: true
+
+# Service configuration (for aggregator communication)
+service:
+  enabled: false  # Agents don't need services
+
+# No persistence needed for agents
+persistence:
+  enabled: false
+
+# No pod disruption budget for DaemonSet
+podDisruptionBudget:
+  enabled: false
+
+# Monitoring disabled for agents (aggregator handles this)
+monitoring:
+  enabled: false
