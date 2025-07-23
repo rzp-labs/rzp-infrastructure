@@ -75,16 +75,6 @@ spec:
             persistence: false
           claiming:
             enabled: true
-            token:
-              valueFrom:
-                secretKeyRef:
-                  name: netdata-secrets
-                  key: netdata-claim-token
-            rooms:
-              valueFrom:
-                secretKeyRef:
-                  name: netdata-secrets
-                  key: netdata-claim-room
           # Enable Kubernetes API monitoring on parent
           env:
             NETDATA_EXTRA_DEB_PACKAGES: "curl"
@@ -191,6 +181,26 @@ spec:
           configs:
             netdata:
               data: |
+                [db]
+                  db = ram
+                  retention = 3600
+                [health]
+                  enabled = no
+                [web]
+                  mode = none
+          claiming:
+            enabled: true
+          env:
+            NETDATA_CLAIM_TOKEN:
+              valueFrom:
+                secretKeyRef:
+                  name: netdata-secrets
+                  key: netdata-claim-token
+            NETDATA_CLAIM_ROOMS:
+              valueFrom:
+                secretKeyRef:
+                  name: netdata-secrets
+                  key: netdata-claim-room|
                 [db]
                   db = ram
                   retention = 3600
