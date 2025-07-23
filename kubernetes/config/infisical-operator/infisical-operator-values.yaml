@@ -1,0 +1,67 @@
+# Install CRDs
+installCRDs: true
+
+# Controller configuration
+controllerManager:
+  replicas: 2
+
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  # Security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 65534
+
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    fsGroup: 65534
+
+  # Service monitor for metrics
+  serviceMonitor:
+    enabled: false  # Disabled for homelab
+
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  # Affinity for high availability
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - infisical-secrets-operator
+            topologyKey: kubernetes.io/hostname
+
+# Global configuration
+config:
+  # TLS configuration for self-hosted instances
+  tls:
+    skipVerify: false
+
+  # Default sync interval
+  syncInterval: "15s"
+
+  # Auto-restart deployments when secrets change
+  autoRestart:
+    enabled: true
