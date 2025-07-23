@@ -195,6 +195,7 @@ logs
 # Editor directories and files
 .idea
 .vscode
+.archived
 # OS specific
 # Task files
 examples/terraform
