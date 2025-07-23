@@ -47,10 +47,10 @@ resources:
   limits:
     cpu: "300m"
     memory: "256Mi"
-# Dashboard enabled - no auth needed on internal network
+# Dashboard disabled - using custom IngressRoute from traefik-config
 ingressRoute:
   dashboard:
-    enabled: true
+    enabled: false
 # Disable built-in ACME (cert-manager handles certificates)
 certificatesResolvers: {}
 # Global security settings

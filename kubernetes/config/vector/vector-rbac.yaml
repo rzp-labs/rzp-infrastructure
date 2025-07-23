@@ -28,7 +28,7 @@ rules:
       - "get"
       - "list"
       - "watch"
-    # Node-level metrics and info
+      # Node-level metrics and info
   - apiGroups:
       - ""
     resources:
@@ -39,7 +39,7 @@ rules:
       - "get"
       - "list"
       - "watch"
-    # Namespace context for logs
+      # Namespace context for logs
   - apiGroups:
       - ""
     resources:
@@ -48,7 +48,7 @@ rules:
       - "get"
       - "list"
       - "watch"
-    # Service discovery for enrichment
+      # Service discovery for enrichment
   - apiGroups:
       - ""
     resources:
@@ -58,7 +58,7 @@ rules:
       - "get"
       - "list"
       - "watch"
-    # Workload metadata for log enrichment
+      # Workload metadata for log enrichment
   - apiGroups:
       - "apps"
     resources:
