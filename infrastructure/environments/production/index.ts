@@ -1,5 +1,5 @@
 /**
- * Staging environment deployment with proper provider architecture
+ * Production environment deployment with proper provider architecture
  */
 import * as proxmoxve from "@muhlba91/pulumi-proxmoxve";
 import * as k8s from "@pulumi/kubernetes";
@@ -9,7 +9,7 @@ import { getProductionConfig } from "../../config/production";
 import type { IK3sNodeConfig } from "../../shared/types";
 import { getVmRole } from "../../shared/utils";
 
-// Get staging configuration
+// Get production configuration
 const config = getProductionConfig();
 
 export const proxmoxProvider = new proxmoxve.Provider("proxmox", {
