@@ -12,12 +12,12 @@ resources:
   limits:
     cpu: 500m
     memory: 512Mi
-# RBAC permissions for node-level access
+# RBAC permissions for node-level access (managed by vector-config)
 rbac:
-  create: true
-# Service account configuration
+  create: false
+# Service account configuration (use existing from vector-config)
 serviceAccount:
-  create: true
+  create: false
   name: vector-agent
   annotations: {}
 # Security context - needs privileged access for log collection

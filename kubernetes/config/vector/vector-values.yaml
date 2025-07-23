@@ -11,12 +11,13 @@ resources:
   limits:
     cpu: 1000m
     memory: 2Gi
-# RBAC permissions for Kubernetes logs/metrics
+# RBAC permissions for Kubernetes logs/metrics (managed by vector-config)
 rbac:
-  create: true
-# Service account configuration
+  create: false
+# Service account configuration (use existing from vector-config)
 serviceAccount:
-  create: true
+  create: false
+  name: vector-aggregator
   annotations: {}
 # Security context
 podSecurityContext:
