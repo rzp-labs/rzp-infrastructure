@@ -74,9 +74,6 @@ spec:
             persistence: false
           alarms:
             persistence: false
-          claiming:
-            enabled: true
-          # Enable Kubernetes API monitoring on parent
           env:
             NETDATA_EXTRA_DEB_PACKAGES: "curl"
             NETDATA_CLAIM_TOKEN:
@@ -179,6 +176,17 @@ spec:
           persistence:
             enabled: false
           # Disable web server on children - they only stream to parent
+          env:
+            NETDATA_CLAIM_TOKEN:
+              valueFrom:
+                secretKeyRef:
+                  name: netdata-secrets
+                  key: netdata-claim-token
+            NETDATA_CLAIM_ROOMS:
+              valueFrom:
+                secretKeyRef:
+                  name: netdata-secrets
+                  key: netdata-claim-room
           configs:
             netdata:
               data: |
@@ -189,18 +197,6 @@ spec:
                   enabled = no
                 [web]
                   mode = none
-          claiming:
-            enabled: true
-            token:
-              valueFrom:
-                secretKeyRef:
-                  name: netdata-secrets
-                  key: netdata-claim-token
-            rooms:
-              valueFrom:
-                secretKeyRef:
-                  name: netdata-secrets
-                  key: netdata-claim-room
 
         # k8s-state-metrics integration
         k8sState:
