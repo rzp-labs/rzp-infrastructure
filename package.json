@@ -1,6 +1,10 @@
 {
-  "packageManager": "pnpm@10.12.4",
+  "packageManager": "pnpm@10.13.1",
   "dependencies": {
-    "mem0ai": "^2.1.34"
+    "js-yaml": "^4.1.0",
+    "mem0ai": "^2.1.34",
+    "pre-commit": "^1.2.2",
+    "prettier": "^3.6.2",
+    "yaml-lint": "^1.7.0"
   }
 }

@@ -1,4 +1,6 @@
 onlyBuiltDependencies:
   - '@pulumi/command'
+  - pre-commit
   - protobufjs
+  - spawn-sync
   - sqlite3
