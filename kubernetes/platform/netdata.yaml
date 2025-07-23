@@ -4,80 +4,24 @@ kind: Application
 metadata:
   name: netdata
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "15" # After core platform services
   labels:
     app.kubernetes.io/name: netdata
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/component: observability
+    app.kubernetes.io/part-of: platform-services
+  annotations:
+    argocd.argoproj.io/sync-wave: "15"
 spec:
   project: default
   source:
-    repoURL: https://netdata.github.io/helmchart
-    chart: netdata
-    targetRevision: 3.7.141
-    helm:
-      values: |
-        # Configuration managed in kubernetes/config/netdata/netdata-values.yaml
-        
-        # Ingress disabled - using Netdata Cloud for access
-        ingress:
-          enabled: false
-        
-        parent:
-          enabled: true
-          persistence:
-            enabled: false
-          database:
-            persistence: false
-          alarms:
-            persistence: false
-          env:
-            NETDATA_CLAIM_TOKEN:
-              valueFrom:
-                secretKeyRef:
-                  name: netdata-secrets
-                  key: netdata-claim-token
-            NETDATA_CLAIM_ROOMS:
-              valueFrom:
-                secretKeyRef:
-                  name: netdata-secrets
-                  key: netdata-claim-room
-
-        child:
-          enabled: true
-          persistence:
-            enabled: false
-          env:
-            NETDATA_CLAIM_TOKEN:
-              valueFrom:
-                secretKeyRef:
-                  name: netdata-secrets
-                  key: netdata-claim-token
-            NETDATA_CLAIM_ROOMS:
-              valueFrom:
-                secretKeyRef:
-                  name: netdata-secrets
-                  key: netdata-claim-room
-          configs:
-            netdata:
-              data: |
-                [db]
-                  db = ram
-                  retention = 3600
-                [health]
-                  enabled = no
-                [web]
-                  mode = none
-
-        k8sState:
-          enabled: true
-          persistence:
-            enabled: false
-
-        rbac:
-          create: true
-          clusterRole: true
-
+    - repoURL: https://netdata.github.io/helmchart
+      chart: netdata
+      targetRevision: 3.7.141
+      helm:
+        valueFiles:
+          - $values/kubernetes/config/netdata/netdata-values.yaml
+    - repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: netdata
@@ -87,7 +31,6 @@ spec:
       selfHeal: true
     syncOptions:
       - ServerSideApply=true
-      - CreateNamespace=true
     retry:
       limit: 5
       backoff:
@@ -100,3 +43,39 @@ spec:
       name: "*"
       jsonPointers:
         - /data
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: netdata-config
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: netdata-config
+    app.kubernetes.io/component: observability
+    app.kubernetes.io/part-of: platform-services
+  annotations:
+    argocd.argoproj.io/sync-wave: "15"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rzp-labs/rzp-infrastructure.git
+    targetRevision: HEAD
+    path: kubernetes/config/netdata
+    directory:
+      exclude: "netdata-values.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: netdata
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 5m

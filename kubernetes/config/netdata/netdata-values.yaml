@@ -1,0 +1,62 @@
+---
+parent:
+  enabled: true
+  persistence:
+    enabled: false
+  database:
+    persistence: false
+  alarms:
+    persistence: false
+  env:
+    NETDATA_CLAIM_TOKEN:
+      valueFrom:
+        secretKeyRef:
+          name: netdata-secrets
+          key: netdata-claim-token
+    NETDATA_CLAIM_ROOMS:
+      valueFrom:
+        secretKeyRef:
+          name: netdata-secrets
+          key: netdata-claim-room
+
+child:
+  enabled: true
+  persistence:
+    enabled: false
+  env:
+    NETDATA_CLAIM_TOKEN:
+      valueFrom:
+        secretKeyRef:
+          name: netdata-secrets
+          key: netdata-claim-token
+    NETDATA_CLAIM_ROOMS:
+      valueFrom:
+        secretKeyRef:
+          name: netdata-secrets
+          key: netdata-claim-room
+  configs:
+    netdata:
+      data: |
+        [db]
+          db = ram
+          retention = 3600
+        [health]
+          enabled = no
+        [web]
+          mode = none
+
+k8sState:
+  enabled: true
+  persistence:
+    enabled: false
+
+rbac:
+  create: false
+
+serviceAccount:
+  create: false
+  name: svc-netdata
+
+# Ingress disabled - using Netdata Cloud for access
+ingress:
+  enabled: false

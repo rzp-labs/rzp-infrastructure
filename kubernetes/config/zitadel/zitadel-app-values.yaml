@@ -1,0 +1,160 @@
+zitadel:
+  # Use external database
+  masterkeySecretName: zitadel-app-secrets
+  configmapConfig:
+    Database:
+      Postgres:
+        Host: zitadel-postgres-postgresql
+        Port: 5432
+        Database: zitadel
+        MaxOpenConns: 20
+        MaxIdleConns: 10
+        MaxConnLifetime: 30m
+        MaxConnIdleTime: 5m
+        User:
+          Username: zitadel
+          SSL:
+            Mode: disable
+        Admin:
+          Username: postgres
+          SSL:
+            Mode: disable
+    ExternalDomain: zitadel.stg.rzp.one
+    ExternalPort: 443
+    ExternalSecure: true
+    TLS:
+      Enabled: false  # TLS handled by Traefik
+    LogLevel: info
+    LogFormat: text
+
+# Enable initialization jobs
+initJob:
+  enabled: true
+setupJob:
+  enabled: true
+
+# Secret configuration
+secretConfig:
+  Database:
+    Postgres:
+      User:
+        Password: "$(ZITADEL_DATABASE_POSTGRES_USER_PASSWORD)"
+      Admin:
+        Password: "$(ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD)"
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  protocol: http2
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: "zitadel-default-headers@kubernetescrd"
+  hosts:
+    - host: zitadel.stg.rzp.one
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: zitadel-tls
+      hosts:
+        - zitadel.stg.rzp.one
+
+# Resource configuration
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+# Replica configuration
+replicaCount: 2
+
+# Anti-affinity for HA across nodes
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: In
+          values:
+          - zitadel
+      topologyKey: kubernetes.io/hostname
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Readiness and liveness probes
+readinessProbe:
+  httpGet:
+    path: /debug/ready
+    port: 8080
+    scheme: HTTP
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /debug/healthz
+    port: 8080
+    scheme: HTTP
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 5
+
+# Environment-specific configuration
+env:
+  - name: ZITADEL_LOG_LEVEL
+    value: "info"
+  - name: ZITADEL_LOG_FORMAT
+    value: "text"
+  - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: zitadel-db-credentials
+        key: zitadel-db-password
+  - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: zitadel-db-credentials
+        key: zitadel-postgres-password
+
+# Additional volumes for writable paths
+extraVolumes:
+  - name: tmp
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+
+extraVolumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: cache
+    mountPath: /home/zitadel/.cache

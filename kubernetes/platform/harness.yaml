@@ -1,13 +1,15 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: harness
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "20" # After platform infrastructure
   labels:
     app.kubernetes.io/name: harness
-    app.kubernetes.io/component: platform
+    app.kubernetes.io/component: gitops
+    app.kubernetes.io/part-of: platform-services
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
 spec:
   project: default
   source:
@@ -22,19 +24,11 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - ServerSideApply=true
-    - CreateNamespace=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
         duration: 5s
         factor: 2
         maxDuration: 3m
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: harness
-  labels:
-    app.kubernetes.io/name: harness
-    app.kubernetes.io/component: platform
+

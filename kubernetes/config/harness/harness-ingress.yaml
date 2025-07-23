@@ -1,0 +1,32 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: harness-ingress
+  namespace: harness
+  labels:
+    app.kubernetes.io/name: harness-ingress
+    app.kubernetes.io/component: gitops
+    app.kubernetes.io/part-of: platform-services
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: harness-default-headers@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - harness.stg.rzp.one
+      secretName: harness-tls
+  rules:
+    - host: harness.stg.rzp.one
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: harness-cluster-ip
+                port:
+                  number: 3000

@@ -1,0 +1,117 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harness-deployment
+  namespace: harness
+  labels:
+    app.kubernetes.io/name: harness-deployment
+    app.kubernetes.io/component: gitops
+    app.kubernetes.io/part-of: platform-services
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: harness-deployment
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: harness-deployment
+    spec:
+      serviceAccountName: svc-harness
+      containers:
+        - name: harness
+          image: harness/gitness:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+            - containerPort: 22
+              name: ssh
+              protocol: TCP
+          env:
+            - name: GITNESS_URL_BASE
+              value: "https://harness.stg.rzp.one"
+            - name: GITNESS_HTTP_PORT
+              value: "3000"
+            - name: GITNESS_SSH_PORT
+              value: "22"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: containerd-sock
+              mountPath: /var/run/containerd/containerd.sock
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /api/v1/system/version
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/system/version
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: harness-data
+        - name: containerd-sock
+          hostPath:
+            path: /run/k3s/containerd/containerd.sock
+            type: Socket
+      securityContext:
+        fsGroup: 1000
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: harness-pvc
+  namespace: harness
+  labels:
+    app.kubernetes.io/name: harness-pvc
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: platform-services
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: harness-cluster-ip
+  namespace: harness
+  labels:
+    app.kubernetes.io/name: harness-cluster-ip
+    app.kubernetes.io/component: gitops
+    app.kubernetes.io/part-of: platform-services
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: http
+    - port: 22
+      targetPort: 22
+      protocol: TCP
+      name: ssh
+  selector:
+    app.kubernetes.io/name: harness-cluster-ip
