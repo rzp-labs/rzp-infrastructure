@@ -122,11 +122,14 @@ customConfig:
         - network
       filesystem:
         devices:
-          excludes: ["binfmt_misc"]
+          excludes:
+            - "binfmt_misc"
         filesystems:
-          excludes: ["binfmt_misc"]
+          excludes:
+            - "binfmt_misc"
         mountpoints:
-          excludes: ["*/proc/sys/fs/binfmt_misc"]
+          excludes:
+            - "*/proc/sys/fs/binfmt_misc"
     # Vector internal metrics
     internal_metrics:
       type: internal_metrics
@@ -135,7 +138,8 @@ customConfig:
     # Add node information to logs
     kubernetes_logs_enriched:
       type: remap
-      inputs: ["kubernetes_logs"]
+      inputs:
+        - "kubernetes_logs"
       source: |
         .node_name = "${VECTOR_SELF_NODE_NAME}"
         .agent_pod = "${VECTOR_SELF_POD_NAME}"
@@ -143,7 +147,8 @@ customConfig:
     # Add node information to host metrics
     host_metrics_enriched:
       type: remap
-      inputs: ["host_metrics"]
+      inputs:
+        - "host_metrics"
       source: |
         .node_name = "${VECTOR_SELF_NODE_NAME}"
         .agent_pod = "${VECTOR_SELF_POD_NAME}"
@@ -151,7 +156,8 @@ customConfig:
     # Add node information to internal metrics
     internal_metrics_enriched:
       type: remap
-      inputs: ["internal_metrics"]
+      inputs:
+        - "internal_metrics"
       source: |
         .node_name = "${VECTOR_SELF_NODE_NAME}"
         .agent_pod = "${VECTOR_SELF_POD_NAME}"
@@ -161,19 +167,22 @@ customConfig:
     # Forward logs to aggregator
     vector_aggregator_logs:
       type: vector
-      inputs: ["kubernetes_logs_enriched"]
+      inputs:
+        - "kubernetes_logs_enriched"
       address: "vector.observability.svc.cluster.local:6000"
       compression: true
     # Forward host metrics to aggregator
     vector_aggregator_host_metrics:
       type: vector
-      inputs: ["host_metrics_enriched"]
+      inputs:
+        - "host_metrics_enriched"
       address: "vector.observability.svc.cluster.local:6001"
       compression: true
     # Forward internal metrics to aggregator
     vector_aggregator_internal_metrics:
       type: vector
-      inputs: ["internal_metrics_enriched"]
+      inputs:
+        - "internal_metrics_enriched"
       address: "vector.observability.svc.cluster.local:6002"
       compression: true
 # Service configuration (for aggregator communication)

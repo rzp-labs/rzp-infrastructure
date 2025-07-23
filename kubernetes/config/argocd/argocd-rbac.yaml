@@ -10,7 +10,7 @@ metadata:
 data:
   # ArgoCD RBAC policy configuration
   policy.default: role:readonly
-  policy.csv: |
+  policy.csv: |-
     # Default policies for ArgoCD RBAC
 
     # Admin role - full access

@@ -19,25 +19,57 @@ metadata:
     app.kubernetes.io/part-of: platform-services
 rules:
   # Essential for log collection
-  - apiGroups: [""]
-    resources: ["pods", "pods/log"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - ""
+    resources:
+      - "pods"
+      - "pods/log"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
     # Node-level metrics and info
-  - apiGroups: [""]
-    resources: ["nodes", "nodes/metrics", "nodes/proxy"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - ""
+    resources:
+      - "nodes"
+      - "nodes/metrics"
+      - "nodes/proxy"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
     # Namespace context for logs
-  - apiGroups: [""]
-    resources: ["namespaces"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - ""
+    resources:
+      - "namespaces"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
     # Service discovery for enrichment
-  - apiGroups: [""]
-    resources: ["services", "endpoints"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - ""
+    resources:
+      - "services"
+      - "endpoints"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
     # Workload metadata for log enrichment
-  - apiGroups: ["apps"]
-    resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - "apps"
+    resources:
+      - "deployments"
+      - "replicasets"
+      - "daemonsets"
+      - "statefulsets"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -76,9 +108,14 @@ metadata:
     app.kubernetes.io/part-of: platform-services
 rules:
   # Only needs basic namespace discovery for routing
-  - apiGroups: [""]
-    resources: ["namespaces"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - ""
+    resources:
+      - "namespaces"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

@@ -9,10 +9,7 @@ metadata:
     app.kubernetes.io/component: metrics
 spec:
   ports:
-    - name: metrics
-      port: 9090
-      targetPort: 9090
-      protocol: TCP
+    - {name: metrics, port: 9090, targetPort: 9090, protocol: TCP}
   selector:
     app.kubernetes.io/name: zitadel
 

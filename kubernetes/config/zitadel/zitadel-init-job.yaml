@@ -36,23 +36,6 @@ spec:
     spec:
       restartPolicy: OnFailure
       containers:
-        - name: zitadel-init
-          image: curlimages/curl:8.4.0
-          command: ["/bin/sh"]
-          args: ["/scripts/init.sh"]
-          volumeMounts:
-            - name: init-script
-              mountPath: /scripts
-              readOnly: true
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
+        - {name: zitadel-init, image: 'curlimages/curl:8.4.0', command: ["/bin/sh"], args: ["/scripts/init.sh"], volumeMounts: [{name: init-script, mountPath: /scripts, readOnly: true}], resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 100m, memory: 128Mi}}}
       volumes:
-        - name: init-script
-          configMap:
-            name: zitadel-init-script
-            defaultMode: 0755
+        - {name: init-script, configMap: {name: zitadel-init-script, defaultMode: 0755}}

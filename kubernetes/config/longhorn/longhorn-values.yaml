@@ -80,7 +80,8 @@ longhornManager:
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: true
     capabilities:
-      drop: ["ALL"]
+      drop:
+        - "ALL"
 longhornDriver:
   priorityClass: ""
   tolerations: []
@@ -98,7 +99,8 @@ longhornDriver:
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: true
     capabilities:
-      drop: ["ALL"]
+      drop:
+        - "ALL"
 longhornUI:
   replicas: 2
   priorityClass: ""
@@ -117,7 +119,8 @@ longhornUI:
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: true
     capabilities:
-      drop: ["ALL"]
+      drop:
+        - "ALL"
 # Service configuration
 service:
   ui:

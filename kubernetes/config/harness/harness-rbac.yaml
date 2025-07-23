@@ -15,18 +15,50 @@ metadata:
   name: harness-role
   namespace: harness
 rules:
-  - apiGroups: [""]
-    resources: ["pods", "secrets", "configmaps"]
-    verbs: ["get", "list", "watch", "create", "update", "delete"]
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["list", "watch"]
-  - apiGroups: ["apps"]
-    resources: ["deployments", "replicasets"]
-    verbs: ["get", "list", "watch", "create", "update", "delete"]
-  - apiGroups: ["extensions", "networking.k8s.io"]
-    resources: ["ingresses"]
-    verbs: ["get", "list", "watch", "create", "update", "delete"]
+  - apiGroups:
+      - ""
+    resources:
+      - "pods"
+      - "secrets"
+      - "configmaps"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
+      - "create"
+      - "update"
+      - "delete"
+  - apiGroups:
+      - ""
+    resources:
+      - "events"
+    verbs:
+      - "list"
+      - "watch"
+  - apiGroups:
+      - "apps"
+    resources:
+      - "deployments"
+      - "replicasets"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
+      - "create"
+      - "update"
+      - "delete"
+  - apiGroups:
+      - "extensions"
+      - "networking.k8s.io"
+    resources:
+      - "ingresses"
+    verbs:
+      - "get"
+      - "list"
+      - "watch"
+      - "create"
+      - "update"
+      - "delete"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

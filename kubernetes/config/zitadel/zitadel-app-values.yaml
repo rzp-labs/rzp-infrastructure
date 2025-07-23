@@ -56,14 +56,9 @@ ingress:
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: "zitadel-default-headers@kubernetescrd"
   hosts:
-    - host: zitadel.stg.rzp.one
-      paths:
-        - path: /
-          pathType: Prefix
+    - {host: zitadel.stg.rzp.one, paths: [{path: /, pathType: Prefix}]}
   tls:
-    - secretName: zitadel-tls
-      hosts:
-        - zitadel.stg.rzp.one
+    - {secretName: zitadel-tls, hosts: [zitadel.stg.rzp.one]}
 # Resource configuration
 resources:
   requests:
@@ -78,13 +73,7 @@ replicaCount: 2
 affinity:
   podAntiAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-            - key: app.kubernetes.io/name
-              operator: In
-              values:
-                - zitadel
-        topologyKey: kubernetes.io/hostname
+      - {labelSelector: {matchExpressions: [{key: app.kubernetes.io/name, operator: In, values: [zitadel]}]}, topologyKey: kubernetes.io/hostname}
 # Pod security context
 podSecurityContext:
   runAsNonRoot: true
@@ -120,28 +109,14 @@ livenessProbe:
   failureThreshold: 5
 # Environment-specific configuration
 env:
-  - name: ZITADEL_LOG_LEVEL
-    value: "info"
-  - name: ZITADEL_LOG_FORMAT
-    value: "text"
-  - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: zitadel-db-credentials
-        key: zitadel-db-password
-  - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: zitadel-db-credentials
-        key: zitadel-postgres-password
+  - {name: ZITADEL_LOG_LEVEL, value: "info"}
+  - {name: ZITADEL_LOG_FORMAT, value: "text"}
+  - {name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD, valueFrom: {secretKeyRef: {name: zitadel-db-credentials, key: zitadel-db-password}}}
+  - {name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD, valueFrom: {secretKeyRef: {name: zitadel-db-credentials, key: zitadel-postgres-password}}}
 # Additional volumes for writable paths
 extraVolumes:
-  - name: tmp
-    emptyDir: {}
-  - name: cache
-    emptyDir: {}
+  - {name: tmp, emptyDir: {}}
+  - {name: cache, emptyDir: {}}
 extraVolumeMounts:
-  - name: tmp
-    mountPath: /tmp
-  - name: cache
-    mountPath: /home/zitadel/.cache
+  - {name: tmp, mountPath: /tmp}
+  - {name: cache, mountPath: /home/zitadel/.cache}
