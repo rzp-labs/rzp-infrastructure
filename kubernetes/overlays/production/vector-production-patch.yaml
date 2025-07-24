@@ -1,0 +1,32 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vector
+  annotations:
+    # Production-specific annotations
+    argocd.argoproj.io/sync-options: RespectIgnoreDifferences=true
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: prod-alerts
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: prod-alerts
+spec:
+  # Production-specific sync policy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false  # More conservative in production
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  # Production-specific ignore differences
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data

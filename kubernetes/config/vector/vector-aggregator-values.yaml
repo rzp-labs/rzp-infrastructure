@@ -56,7 +56,7 @@ persistence:
   storageClassName: "longhorn"
   size: 10Gi
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
 # Pod disruption budget
 podDisruptionBudget:
   enabled: true
