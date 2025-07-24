@@ -4,7 +4,7 @@ global:
     auth:
       username: "openobserve"
       database: "openobserve"
-      existingSecret: "openobserve-db-credentials"
+      existingSecret: "openobserve-secrets"
       secretKeys:
         userPasswordKey: "openobserve-db-password"
         adminPasswordKey: "openobserve-postgres-password"
