@@ -52,7 +52,7 @@ spec:
         - /webhooks/0/clientConfig/caBundle
         - /webhooks/1/clientConfig/caBundle
     - group: ""
-    - kind: Secret
+      kind: Secret
       jsonPointers:
         - /data
     - group: apps
