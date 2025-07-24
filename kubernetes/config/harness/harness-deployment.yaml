@@ -66,7 +66,7 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: harness-data
+            claimName: harness-pvc
         - name: containerd-sock
           hostPath:
             path: /run/k3s/containerd/containerd.sock
