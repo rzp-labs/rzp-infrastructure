@@ -74,7 +74,12 @@ env:
     valueFrom:
       secretKeyRef:
         name: openobserve-secrets
-        key: openobserve-root-password
+        key: openobserve-root-user-password
+  - name: OPENOBSERVE_EMAIL
+    valueFrom:
+      secretKeyRef:
+        name: openobserve-secrets
+        key: openobserve-root-user-email
 # Node selector and tolerations
 nodeSelector: {}
 tolerations: []
@@ -186,7 +191,7 @@ customConfig:
       method: "post"
       auth:
         strategy: "basic"
-        user: "admin@rzp.one"
+        user: "${OPENOBSERVE_EMAIL}"
         password: "${OPENOBSERVE_PASSWORD}"
       encoding:
         codec: "json"
@@ -204,7 +209,7 @@ customConfig:
       method: "post"
       auth:
         strategy: "basic"
-        user: "admin@rzp.one"
+        user: "${OPENOBSERVE_EMAIL}"
         password: "${OPENOBSERVE_PASSWORD}"
       encoding:
         codec: "json"
@@ -221,7 +226,7 @@ customConfig:
       method: "post"
       auth:
         strategy: "basic"
-        user: "admin@rzp.one"
+        user: "${OPENOBSERVE_EMAIL}"
         password: "${OPENOBSERVE_PASSWORD}"
       encoding:
         codec: "json"
@@ -238,7 +243,7 @@ customConfig:
       method: "post"
       auth:
         strategy: "basic"
-        user: "admin@rzp.one"
+        user: "${OPENOBSERVE_EMAIL}"
         password: "${OPENOBSERVE_PASSWORD}"
       encoding:
         codec: "json"
